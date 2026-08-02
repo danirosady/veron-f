@@ -17,6 +17,7 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('[API REQUEST]', config.method?.toUpperCase(), config.url, config.data);
     return config;
   },
   (error) => Promise.reject(error)
@@ -37,8 +38,12 @@ const processQueue = (error, token = null) => {
 };
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('[API RESPONSE]', response.config.method?.toUpperCase(), response.config.url, response.status, response.data);
+    return response;
+  },
   async (error) => {
+    console.log('[API ERROR]', error.config?.method?.toUpperCase(), error.config?.url, error.response?.status, error.response?.data);
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {

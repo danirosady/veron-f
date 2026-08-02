@@ -88,7 +88,7 @@ export default function ReplacementListPage() {
     {
       key: 'unit',
       header: 'Unit',
-      render: (_, row) => row.unit?.plate_number || row.unit?.code || '-',
+      render: (_, row) => row.unit?.plate_number || row.unit?.unit_id || row.unit?.code || '-',
     },
     {
       key: 'position',
@@ -114,7 +114,7 @@ export default function ReplacementListPage() {
       key: 'hm',
       header: 'HM',
       align: 'right',
-      render: (_, row) => formatNumber(row.new_tyre_hm || row.hm || 0, 0),
+      render: (_, row) => formatNumber(row.hm || 0, 0),
     },
     {
       key: 'operator',

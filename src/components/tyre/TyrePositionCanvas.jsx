@@ -1,35 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { formatNumber, getRtdColor } from '@/utils/format';
-
-const UNIT_POSITIONS = {
-  dump_truck: [
-    { id: 'FL', label: 'Front Left', x: 10, y: 35, row: 'front' },
-    { id: 'FR', label: 'Front Right', x: 90, y: 35, row: 'front' },
-    { id: 'RL', label: 'Rear Left', x: 10, y: 75, row: 'rear' },
-    { id: 'RR', label: 'Rear Right', x: 90, y: 75, row: 'rear' },
-    { id: 'CL', label: 'Center Left', x: 30, y: 75, row: 'rear' },
-    { id: 'CR', label: 'Center Right', x: 70, y: 75, row: 'rear' },
-  ],
-  excavator: [
-    { id: 'FL', label: 'Front Left', x: 10, y: 30, row: 'front' },
-    { id: 'FR', label: 'Front Right', x: 90, y: 30, row: 'front' },
-    { id: 'RL', label: 'Rear Left', x: 10, y: 70, row: 'rear' },
-    { id: 'RR', label: 'Rear Right', x: 90, y: 70, row: 'rear' },
-  ],
-  loader: [
-    { id: 'FL', label: 'Front Left', x: 10, y: 40, row: 'front' },
-    { id: 'FR', label: 'Front Right', x: 90, y: 40, row: 'front' },
-    { id: 'RL', label: 'Rear Left', x: 10, y: 70, row: 'rear' },
-    { id: 'RR', label: 'Rear Right', x: 90, y: 70, row: 'rear' },
-  ],
-  default: [
-    { id: 'FL', label: 'Front Left', x: 10, y: 35, row: 'front' },
-    { id: 'FR', label: 'Front Right', x: 90, y: 35, row: 'front' },
-    { id: 'RL', label: 'Rear Left', x: 10, y: 75, row: 'rear' },
-    { id: 'RR', label: 'Rear Right', x: 90, y: 75, row: 'rear' },
-  ],
-};
 
 const RTD_COLOR_MAP = {
   spare: {
@@ -56,7 +27,13 @@ const RTD_COLOR_MAP = {
     text: 'text-gray-500',
     fill: '#9ca3af',
   },
-  default: {
+  mounted: {
+    bg: 'bg-blue-50',
+    border: 'border-blue-300',
+    text: 'text-blue-700',
+    fill: '#2563eb',
+  },
+  empty: {
     bg: 'bg-gray-50',
     border: 'border-gray-300',
     text: 'text-gray-400',
@@ -64,44 +41,78 @@ const RTD_COLOR_MAP = {
   },
 };
 
-function getTyreColor(rtd) {
-  return RTD_COLOR_MAP[getRtdColor(rtd)] || RTD_COLOR_MAP.default;
+function getTyreColor(rtd, status) {
+  if (status === 'scrap') return RTD_COLOR_MAP.scrap;
+  if (status === 'spare') return RTD_COLOR_MAP.spare;
+  if (rtd === null || rtd === undefined) return RTD_COLOR_MAP.mounted;
+  return RTD_COLOR_MAP[getRtdColor(rtd)] || RTD_COLOR_MAP.mounted;
 }
 
 export default function TyrePositionCanvas({
   positions = [],
-  unitType = 'default',
+  unitTypeConfig = null,
   onPositionClick,
   disabled = false,
   className = '',
+  height = 400,
 }) {
-  const config = UNIT_POSITIONS[unitType] || UNIT_POSITIONS.default;
+  const [tooltip, setTooltip] = useState(null);
 
-  const getPositionData = (posId) => {
-    const found = positions.find((p) => p.position === posId);
-    return found || null;
-  };
+  const canvasWidth = 100;
+  const canvasHeight = 100;
 
-  const handleClick = (posConfig, tyreData) => {
-    if (!disabled) {
-      onPositionClick?.(posConfig.id, tyreData?.tyre || null);
+  // Use unit type config positions if available, otherwise use the positions array directly
+  const layoutPositions = React.useMemo(() => {
+    if (unitTypeConfig?.position_config && unitTypeConfig.position_config.length > 0) {
+      return unitTypeConfig.position_config.map((pos) => {
+        const posData = positions.find((p) => p.position === pos.position);
+        return {
+          ...pos,
+          tyre: posData?.tyre || null,
+          rtd: posData?.rtd || posData?.tyre?.rtd || null,
+          status: posData?.status || (posData?.tyre ? 'mounted' : 'empty'),
+        };
+      });
+    }
+    // Positions from API already have position, label, x, y, tyre, rtd, status
+    return positions.map((pos) => ({
+      position: pos.position,
+      label: pos.label || `Pos ${pos.position}`,
+      side: pos.side || '',
+      axle: pos.axle || '',
+      x: pos.x || 0,
+      y: pos.y || 0,
+      tyre: pos.tyre || null,
+      rtd: pos.rtd || pos.tyre?.rtd || null,
+      status: pos.status || (pos.tyre ? 'mounted' : 'empty'),
+    }));
+  }, [positions, unitTypeConfig]);
+
+  const handleMouseEnter = (pos, event) => {
+    if (pos.tyre) {
+      setTooltip({ pos, x: event.clientX, y: event.clientY });
     }
   };
 
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
+
   return (
-    <div className={cn('w-full max-w-lg mx-auto', className)}>
+    <div className={cn('w-full relative', className)}>
       <svg
-        viewBox="0 0 100 120"
+        viewBox={`0 0 ${canvasWidth} ${canvasHeight + 15}`}
         className="w-full h-auto"
         xmlns="http://www.w3.org/2000/svg"
+        style={{ minHeight: height }}
       >
         {/* Vehicle body */}
         <rect
           x="15"
-          y="25"
+          y="15"
           width="70"
           height="70"
-          rx="12"
+          rx="10"
           fill="#f9fafb"
           stroke="#d1d5db"
           strokeWidth="1.5"
@@ -110,146 +121,109 @@ export default function TyrePositionCanvas({
         {/* Cab / front indicator */}
         <rect
           x="30"
-          y="25"
+          y="15"
           width="40"
-          height="12"
-          rx="4"
+          height="10"
+          rx="3"
           fill="#e5e7eb"
           stroke="#d1d5db"
           strokeWidth="1"
         />
         <text
           x="50"
-          y="33.5"
+          y="22.5"
           textAnchor="middle"
-          fontSize="5"
+          fontSize="4"
           fill="#9ca3af"
           fontWeight="500"
         >
           CAB
         </text>
 
-        {/* Front axle */}
-        <line
-          x1="20"
-          y1="40"
-          x2="80"
-          y2="40"
-          stroke="#d1d5db"
-          strokeWidth="1"
-          strokeDasharray="3,2"
+        {/* Direction arrow */}
+        <polygon
+          points="50,13 47,17 53,17"
+          fill="#9ca3af"
         />
+        <text x="50" y="12" textAnchor="middle" fontSize="3.5" fill="#9ca3af" fontWeight="600">
+          FRONT
+        </text>
 
-        {/* Rear axle */}
-        <line
-          x1="20"
-          y1="80"
-          x2="80"
-          y2="80"
-          stroke="#d1d5db"
-          strokeWidth="1"
-          strokeDasharray="3,2"
-        />
+        {/* Dynamic axle lines based on layout */}
+        {layoutPositions.some((p) => p.axle === 'front') && (
+          <>
+            <line
+              x1="20"
+              y1="45"
+              x2="80"
+              y2="45"
+              stroke="#d1d5db"
+              strokeWidth="0.8"
+              strokeDasharray="2,1.5"
+            />
+          </>
+        )}
+        {layoutPositions.some((p) => p.axle !== 'front' && p.axle) && (
+          <>
+            <line
+              x1="20"
+              y1="65"
+              x2="80"
+              y2="65"
+              stroke="#d1d5db"
+              strokeWidth="0.8"
+              strokeDasharray="2,1.5"
+            />
+          </>
+        )}
 
         {/* Centre line */}
         <line
           x1="50"
-          y1="25"
+          y1="15"
           x2="50"
-          y2="95"
+          y2="85"
           stroke="#e5e7eb"
           strokeWidth="0.5"
-          strokeDasharray="2,2"
+          strokeDasharray="1.5,1.5"
         />
 
-        {/* Row labels */}
-        <text x="5" y="42" fontSize="4.5" fill="#9ca3af" fontWeight="500">
-          F
-        </text>
-        <text x="5" y="82" fontSize="4.5" fill="#9ca3af" fontWeight="500">
-          R
-        </text>
-
         {/* Tyre position slots */}
-        {config.map((pos) => {
-          const posData = getPositionData(pos.id);
-          const tyre = posData?.tyre;
-          const status = posData?.status;
-          const rtd = tyre?.rtd ?? tyre?.rtd_avg ?? null;
-          const colors = getTyreColor(rtd);
-          const isEmpty = !tyre;
-          const isScrap = status === 'scrap';
-          const isSpare = status === 'spare';
-          const serialNumber = tyre?.serial_number || '';
+        {layoutPositions.map((pos) => {
+          const colors = getTyreColor(pos.rtd, pos.status);
+          const isEmpty = pos.status === 'empty' || !pos.tyre;
+          const isScrap = pos.status === 'scrap';
+          const serialNumber = pos.tyre?.serial_number || '';
+          const label = pos.label || `P${pos.position}`;
+          const rtdDisplay = pos.rtd !== null && pos.rtd !== undefined ? pos.rtd : pos.tyre?.rtd;
 
           return (
             <g
-              key={pos.id}
-              transform={`translate(${pos.x}, ${pos.y})`}
-              onClick={() => handleClick(pos, posData)}
+              key={pos.position}
+              transform={`translate(${pos.x * 100}, ${pos.y * 100})`}
+              onClick={() => !disabled && onPositionClick?.(pos.position, pos.tyre, pos.status)}
+              onMouseEnter={(e) => handleMouseEnter(pos, e)}
+              onMouseLeave={handleMouseLeave}
               style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
               className={disabled ? '' : 'hover:opacity-80'}
             >
-              {/* Tyre circle */}
               {isEmpty ? (
-                /* Empty slot — dashed circle with + */
                 <g>
-                  <circle
-                    r="10"
-                    fill="#f9fafb"
-                    stroke="#d1d5db"
-                    strokeWidth="1.5"
-                    strokeDasharray="3,2"
-                  />
-                  <text
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize="8"
-                    fill="#d1d5db"
-                    fontWeight="400"
-                  >
+                  <circle r="8" fill="#f9fafb" stroke="#d1d5db" strokeWidth="1.5" strokeDasharray="3,2" />
+                  <text textAnchor="middle" dominantBaseline="central" fontSize="7" fill="#d1d5db" fontWeight="400">
                     +
                   </text>
                 </g>
               ) : isScrap ? (
-                /* Scrap — X pattern */
                 <g>
-                  <circle
-                    r="10"
-                    fill="#f3f4f6"
-                    stroke="#9ca3af"
-                    strokeWidth="1.5"
-                  />
-                  <line x1="-6" y1="-6" x2="6" y2="6" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="6" y1="-6" x2="-6" y2="6" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
-                </g>
-              ) : isSpare ? (
-                /* Spare — dashed outline */
-                <g>
-                  <circle
-                    r="10"
-                    fill="#f9fafb"
-                    stroke={colors.fill}
-                    strokeWidth="1.5"
-                    strokeDasharray="3,2"
-                  />
-                  {serialNumber && (
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize="3.5"
-                      fill={colors.fill}
-                      fontWeight="500"
-                    >
-                      {serialNumber.length > 5 ? serialNumber.slice(0, 5) + '…' : serialNumber}
-                    </text>
-                  )}
+                  <circle r="8" fill="#f3f4f6" stroke="#9ca3af" strokeWidth="1.5" />
+                  <line x1="-5" y1="-5" x2="5" y2="5" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="5" y1="-5" x2="-5" y2="5" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" />
                 </g>
               ) : (
-                /* Mounted — solid coloured circle */
                 <g>
                   <circle
-                    r="10"
+                    r="8"
                     fill={colors.fill}
                     fillOpacity="0.15"
                     stroke={colors.fill}
@@ -259,28 +233,27 @@ export default function TyrePositionCanvas({
                     <text
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fontSize="3"
+                      fontSize="2.8"
                       fill={colors.fill}
                       fontWeight="600"
                     >
-                      {serialNumber.length > 6 ? serialNumber.slice(0, 6) + '…' : serialNumber}
+                      {serialNumber.length > 7 ? serialNumber.slice(0, 7) + '…' : serialNumber}
                     </text>
                   ) : (
                     <text
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fontSize="3"
+                      fontSize="2.5"
                       fill={colors.fill}
                     >
                       –
                     </text>
                   )}
-                  {/* RTD indicator dot */}
-                  {rtd !== null && (
+                  {rtdDisplay !== null && rtdDisplay !== undefined && (
                     <circle
-                      cx="5.5"
-                      cy="-5.5"
-                      r="2"
+                      cx="4.5"
+                      cy="-4.5"
+                      r="1.8"
                       fill={colors.fill}
                       fillOpacity="0.9"
                       stroke="white"
@@ -290,15 +263,15 @@ export default function TyrePositionCanvas({
                 </g>
               )}
 
-              {/* Position label below circle */}
+              {/* Position label */}
               <text
-                y="16"
+                y="13"
                 textAnchor="middle"
-                fontSize="4.5"
+                fontSize="3.5"
                 fill="#6b7280"
                 fontWeight="500"
               >
-                {pos.id}
+                {label}
               </text>
             </g>
           );
@@ -306,36 +279,65 @@ export default function TyrePositionCanvas({
       </svg>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+      <div className="flex flex-wrap items-center justify-center gap-3 mt-3 px-2">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full border border-gray-300 border-dashed bg-gray-50 inline-block" />
-          <span className="text-xs text-gray-500">Empty</span>
+          <span className="w-2.5 h-2.5 rounded-full border border-gray-300 border-dashed bg-gray-50 inline-block" />
+          <span className="text-[10px] text-gray-500">Empty</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-green-100 border border-green-300 inline-block" />
-          <span className="text-xs text-gray-500">RTD ≥ 20mm</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-green-100 border border-green-300 inline-block" />
+          <span className="text-[10px] text-gray-500">RTD ≥ 20mm</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-yellow-100 border border-yellow-300 inline-block" />
-          <span className="text-xs text-gray-500">RTD 10–19mm</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-yellow-100 border border-yellow-300 inline-block" />
+          <span className="text-[10px] text-gray-500">RTD 10–19mm</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-red-100 border border-red-300 inline-block" />
-          <span className="text-xs text-gray-500">RTD &lt; 10mm</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-red-100 border border-red-300 inline-block" />
+          <span className="text-[10px] text-gray-500">RTD &lt; 10mm</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-gray-100 border border-gray-300 border-dashed inline-block" />
-          <span className="text-xs text-gray-500">Spare</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-gray-100 border border-gray-300 relative inline-block">
-            <span className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[6px] text-gray-400 leading-none font-bold">×</span>
-            </span>
-          </span>
-          <span className="text-xs text-gray-500">Scrap</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-gray-100 border border-gray-300 border-dashed inline-block" />
+          <span className="text-[10px] text-gray-500">Scrap</span>
         </div>
       </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-3 pointer-events-none"
+          style={{
+            left: tooltip.x + 12,
+            top: tooltip.y - 10,
+            maxWidth: 240,
+          }}
+        >
+          <div className="font-semibold mb-1">{tooltip.pos.tyre?.serial_number || '—'}</div>
+          <div className="space-y-0.5 text-gray-300">
+            {tooltip.pos.tyre?.brand?.name || tooltip.pos.tyre?.brand_name ? (
+              <div>Brand: {tooltip.pos.tyre.brand?.name || tooltip.pos.tyre.brand_name}</div>
+            ) : null}
+            {tooltip.pos.tyre?.size?.name || tooltip.pos.tyre?.size_name ? (
+              <div>Size: {tooltip.pos.tyre.size?.name || tooltip.pos.tyre.size_name}</div>
+            ) : null}
+            {tooltip.pos.tyre?.pattern?.name || tooltip.pos.tyre?.pattern_name ? (
+              <div>Pattern: {tooltip.pos.tyre.pattern?.name || tooltip.pos.tyre.pattern_name}</div>
+            ) : null}
+            {tooltip.pos.rtd !== null && tooltip.pos.rtd !== undefined && (
+              <div>RTD: {formatNumber(tooltip.pos.rtd, 1)}mm</div>
+            )}
+            {tooltip.pos.tyre?.otd ? (
+              <div>OTD: {formatNumber(tooltip.pos.tyre.otd, 1)}mm</div>
+            ) : null}
+            {tooltip.pos.tyre?.psi ? (
+              <div>PSI: {formatNumber(tooltip.pos.tyre.psi, 0)}</div>
+            ) : null}
+            {tooltip.pos.tyre?.remarks ? (
+              <div className="truncate">Note: {tooltip.pos.tyre.remarks}</div>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

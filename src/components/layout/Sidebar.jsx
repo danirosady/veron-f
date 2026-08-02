@@ -72,7 +72,7 @@ const navItems = [
   //   items: [
   //     {
   //       label: 'Replacement History',
-  //       path: '/reports/replacement',
+  //       path: '/reports/replacements',
   //       icon: History,
   //       roles: ['superadmin', 'admin_company'],
   //     },

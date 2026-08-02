@@ -121,16 +121,21 @@ export default function TyreFormPage() {
   });
 
   const onSubmit = (data) => {
+    console.log('[DEBUG] Form data:', data);
+    const otd = Number(data.depth_new);
     const payload = {
-      ...data,
+      serial_number: data.serial_number,
+      barcode: data.barcode,
       company_id: data.company_id ? Number(data.company_id) : Number(user?.company_id),
       brand_id: Number(data.brand_id),
       size_id: Number(data.size_id),
-      type_id: data.type_id ? Number(data.type_id) : null,
       pattern_id: data.pattern_id ? Number(data.pattern_id) : null,
-      depth_new: Number(data.depth_new),
+      otd: otd,
+      rtd: otd,
       cost: data.cost ? Number(data.cost) : 0,
+      remarks: data.remarks || '',
     };
+    console.log('[DEBUG] Payload:', payload);
     saveMutation.mutate(payload);
   };
 
