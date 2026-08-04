@@ -10,6 +10,7 @@ import {
   RefreshCw,
   BarChart3,
   Database,
+  LayoutGrid,
   UserCog,
   X,
   History,
@@ -97,6 +98,12 @@ const navItems = [
         label: 'Master Data',
         path: '/master',
         icon: Database,
+        roles: ['superadmin'],
+      },
+      {
+        label: 'Tyre Position Templates',
+        path: '/master/unit-types',
+        icon: LayoutGrid,
         roles: ['superadmin'],
       },
       {

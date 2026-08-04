@@ -22,6 +22,7 @@ import ReplacementReportPage from '@/pages/report/ReplacementReportPage';
 import InventoryReportPage from '@/pages/report/InventoryReportPage';
 import ScheduleReportPage from '@/pages/report/ScheduleReportPage';
 import MasterDataPage from '@/pages/master/MasterDataPage';
+import UnitTypeTemplatePage from '@/pages/master-data/UnitTypeTemplatePage';
 import UserListPage from '@/pages/user/UserListPage';
 import UserFormPage from '@/pages/user/UserFormPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
@@ -100,6 +101,7 @@ export default function App() {
         <Route path="reports/inventory" element={<InventoryReportPage />} />
         <Route path="reports/schedule" element={<ScheduleReportPage />} />
         <Route path="master" element={<MasterDataPage />} />
+        <Route path="master/unit-types" element={<UnitTypeTemplatePage />} />
         <Route path="users" element={<UserListPage />} />
         <Route path="users/new" element={<UserFormPage />} />
         <Route path="users/:id/edit" element={<UserFormPage />} />
