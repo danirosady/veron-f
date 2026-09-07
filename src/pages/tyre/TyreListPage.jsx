@@ -138,10 +138,10 @@ export default function TyreListPage() {
       render: (_, row) => row.pattern?.name || row.pattern_name || '-',
     },
     {
-      key: 'depth_new',
+      key: 'otd',
       header: 'OTD',
       align: 'right',
-      render: (v) => formatNumber(v, 1),
+      render: (v) => formatNumber(v ?? null, 1),
     },
     {
       key: 'rtd',
@@ -165,9 +165,13 @@ export default function TyreListPage() {
       render: (v) => <Badge variant={v || 'default'} size="sm">{v || '-'}</Badge>,
     },
     {
-      key: 'unit',
+      key: 'unit_id',
       header: 'Mounted Unit',
-      render: (_, row) => row.unit?.unit_id || '-',
+      render: (_, row) => {
+        const u = row.unit;
+        if (!u) return '-';
+        return `${u.unit_model} (${u.unit_id})`;
+      },
     },
     {
       key: 'mounted_position',

@@ -1,71 +1,21 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import TyreCanvasBase from './TyreCanvasBase';
+import TyreSlot from './TyreSlot';
 import { getRtdColor } from '@/utils/format';
-import { VEHICLE_CHASSIS_IMAGES } from '@/utils/vehicleLayouts';
 
-const TYRE_IMAGE = '/tyre-pattern.png';
-
-function getTyreZIndex(slot) {
-  const axle = slot.axle || '';
-  if (axle.includes('front')) return 4;
-  if (axle.includes('bogie')) return 3;
-  return 1;
-}
-
-function TyrePosition({ slot, isSelected, onClick }) {
-  const tyre = slot.tyre;
-  const rtd = slot.rtd;
-  const isEmpty = !tyre;
-  const rtdColor = rtd != null ? getRtdColor(rtd) : null;
-  const zIndex = getTyreZIndex(slot);
-
-  const { setNodeRef, isOver } = useDroppable({
-    id: `position-${slot.position}`,
-    data: { type: 'CANVAS_POSITION', position: slot.position, tyre, label: slot.label },
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className="absolute flex flex-col items-center justify-center transition-all duration-150 cursor-pointer"
-      style={{
-        left: `${(slot.x || 0.5) * 100}%`,
-        top: `${(slot.y || 0.5) * 100}%`,
-        transform: 'translate(-50%, -50%)',
-        zIndex: isEmpty ? zIndex - 1 : zIndex,
-      }}
-      onClick={() => onClick?.(slot.position, tyre, slot.status)}
-    >
-      <div className="relative" style={{ width: 64, height: 64 }}>
-        <img
-          src={TYRE_IMAGE}
-          alt={slot.label}
-          className="object-contain select-none pointer-events-none"
-          style={{ width: 64, height: 64, opacity: isEmpty ? 0.15 : 1 }}
-          draggable={false}
-        />
-        {!isEmpty && rtdColor && (
-          <div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            style={{ border: `3px solid ${rtdColor}`, boxShadow: `0 0 8px ${rtdColor}50` }}
-          />
-        )}
-        {isSelected && !isOver && (
-          <div className="absolute -inset-0.5 rounded-full border-2 border-primary-500 pointer-events-none" />
-        )}
-        {isOver && (
-          <div className="absolute inset-0 rounded-full border-2 border-primary-500 bg-primary-50/40 pointer-events-none animate-pulse" />
-        )}
-      </div>
-      <span
-        className={`text-[9px] font-bold mt-0.5 px-1.5 py-0.5 rounded whitespace-nowrap ${isEmpty ? 'bg-gray-200 text-gray-500' : 'bg-gray-800 text-white'}`}
-      >
-        {slot.label}
-      </span>
-    </div>
-  );
-}
-
+/**
+ * VehicleCanvasCore — view-mode canvas with DnD support.
+ *
+ * Delegates bounds measurement to TyreCanvasBase (ResizeObserver on the
+ * chassis image), computes proportional tyre sizes, then renders TyreSlot
+ * children inside the overlay.
+ *
+ * TyreSlot uses @dnd-kit (useDraggable + useDroppable) for mount/swap flows.
+ * All tyre positions use [0,1] percentage coordinates relative to the
+ * measured image bounds — the same coordinate always maps to the same
+ * pixel regardless of canvas height or chassis image size.
+ */
 export default function VehicleCanvasCore({
   positions = [],
   unitType = 'ADT_8POS',
@@ -73,99 +23,88 @@ export default function VehicleCanvasCore({
   selectedPosition,
   enableSwap = false,
   className = '',
-  height = 480,
+  height = 520,
+  isDraggingSpare = false,
+  canvasOverlayRef = null,
 }) {
-  const chassisImage = VEHICLE_CHASSIS_IMAGES[unitType] || null;
-  const wrapperRef = useRef(null);
-  const [renderedBounds, setRenderedBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
+  const [imageBounds, setImageBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
 
+  // Register the whole canvas overlay as a single droppable target
+  const { setNodeRef } = useDroppable({ id: 'canvas-droppable' });
+
+  // Sync TyreCanvasBase's forwarded ref (which carries overlayRect + imageBounds) to parent
   useEffect(() => {
-    const update = () => {
-      if (!wrapperRef.current) return;
-      const wrapper = wrapperRef.current;
-      const img = wrapper.querySelector('img');
-      const svg = wrapper.querySelector('svg');
-      const wr = wrapper.getBoundingClientRect();
+    if (canvasOverlayRef) canvasOverlayRef.current = localOverlayRefRef.current;
+  });
 
-      if (img && img.complete && img.naturalWidth > 0) {
-        const ir = img.getBoundingClientRect();
-        setRenderedBounds({
-          left: ir.left - wr.left,
-          top: ir.top - wr.top,
-          width: ir.width,
-          height: ir.height,
-        });
-      } else if (svg) {
-        const sr = svg.getBoundingClientRect();
-        setRenderedBounds({
-          left: sr.left - wr.left,
-          top: sr.top - wr.top,
-          width: sr.width,
-          height: sr.height,
-        });
-      }
-    };
+  // Store the forwarded ref object so useEffect can write to it
+  const localOverlayRefRef = useRef(null);
+  const localOverlayRef = useCallback((el) => {
+    setNodeRef(el);
+    localOverlayRefRef.current = el;
+  }, [setNodeRef]);
 
-    const ro = new ResizeObserver(update);
-    if (wrapperRef.current) ro.observe(wrapperRef.current);
-    const img = wrapperRef.current?.querySelector('img');
-    if (img) img.addEventListener('load', update);
-    update();
-    return () => {
-      ro.disconnect();
-      if (img) img.removeEventListener('load', update);
-    };
-  }, [chassisImage]);
+  // Proportional tyre size: 25% of image width, height = 1.15 × width
+  // Fallback to fixed minimum so tyres are visible even before ResizeObserver fires
+  const tyreWidth = imageBounds.width > 0
+    ? Math.max(100, Math.round(imageBounds.width * 0.25))
+    : 80;
+  const tyreHeight = imageBounds.width > 0
+    ? Math.max(120, Math.round(tyreWidth * 1.15))
+    : 92;
+
+  const handleBoundsChange = useCallback((bounds) => {
+    setImageBounds(bounds);
+  }, []);
+
+  // Merge RTD color into each slot for TyreSlot/RtdRing
+  // Convert percentage [0,1] positions to pixel offsets from image top-left.
+  // Slots use px coords so overlay can be full-width without shifting slot positions.
+  const slots = positions
+    .slice()
+    .sort((a, b) => {
+      const ao = (a.axle || '').localeCompare(b.axle || '');
+      if (ao !== 0) return ao;
+      return (a.x ?? 0) - (b.x ?? 0);
+    })
+    .map((s) => ({
+      ...s,
+      rtdColor: s.rtd != null ? getRtdColor(s.rtd) : null,
+      // px/py: pixel coords within the full-width overlay.
+      // Overlay starts at left=0 (full container width), slots use pixel offsets from there.
+      px: imageBounds.width > 0 && s.x != null ? s.x * imageBounds.width : 0,
+      py: imageBounds.height > 0 && s.y != null ? s.y * imageBounds.height : 0,
+    }));
 
   return (
-    <div className={`w-full ${className}`} style={{ height }}>
-      <div
-        ref={wrapperRef}
-        className="relative w-full h-full overflow-hidden rounded-xl"
-        style={{ background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)' }}
-      >
-        {/* Image: constrained to wrapper with contain, centered */}
-        <div className="absolute inset-0 p-4 flex items-center justify-center">
-          {chassisImage ? (
-            <img
-              src={chassisImage}
-              alt="Vehicle chassis"
-              className="max-w-full max-h-full"
-              style={{ objectFit: 'contain', opacity: 0.9 }}
-              draggable={false}
-            />
-          ) : (
-            <svg
-              viewBox="0 0 100 100"
-              className="max-w-full max-h-full"
-              style={{ opacity: 0.15 }}
-            >
-              <rect x="10" y="15" width="80" height="62" rx="8" fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
-              <rect x="30" y="5" width="40" height="13" rx="5" fill="#94a3b8" stroke="#64748b" strokeWidth="1" />
-            </svg>
-          )}
-        </div>
-
-        {/* Tyre overlay: sized and positioned to match the actual rendered image area */}
-        <div
-          className="absolute"
-          style={{
-            left: `${renderedBounds.left + 16}px`,
-            top: `${renderedBounds.top + 16}px`,
-            width: `${renderedBounds.width}px`,
-            height: `${renderedBounds.height}px`,
-          }}
-        >
-          {positions.map((slot) => (
-            <TyrePosition
-              key={slot.position}
-              slot={slot}
-              isSelected={selectedPosition === slot.position}
-              onClick={onPositionClick}
-            />
-          ))}
-        </div>
+    <TyreCanvasBase
+      ref={localOverlayRef}
+      unitType={unitType}
+      height={height}
+      onBoundsChange={handleBoundsChange}
+      className={className}
+    >
+      <div className="relative w-full h-full">
+        {slots.map((slot) => (
+          <TyreSlot
+            key={slot.position}
+            position={slot.position}
+            label={slot.label}
+            tyre={slot.tyre}
+            rtd={slot.rtd}
+            otd={slot.otd}
+            status={slot.status}
+            isSelected={selectedPosition === slot.position}
+            enableSwap={enableSwap}
+            tyreWidth={tyreWidth}
+            tyreHeight={tyreHeight}
+            x={slot.px}
+            y={slot.py}
+            onClick={onPositionClick}
+            isDraggingSpare={isDraggingSpare}
+          />
+        ))}
       </div>
-    </div>
+    </TyreCanvasBase>
   );
 }

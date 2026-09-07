@@ -1,17 +1,18 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, forwardRef } from 'react';
 import VehicleCanvasCore from './VehicleCanvasCore';
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-export default function TyrePositionCanvas({
+const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
   positions = [],
   unitTypeConfig = null,
   tyresData = null,
   onPositionClick,
   mode = 'view',
-  height = 480,
+  height = 880,
   className = '',
-}) {
+  isDraggingSpare = false,
+}, ref) {
   const [selectedPosition, setSelectedPosition] = useState(null);
 
   const unitType = unitTypeConfig?.unit_type || 'ADT_8POS';
@@ -39,7 +40,7 @@ export default function TyrePositionCanvas({
     <div className={`w-full ${className}`} style={{ height }}>
       <div
         className="relative rounded-xl border border-gray-200 overflow-hidden"
-        style={{ minHeight: height }}
+        style={{ height }}
       >
         <VehicleCanvasCore
           positions={mergedPositions}
@@ -49,6 +50,8 @@ export default function TyrePositionCanvas({
           selectedPosition={selectedPosition}
           enableSwap={mode === 'view'}
           height={height}
+          isDraggingSpare={isDraggingSpare}
+          canvasOverlayRef={ref}
         />
 
         {/* Edit mode indicator */}
@@ -72,7 +75,9 @@ export default function TyrePositionCanvas({
       </div>
     </div>
   );
-}
+});
+
+export default TyrePositionCanvas;
 
 function LegendItem({ color, label, dashed }) {
   return (

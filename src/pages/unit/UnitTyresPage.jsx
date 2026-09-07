@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -244,6 +244,22 @@ function MountedTyreOverlay({ tyre, label }) {
   );
 }
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+/** Find the nearest position slot to (nx, ny) where nx/ny are [0,1] canvas coords */
+function findPositionAtCoords(positions, nx, ny) {
+  let best = null;
+  let bestDist = Infinity;
+  for (const pos of positions) {
+    if (pos.x == null || pos.y == null) continue;
+    const d = Math.hypot(pos.x - nx, pos.y - ny);
+    if (d < bestDist) { bestDist = d; best = pos; }
+  }
+  // Only match if within a reasonable radius (e.g. 8% of canvas diagonal)
+  const threshold = 0.08;
+  return bestDist < threshold ? best : null;
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────
 
 export default function UnitTyresPage() {
@@ -258,6 +274,8 @@ export default function UnitTyresPage() {
   const [editMode, setEditMode] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
   const [isSparePanelDragOver, setIsSparePanelDragOver] = useState(false);
+  const [isDraggingSpare, setIsDraggingSpare] = useState(false);
+  const canvasOverlayRef = useRef({});
 
   // Action form state
   const [action, setAction] = useState('');
@@ -326,13 +344,13 @@ export default function UnitTyresPage() {
 
   // Batch submit mutation
   const batchSubmitMutation = useMutation({
-    mutationFn: (details) => replacementsAPI.create({
+    mutationFn: ({ details, driver_id, hm_plan, current_life_hm }) => replacementsAPI.create({
       unit_id: Number(id),
-      driver_id: driverId ? Number(driverId) : null,
+      driver_id,
       date: replacementDate,
       hm_update: hmInput ? Number(hmInput) : 0,
-      current_life_hm: currentLifeHm ? Number(currentLifeHm) : (unit?.current_hm || 0),
-      hm_plan: hmPlan ? Number(hmPlan) : 0,
+      current_life_hm,
+      hm_plan,
       remarks: remarksInput || null,
       details,
     }),
@@ -408,6 +426,10 @@ export default function UnitTyresPage() {
         condition: action === 'dismount' ? dismountCondition : null,
         tyre: selectedTyre,
         new_tyre: spareTyre,
+        remarks: remarksInput || null,
+        driver_id: driverId ? Number(driverId) : null,
+        hm_plan: hmPlan ? Number(hmPlan) : null,
+        current_life_hm: currentLifeHm ? Number(currentLifeHm) : null,
       };
       if (existing >= 0) {
         const updated = [...prev];
@@ -434,7 +456,12 @@ export default function UnitTyresPage() {
       new_tyre_status: q.condition || '',
       remark: q.remarks || '',
     }));
-    batchSubmitMutation.mutate(details);
+    batchSubmitMutation.mutate({
+      details,
+      driver_id: actionQueue[0]?.driver_id || null,
+      hm_plan: actionQueue[0]?.hm_plan || null,
+      current_life_hm: actionQueue[0]?.current_life_hm || (unit?.current_hm || 0),
+    });
   };
 
   const handleDirectSubmit = () => {
@@ -449,35 +476,26 @@ export default function UnitTyresPage() {
 
   const handleDragStart = useCallback((event) => {
     setActiveDragItem(event.active.data.current || null);
+    if (event.active.data.current?.type === 'SPARE_TYRE') {
+      setIsDraggingSpare(true);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((event) => {
+    const { over } = event;
+    setIsSparePanelDragOver(over?.id === 'spare-panel');
   }, []);
 
   const handleDragEnd = useCallback((event) => {
     setActiveDragItem(null);
     setIsSparePanelDragOver(false);
+    setIsDraggingSpare(false);
     const { active, over } = event;
-    if (!over || !active) return;
-
     const sourceData = active.data.current;
-    const targetData = over.data.current;
+    if (!sourceData) return;
 
-    if (!sourceData || !targetData) return;
-
-    // Spare tyre dropped on canvas position → mount
-    if (sourceData.type === 'SPARE_TYRE' && targetData.type === 'CANVAS_POSITION') {
-      const tyre = sourceData.tyre;
-      setSelectedPosition(targetData.position);
-      setSpareTyreId(String(tyre.id));
-      setAction('mount');
-      setRtdInput('');
-      setHmInput('');
-      setCurrentLifeHm('');
-      setHmPlan('');
-      setRemarksInput('');
-      return;
-    }
-
-    // Mounted tyre dropped on spare panel → dismount
-    if (sourceData.type === 'MOUNTED_TYRE' && targetData.type === 'SPARE_PANEL') {
+    // Dropped on spare panel → dismount
+    if (sourceData.type === 'MOUNTED_TYRE' && over?.id === 'spare-panel') {
       setSelectedPosition(sourceData.position);
       setSelectedTyre(sourceData.tyre);
       setAction('dismount');
@@ -490,18 +508,64 @@ export default function UnitTyresPage() {
       return;
     }
 
-    // Mounted tyre dropped on another position → swap
-    if (sourceData.type === 'MOUNTED_TYRE' && targetData.type === 'CANVAS_POSITION') {
-      if (sourceData.position === targetData.position) return;
-      const srcTyre = sourceData.tyre;
-      const tgtTyre = targetData.tyre;
+    // Spare tyre dropped on canvas or slot
+    if (sourceData.type === 'SPARE_TYRE' && (over?.id === 'canvas-droppable' || over?.id?.startsWith?.('position-'))) {
+      const tyre = sourceData.tyre;
+      // Prefer the slot's own data (set when dropping directly on a slot's droppable)
+      const targetPosition = over?.data?.current?.position;
+      const targetTyre = over?.data?.current?.tyre;
+      const targetPos = targetPosition
+        ? positions.find(p => p.position === targetPosition)
+        : (() => {
+            const ib = canvasOverlayRef.current?.imageBounds || {};
+            const rect = canvasOverlayRef.current?.overlayRect;
+            if (!rect) return null;
+            const nx = (event.activatorEvent.clientX - rect.left - (ib.left || 0)) / (ib.width || rect.width);
+            const ny = (event.activatorEvent.clientY - rect.top - (ib.top || 0)) / (ib.height || rect.height);
+            return findPositionAtCoords(positions, nx, ny);
+          })();
+      if (!targetPos) return;
+
+      if (targetTyre || targetPos.tyre) {
+        setSelectedPosition(targetPos.position);
+        setSelectedTyre(targetTyre || targetPos.tyre);
+        setSpareTyreId(String(tyre.id));
+        setAction('swap');
+      } else {
+        setSelectedPosition(targetPos.position);
+        setSpareTyreId(String(tyre.id));
+        setAction('mount');
+      }
+      setRtdInput('');
+      setHmInput('');
+      setCurrentLifeHm('');
+      setHmPlan('');
+      setRemarksInput('');
+      return;
+    }
+
+    // Mounted tyre dropped on canvas or slot
+    if (sourceData.type === 'MOUNTED_TYRE' && (over?.id === 'canvas-droppable' || over?.id?.startsWith?.('position-'))) {
+      const targetPosition = over?.data?.current?.position;
+      const tgtTyre = over?.data?.current?.tyre;
+      const targetPos = targetPosition
+        ? positions.find(p => p.position === targetPosition)
+        : (() => {
+            const ib = canvasOverlayRef.current?.imageBounds || {};
+            const rect = canvasOverlayRef.current?.overlayRect;
+            if (!rect) return null;
+            const nx = (event.activatorEvent.clientX - rect.left - (ib.left || 0)) / (ib.width || rect.width);
+            const ny = (event.activatorEvent.clientY - rect.top - (ib.top || 0)) / (ib.height || rect.height);
+            return findPositionAtCoords(positions, nx, ny);
+          })();
+      if (!targetPos) return;
+      if (targetPos.position === sourceData.position) return;
 
       setSelectedPosition(sourceData.position);
-      setSelectedTyre(srcTyre);
-
-      if (tgtTyre) {
+      setSelectedTyre(sourceData.tyre);
+      if (tgtTyre || targetPos.tyre) {
         setAction('swap');
-        setSpareTyreId(String(tgtTyre.id));
+        setSpareTyreId(String((tgtTyre || targetPos.tyre).id));
       } else {
         setAction('mount');
         setSpareTyreId('');
@@ -513,7 +577,7 @@ export default function UnitTyresPage() {
       setRemarksInput('');
       return;
     }
-  }, []);
+  }, [positions]);
 
   if (isLoading) {
     return (
@@ -561,6 +625,7 @@ export default function UnitTyresPage() {
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="space-y-6">
@@ -665,13 +730,15 @@ export default function UnitTyresPage() {
               </CardHeader>
               <CardBody>
                 <TyrePositionCanvas
+                  ref={canvasOverlayRef}
                   positions={positions}
                   unitTypeConfig={unitTypeConfig}
                   tyresData={positions}
                   onPositionClick={handlePositionClick}
                   onPositionChange={handlePositionChange}
                   mode={editMode ? 'edit' : 'view'}
-                  height={480}
+                  height={520}
+                  isDraggingSpare={isDraggingSpare}
                 />
               </CardBody>
             </Card>
@@ -721,6 +788,8 @@ export default function UnitTyresPage() {
                       <th className="text-left pb-2 font-medium">#</th>
                       <th className="text-left pb-2 font-medium">Pos</th>
                       <th className="text-left pb-2 font-medium">Action</th>
+                      <th className="text-left pb-2 font-medium">Driver</th>
+                      <th className="text-left pb-2 font-medium">HM Plan</th>
                       <th className="text-left pb-2 font-medium">Old Tyre</th>
                       <th className="text-left pb-2 font-medium">New Tyre</th>
                       <th className="text-left pb-2 font-medium">RTD</th>
@@ -736,6 +805,12 @@ export default function UnitTyresPage() {
                           <Badge variant={item.action === 'mount' ? 'mounted' : item.action === 'dismount' ? 'dismounted' : 'pending'} size="sm">
                             {titleCase(item.action)}
                           </Badge>
+                        </td>
+                        <td className="py-2 text-gray-600">
+                          {item.driver_id ? (drivers.find(d => d.id === item.driver_id)?.name || `#${item.driver_id}`) : '—'}
+                        </td>
+                        <td className="py-2 text-gray-600">
+                          {item.hm_plan != null ? formatNumber(item.hm_plan, 0) : '—'}
                         </td>
                         <td className="py-2 text-gray-600">{item.tyre?.serial_number || '—'}</td>
                         <td className="py-2 text-gray-600">{item.new_tyre?.serial_number || '—'}</td>

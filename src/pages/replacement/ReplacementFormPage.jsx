@@ -395,18 +395,18 @@ export default function ReplacementFormPage() {
 
                       {/* Tyre canvas */}
                       {tyresLoading ? (
-                        <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 h-[280px] flex items-center justify-center">
+                        <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 h-[520px] flex items-center justify-center">
                           <div className="animate-pulse text-sm text-gray-400">
                             Loading tyres...
                           </div>
                         </div>
                       ) : canvasPositions.length > 0 ? (
-                        <div className="bg-gray-50 rounded-xl border border-gray-200 p-3">
+                        <>
                           <TyrePositionCanvas
                             positions={canvasWithQueue}
                             unitTypeConfig={unitTypeConfig}
                             onPositionClick={openModalForPosition}
-                            height={240}
+                            height={520}
                             disabled={false}
                           />
                           <div className="mt-2 flex items-center justify-center gap-1 text-xs text-gray-400">
@@ -419,9 +419,9 @@ export default function ReplacementFormPage() {
                               </span>
                             )}
                           </div>
-                        </div>
+                        </>
                       ) : (
-                        <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 h-[200px] flex items-center justify-center">
+                        <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 h-[520px] flex items-center justify-center">
                           <EmptyState
                             icon={CircleDot}
                             title="No tyres loaded"

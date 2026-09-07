@@ -20,10 +20,26 @@ function RtdRing({ rtd }) {
 
 // ─── Tooltip ─────────────────────────────────────────────────────────────────
 
-function TyreTooltip({ tyre, rtd, otd, label }) {
+function TyreTooltip({ tyre, rtd, otd, label, position }) {
   const color = rtd != null ? getRtdColor(rtd) : '#22c55e';
+
+  // Smart placement: if tyre is in top half of canvas, show tooltip below; else above
+  const isTopHalf = (position?.y ?? 0.5) < 0.5;
+  const placement = isTopHalf ? 'bottom' : 'top';
+
   return (
-    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 bg-gray-900 text-white text-[10px] rounded-lg p-2.5 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+    <div
+      className={cn(
+        'absolute left-1/2 -translate-x-1/2 w-44 bg-gray-900 text-white text-[10px] rounded-lg p-2.5 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap',
+        placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
+      )}
+    >
+      {/* Arrow */}
+      <div className={cn(
+        'absolute left-1/2 -translate-x-1/2 w-0 h-0 border-4 border-transparent',
+        placement === 'top' ? 'top-full -mt-px border-t-gray-900' : 'bottom-full mb-px border-b-gray-900',
+      )} />
+
       <div className="flex items-center justify-between mb-1.5">
         <span className="font-bold text-white">{label}</span>
         <span className="text-gray-400">{tyre.serial_number || '—'}</span>
@@ -52,45 +68,48 @@ function TyreTooltip({ tyre, rtd, otd, label }) {
         {tyre.psi && <span>PSI: <span className="text-gray-300 font-medium">{formatNumber(tyre.psi, 0)}</span></span>}
         {tyre.lifetime != null && <span>HM: <span className="text-gray-300 font-medium">{formatNumber(tyre.lifetime, 0)}h</span></span>}
       </div>
-      {/* Arrow */}
-      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-        <div className="border-4 border-transparent border-t-gray-900" />
-      </div>
     </div>
   );
 }
 
 // ─── Empty Slot ──────────────────────────────────────────────────────────────
 
-function EmptySlot({ id, label, isOver, isDragging }) {
-  const { setNodeRef } = useDroppable({ id, data: { type: 'CANVAS_POSITION' } });
+function EmptySlot({ id, label, isDragging, isDraggingSpare, tyreWidth, tyreHeight, position }) {
+  const { setNodeRef, isOver } = useDroppable({ id, data: { type: 'CANVAS_POSITION', position, tyre: null, label } });
+
+  const showDragHint = isDraggingSpare && !isOver;
+  const showActiveDrop = isOver;
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'relative flex items-center justify-center rounded-full transition-all duration-150',
-        'bg-white/60 backdrop-blur-sm',
-        !isDragging && !isOver && 'border-2 border-dashed border-gray-300 hover:border-primary-300 hover:bg-primary-50/30 cursor-pointer',
-        isDragging && !isOver && 'border-2 border-dashed border-gray-300 bg-white/40 cursor-default',
-        isOver && 'border-2 border-primary-500 bg-primary-50 scale-110 shadow-lg shadow-primary-200/50 cursor-grab',
-        isDragging && isOver && 'border-2 border-primary-500 bg-primary-50 scale-110 shadow-lg cursor-grabbing',
+        'relative flex items-center justify-center transition-all duration-150',
+        !isDragging && !showActiveDrop && 'border border-4 border-dashed border-gray-300/70 hover:border-primary-400 cursor-pointer',
+        isDragging && !showActiveDrop && 'border border-4 border-dashed border-gray-300/40 cursor-default',
+        showDragHint && 'border border-4 border-dashed border-primary-300 cursor-grab',
+        showActiveDrop && 'border border-4 border-primary-500 bg-primary-50/60 cursor-grab scale-105',
       )}
-      style={{ width: 48, height: 48 }}
+      style={{ width: 36, height: tyreHeight, ...(showActiveDrop ? { boxShadow: '0 0 0 3px rgba(59,130,246,0.25)' } : showDragHint ? { boxShadow: '0 0 0 2px rgba(59,130,246,0.15)' } : {}) }}
     >
       <span className={cn(
         'text-[9px] font-semibold select-none transition-colors',
-        isOver ? 'text-primary-600' : 'text-gray-400',
+        isOver ? 'text-primary-600' : 'text-gray-400/80',
       )}>
         {label}
       </span>
+      {showActiveDrop && (
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-sm animate-bounce z-10">
+          DROP
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Filled Slot ─────────────────────────────────────────────────────────────
 
-function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging, enableSwap, isDragOver }) {
+function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging, enableSwap, isDraggingSpare, tyreWidth, tyreHeight }) {
   const isEmpty = status === 'empty' || !tyre;
   const imageOpacity = isEmpty ? 0.15 : 1;
 
@@ -100,9 +119,9 @@ function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging,
     disabled: !enableSwap,
   });
 
-  // Combine droppable + draggable refs for filled slots
-  const { setNodeRef: dropRef } = useDroppable({
-    id: `position-${id}`,
+  // Combine droppable + draggable refs for filled slots; use isOver for hover hint
+  const { setNodeRef: dropRef, isOver } = useDroppable({
+    id,
     data: { type: 'CANVAS_POSITION', position: id, tyre, label },
   });
 
@@ -111,31 +130,35 @@ function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging,
     dropRef(el);
   };
 
+  const imgW = Math.round(tyreWidth);
+  const imgH = Math.round(tyreHeight);
+
   const combinedStyle = transform
-    ? { width: 56, height: 64, transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : { width: 56, height: 64 };
+    ? { width: tyreWidth, height: tyreHeight, transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : { width: tyreWidth, height: tyreHeight };
+
+  const isSwapTarget = isDraggingSpare && isOver;
 
   return (
     <div
       ref={setRefs}
-      style={combinedStyle}
       {...(enableSwap ? { ...attributes, ...listeners } : {})}
       className={cn(
-        'relative flex flex-col items-center justify-center rounded-full transition-all duration-150',
-        'bg-white shadow-sm',
+        'relative flex flex-col items-center justify-center transition-all duration-150',
         enableSwap && !isActiveDrag && 'cursor-grab active:cursor-grabbing select-none',
         !enableSwap && 'cursor-pointer',
         isDragging && 'opacity-60 scale-110',
-        isDragOver && 'scale-110 shadow-lg shadow-primary-200/50',
-        isSelected && !isDragging && 'ring-2 ring-primary-500 ring-offset-2',
+        isSelected && !isDragging && 'drop-shadow-[0_0_4px_rgba(59,130,246,0.8)]',
+        isSwapTarget && 'scale-105 cursor-grab',
       )}
+      style={isSwapTarget ? { ...combinedStyle, boxShadow: '0 0 0 3px rgba(251,146,60,0.35)' } : combinedStyle}
     >
-      {/* Tyre image */}
+      {/* Tyre image — no background fill, lets chassis show through */}
       <img
         src={TYRE_IMAGE}
         alt="Tyre"
         className="object-contain select-none pointer-events-none"
-        style={{ width: 44, height: 50, opacity: imageOpacity }}
+        style={{ width: imgW, height: imgH, opacity: imageOpacity }}
         draggable={false}
       />
 
@@ -144,7 +167,7 @@ function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging,
 
       {/* Label */}
       <div className={cn(
-        'absolute bottom-0 text-[8px] font-bold px-1 py-0.5 rounded-b-full w-full text-center',
+        'absolute bottom-0 left-1/2 -translate-x-1/2 text-[8px] font-bold px-1 py-0.5 rounded whitespace-nowrap',
         !isEmpty ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-500',
       )}>
         {label}
@@ -156,6 +179,13 @@ function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging,
           <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
+        </div>
+      )}
+
+      {/* Spare-drag swap hint badge */}
+      {isSwapTarget && (
+        <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-sm animate-bounce z-10">
+          SWAP
         </div>
       )}
     </div>
@@ -177,14 +207,35 @@ export default function TyreSlot({
   isDragOver,
   onClick,
   droppableId,
+  tyreWidth = 36,
+  tyreHeight = 64,
+  x,
+  y,
+  isDraggingSpare = false,
 }) {
   const isEmpty = status === 'empty' || !tyre;
   const id = droppableId || `position-${position}`;
 
+  const positionStyle = (x != null && y != null) ? {
+    position: 'absolute',
+    left: x,
+    top: y,
+    transform: 'translate(-50%, -50%)',
+    zIndex: isSelected ? 20 : 1,
+  } : { position: 'relative' };
+
   if (isEmpty) {
     return (
-      <div className="group relative" onClick={() => onClick?.(position, null, 'empty')}>
-        <EmptySlot id={id} label={label} isOver={isDragOver} isDragging={isDragging} />
+      <div className="group relative" style={positionStyle} onClick={() => onClick?.(position, null, 'empty')}>
+        <EmptySlot
+          id={id}
+          label={label}
+          position={position}
+          isDragging={isDragging}
+          isDraggingSpare={isDraggingSpare}
+          tyreWidth={tyreWidth}
+          tyreHeight={tyreHeight}
+        />
         {isDragOver && (
           <div className="absolute inset-0 rounded-full bg-primary-200/30 animate-pulse pointer-events-none" />
         )}
@@ -195,6 +246,7 @@ export default function TyreSlot({
   return (
     <div
       className="group relative"
+      style={positionStyle}
       onClick={() => onClick?.(position, tyre, status)}
     >
       <FilledSlot
@@ -207,9 +259,11 @@ export default function TyreSlot({
         isSelected={isSelected}
         isDragging={isDragging}
         enableSwap={enableSwap}
-        isDragOver={isDragOver}
+        isDraggingSpare={isDraggingSpare}
+        tyreWidth={tyreWidth}
+        tyreHeight={tyreHeight}
       />
-      <TyreTooltip tyre={tyre} rtd={rtd} otd={otd} label={label} />
+      <TyreTooltip tyre={tyre} rtd={rtd} otd={otd} label={label} position={{ x, y }} />
     </div>
   );
 }

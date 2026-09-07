@@ -10,27 +10,27 @@ export const VEHICLE_LAYOUTS = {
   ADT_8POS: {
     maxPositions: 8,
     rows: [
-      { axle: 'rear_1', axleLabel: 'POROS 1 - BELAKANG 1', sideLabels: ['L', 'R'] },
-      { axle: 'rear_2', axleLabel: 'POROS 2 - BELAKANG 2', sideLabels: ['L', 'R'] },
-      { axle: 'bogie',  axleLabel: 'POROS 3 - BOGIE',      sideLabels: ['L', 'R'] },
-      { axle: 'front',  axleLabel: 'POROS 4 - DEPAN',      sideLabels: ['L', 'R'] },
+      { axle: 'poros_3', axleLabel: 'POROS 3', sideLabels: ['L', 'R'] },
+      { axle: 'poros_4', axleLabel: 'POROS 4', sideLabels: ['L', 'R'] },
+      { axle: 'poros_2', axleLabel: 'POROS 2', sideLabels: ['L', 'R'] },
+      { axle: 'poros_1', axleLabel: 'POROS 1', sideLabels: ['L', 'R'] },
     ],
   },
   SANY_10POS: {
     maxPositions: 10,
     rows: [
-      { axle: 'rear_1', axleLabel: 'POROS 1 - BELAKANG 1', sideLabels: ['L', 'R'] },
-      { axle: 'rear_2', axleLabel: 'POROS 2 - BELAKANG 2', sideLabels: ['L', 'R'] },
-      { axle: 'bogie',  axleLabel: 'POROS 3 - BOGIE',      sideLabels: ['L', 'R'] },
-      { axle: 'front',  axleLabel: 'POROS 4 - DEPAN',      sideLabels: ['L', 'R'] },
+      { axle: 'poros_3', axleLabel: 'POROS 3', sideLabels: ['L', 'R'] },
+      { axle: 'poros_4', axleLabel: 'POROS 4', sideLabels: ['L', 'R'] },
+      { axle: 'poros_2', axleLabel: 'POROS 2', sideLabels: ['L', 'R'] },
+      { axle: 'poros_1', axleLabel: 'POROS 1', sideLabels: ['L', 'R'] },
     ],
   },
   GREADER_6POS: {
     maxPositions: 6,
     rows: [
-      { axle: 'rear',   axleLabel: 'POROS 1 - BELAKANG',   sideLabels: ['L', 'R'] },
-      { axle: 'bogie',  axleLabel: 'POROS 2 - BOGIE',      sideLabels: ['L', 'R'] },
-      { axle: 'front',  axleLabel: 'POROS 3 - DEPAN',      sideLabels: ['L', 'R'] },
+      { axle: 'poros_5', axleLabel: 'POROS 5', sideLabels: ['L', 'R'] },
+      { axle: 'poros_2', axleLabel: 'POROS 2', sideLabels: ['L', 'R'] },
+      { axle: 'poros_1', axleLabel: 'POROS 1', sideLabels: ['L', 'R'] },
     ],
   },
 };

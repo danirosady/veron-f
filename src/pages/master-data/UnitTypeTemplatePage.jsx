@@ -40,14 +40,14 @@ function TemplatePreview({ config }) {
   });
 
   const axleLabels = {
-    rear_1: 'REAR',
-    bogie: 'BOGIE',
-    front: 'FRONT',
-    rear: 'REAR',
-    rear_2: 'REAR 2',
+    poros_1: 'POROS 1',
+    poros_2: 'POROS 2',
+    poros_3: 'POROS 3',
+    poros_4: 'POROS 4',
+    poros_5: 'POROS 5',
   };
 
-  const axleOrder = ['rear_1', 'bogie', 'front', 'rear', 'rear_2'];
+  const axleOrder = ['poros_1', 'poros_2', 'poros_3', 'poros_4', 'poros_5'];
 
   return (
     <div className="h-24 flex flex-col items-center justify-center gap-1 bg-gradient-to-b from-slate-50 to-gray-50 rounded-lg border border-gray-200 overflow-hidden px-2 py-2">
@@ -152,7 +152,10 @@ function TemplateEditorModal({ isOpen, onClose, onSave, template, positions }) {
   }, [template, isOpen]);
 
   const handleSave = (savedPositions) => {
-    onSave(form, savedPositions || localPositions);
+    const sorted = [...(savedPositions || localPositions)].sort(
+      (a, b) => parseInt(a.position, 10) - parseInt(b.position, 10)
+    );
+    onSave(form, sorted);
   };
 
   return (
@@ -160,7 +163,7 @@ function TemplateEditorModal({ isOpen, onClose, onSave, template, positions }) {
       isOpen={isOpen}
       onClose={onClose}
       title={template ? 'Edit Unit Type Template' : 'New Unit Type Template'}
-      size="xl"
+      size="xxl"
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
@@ -224,11 +227,13 @@ function TemplateEditorModal({ isOpen, onClose, onSave, template, positions }) {
             </span>
           </div>
           <TyrePositionCanvasEditable
-            positions={localPositions}
+            key={template?.id ?? 'new'}
+            initialPositions={template?.position_config || []}
             maxPosition={form.max_position}
             unitType={form.unit_type || 'CUSTOM'}
             onSave={(savedPositions) => {
-              setLocalPositions(savedPositions);
+              const sorted = [...savedPositions].sort((a, b) => parseInt(a.position, 10) - parseInt(b.position, 10));
+              setLocalPositions(sorted);
             }}
           />
         </div>
