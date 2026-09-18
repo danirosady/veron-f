@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -7,14 +7,10 @@ import {
   Copy,
   LayoutGrid,
   ArrowLeft,
-  Eye,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Card, { CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import ConfirmDialog from '@/components/form/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import TyrePositionCanvasEditable from '@/components/tyre/TyrePositionCanvasEditable';
@@ -127,9 +123,52 @@ function TemplateCard({ template, onEdit, onDuplicate, onDelete }) {
   );
 }
 
+// ─── Save Button (owns mutation + toast) ──────────────────────────────────────
+
+import { useToast } from '@/components/ui/Toast';
+
+function TemplateSaveButton({ form, positions, templateId, onSuccess }) {
+  const { toast_success, toast_error } = useToast();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: () => {
+      const payload = {
+        unit_type: form.unit_type,
+        display_name: form.display_name,
+        max_position: form.max_position,
+        position_config: positions,
+        status: form.status || 'active',
+      };
+      if (templateId) return masterAPI.updateUnitType(templateId, payload);
+      return masterAPI.createUnitType(payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['master', 'unit-types'] });
+      queryClient.invalidateQueries({ queryKey: ['unit-tyres'] });
+      toast_success('Template berhasil disimpan!');
+      onSuccess?.();
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.message || 'Terjadi kesalahan';
+      toast_error(`Gagal menyimpan: ${msg}`);
+    },
+  });
+
+  return (
+    <Button
+      onClick={() => mutation.mutate()}
+      loading={mutation.isLoading}
+      disabled={positions.length === 0}
+    >
+      {templateId ? 'Update' : 'Create'} Template
+    </Button>
+  );
+}
+
 // ─── Template Editor Modal ──────────────────────────────────────────────────
 
-function TemplateEditorModal({ isOpen, onClose, onSave, template, positions }) {
+function TemplateEditorModal({ isOpen, onClose, template }) {
   const [form, setForm] = useState({
     unit_type: '',
     display_name: '',
@@ -137,7 +176,7 @@ function TemplateEditorModal({ isOpen, onClose, onSave, template, positions }) {
   });
   const [localPositions, setLocalPositions] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (template) {
       setForm({
         unit_type: template.unit_type || '',
@@ -151,13 +190,6 @@ function TemplateEditorModal({ isOpen, onClose, onSave, template, positions }) {
     }
   }, [template, isOpen]);
 
-  const handleSave = (savedPositions) => {
-    const sorted = [...(savedPositions || localPositions)].sort(
-      (a, b) => parseInt(a.position, 10) - parseInt(b.position, 10)
-    );
-    onSave(form, sorted);
-  };
-
   return (
     <Modal
       isOpen={isOpen}
@@ -167,76 +199,28 @@ function TemplateEditorModal({ isOpen, onClose, onSave, template, positions }) {
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => {
-            if (localPositions.length > 0) {
-              handleSave(localPositions);
-            }
-          }} disabled={localPositions.length === 0}>
-            {template ? 'Update' : 'Create'} Template
-          </Button>
+          <TemplateSaveButton
+            form={form}
+            positions={localPositions}
+            templateId={template?.id}
+            onSuccess={onClose}
+          />
         </div>
       }
     >
-      <div className="space-y-6">
-        {/* Basic Info */}
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Unit Type Code <span className="text-red-500">*</span>
-            </label>
-            <Input
-              value={form.unit_type}
-              onChange={(e) => setForm({ ...form, unit_type: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') })}
-              placeholder="e.g. CUSTOM_8POS"
-              disabled={!!template} // Can't change code on edit
-            />
-            <p className="text-[10px] text-gray-400 mt-1">Unique identifier (can't change after create)</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Display Name <span className="text-red-500">*</span>
-            </label>
-            <Input
-              value={form.display_name}
-              onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-              placeholder="e.g. Custom 8 Position"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Max Position <span className="text-red-500">*</span>
-            </label>
-            <Input
-              type="number"
-              min="1"
-              max="20"
-              value={form.max_position}
-              onChange={(e) => setForm({ ...form, max_position: parseInt(e.target.value) || 1 })}
-            />
-          </div>
-        </div>
-
-        {/* Visual Editor */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Position Layout
-            </label>
-            <span className="text-xs text-gray-400">
-              {localPositions.length} positions defined
-            </span>
-          </div>
-          <TyrePositionCanvasEditable
-            key={template?.id ?? 'new'}
-            initialPositions={template?.position_config || []}
-            maxPosition={form.max_position}
-            unitType={form.unit_type || 'CUSTOM'}
-            onSave={(savedPositions) => {
-              const sorted = [...savedPositions].sort((a, b) => parseInt(a.position, 10) - parseInt(b.position, 10));
-              setLocalPositions(sorted);
-            }}
-          />
-        </div>
+      <div style={{ height: '80vh', maxHeight: '900px' }}>
+        <TyrePositionCanvasEditable
+          key={template?.id ?? 'new'}
+          initialPositions={localPositions}
+          maxPosition={form.max_position}
+          unitType={form.unit_type || 'CUSTOM'}
+          onSave={(savedPositions) => {
+            const sorted = [...savedPositions].sort((a, b) => parseInt(a.position, 10) - parseInt(b.position, 10));
+            setLocalPositions(sorted);
+          }}
+          form={form}
+          onFormChange={setForm}
+        />
       </div>
     </Modal>
   );
@@ -251,7 +235,6 @@ export default function UnitTypeTemplatePage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [duplicateSource, setDuplicateSource] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['master', 'unit-types'],
@@ -259,26 +242,6 @@ export default function UnitTypeTemplatePage() {
   });
 
   const templates = data?.data?.data || data?.data || [];
-
-  const saveMutation = useMutation({
-    mutationFn: ({ form, positions, id }) => {
-      const payload = {
-        unit_type: form.unit_type,
-        display_name: form.display_name,
-        max_position: form.max_position,
-        position_config: positions,
-      };
-      if (id) {
-        return masterAPI.updateUnitType(id, payload);
-      }
-      return masterAPI.createUnitType(payload);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['master', 'unit-types'] });
-      queryClient.invalidateQueries({ queryKey: ['unit-tyres'] });
-      closeEditor();
-    },
-  });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => masterAPI.deleteUnitType(id),
@@ -311,14 +274,6 @@ export default function UnitTypeTemplatePage() {
   const closeEditor = () => {
     setEditorOpen(false);
     setEditingTemplate(null);
-  };
-
-  const handleSave = (form, positions) => {
-    saveMutation.mutate({
-      form,
-      positions,
-      id: editingTemplate?.id || null,
-    });
   };
 
   return (
@@ -383,7 +338,6 @@ export default function UnitTypeTemplatePage() {
       <TemplateEditorModal
         isOpen={editorOpen}
         onClose={closeEditor}
-        onSave={handleSave}
         template={editingTemplate}
       />
 

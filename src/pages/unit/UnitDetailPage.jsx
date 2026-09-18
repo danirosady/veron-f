@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Pencil, Truck, Plus, History, CircleDot } from 'lucide-react';
+import { ArrowLeft, Pencil, Truck, Plus, History } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import Card, { CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -131,7 +132,7 @@ export default function UnitDetailPage() {
             className="p-1.5 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
             title="View Tyre"
           >
-            <CircleDot className="w-4 h-4" />
+            <TyreIcon className="w-4 h-4" />
           </button>
         </div>
       ),
@@ -296,7 +297,7 @@ export default function UnitDetailPage() {
                     columns={tyreColumns}
                     data={mountedTyres}
                     loading={tyresLoading}
-                    emptyIcon={CircleDot}
+                    emptyIcon={TyreIcon}
                     emptyTitle="No mounted tyres"
                     emptyMessage="This unit has no tyres mounted on it."
                     skeletonRows={3}
@@ -305,7 +306,7 @@ export default function UnitDetailPage() {
               ) : !tyresLoading ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                    <CircleDot className="w-6 h-6 text-gray-400" />
+                    <TyreIcon className="w-6 h-6 text-gray-400" />
                   </div>
                   <p className="text-sm font-medium text-gray-700 mb-1">No tyres mounted</p>
                   <p className="text-xs text-gray-500 mb-3">This unit currently has no tyres mounted.</p>

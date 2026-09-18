@@ -51,9 +51,13 @@ export function generatePositionsFromFormation(formation) {
     // Generate left/right pairs per column first
     const axlePositions = [];
     for (let col = 0; col < cols; col++) {
+      // t = position fraction within one side, from inner (closest to center) to outer
       const t = (col + 1) / (cols + 1);
-      const xLeft  = 0.05 + t * 0.38;
-      const xRight = 0.96 - t * 0.38;
+      // Symmetric around x=0.5: inner pairs near center, outer pairs near edges
+      // offset max = 0.44 so x stays in [0.06, 0.94]
+      const offset = t * 0.44;
+      const xLeft  = 0.5 - offset;  // cols=1 → 0.06,  cols=2 → 0.17
+      const xRight = 0.5 + offset;  // cols=1 → 0.94,  cols=2 → 0.83
 
       axlePositions.push(
         { position: String(posNum),     label: `Tyre ${posNum}`,     side: 'left',  axle, x: xLeft,  y, col },

@@ -21,17 +21,22 @@ const TYRE_IMAGE = '/tyre-pattern.png';
  *
  * Props
  * -----
- * unitType    : string — key into VEHICLE_CHASSIS_IMAGES (e.g. 'ADT_8POS')
- * height      : number — container height in px (default 520)
+ * unitType       : string — key into VEHICLE_CHASSIS_IMAGES (e.g. 'ADT_8POS')
+ * height         : number — container height in px (default 520)
  * onBoundsChange : (bounds) => void — called with {width, height} when image bounds change
- * className   : string
- * children    : node   — tyre slot components rendered inside overlay
+ * showGrid       : bool   — show background grid (default true)
+ * showMirror    : bool   — show vertical dashed mirror centre line (default true)
+ * className      : string
+ * children       : node   — tyre slot components rendered inside overlay
  */
+const GRID_SIZE = 40;
 const TyreCanvasBase = forwardRef(function TyreCanvasBase({
   children,
   unitType = 'ADT_8POS',
-  height = 520,
+  height = '100%',
   onBoundsChange,
+  showGrid = true,
+  showMirror = true,
   className = '',
 }, ref) {
   const containerRef = useRef(null);
@@ -58,35 +63,57 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
   const chassisSrc = VEHICLE_CHASSIS_IMAGES[unitType] || null;
   const hasChassis = Boolean(chassisSrc);
 
-  // ── Measure image bounds ──────────────────────────────────────────────────
+  // ── Keep imageBounds in sync with the overlay's ACTUAL rendered size ─────────────────
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      const containerRect = container.getBoundingClientRect();
+      const overlayRect = el.getBoundingClientRect();
+      onBoundsChange?.({ width: overlayRect.width, height: overlayRect.height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const measureBounds = useCallback(() => {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
+    if (containerRect.width === 0) return;
+
+    // Always center the overlay on the container midpoint.
+    // This guarantees x=0.5 maps exactly to the mirror line (SVG x1="50%"),
+    // regardless of CSS letterboxing or object-fit rounding.
+    const containerCenter = containerRect.width / 2;
 
     if (hasChassis && imageRef.current?.complete && imageRef.current.naturalWidth > 0) {
       const imgRect = imageRef.current.getBoundingClientRect();
-      const bounds = {
-        left: imgRect.left - containerRect.left,
+      const overlayLeft = containerCenter - imgRect.width / 2;
+      setImageBounds({
+        left: overlayLeft,
         top: imgRect.top - containerRect.top,
         width: imgRect.width,
         height: imgRect.height,
-      };
-      setImageBounds(bounds);
-      onBoundsChange?.(bounds);
+      });
+      onBoundsChange?.({ width: imgRect.width, height: imgRect.height });
     } else {
-      // SVG fallback: container rect minus p-4 padding
+      // No chassis image yet (or no chassis at all): use container center as overlay center.
+      // Initial state: overlay width=0 → CSS fallback `width: calc(100%-32px)` kicks in.
+      // measureBounds runs again once the container has real size, so overlay will be correct.
       const p = 16;
-      const bounds = {
-        left: p,
+      const overlayWidth = containerRect.width - p * 2;
+      const overlayLeft = containerCenter - overlayWidth / 2;
+      setImageBounds({
+        left: overlayLeft,
         top: p,
-        width: containerRect.width - p * 2,
+        width: overlayWidth,
         height: containerRect.height - p * 2,
-      };
-      setImageBounds(bounds);
-      onBoundsChange?.(bounds);
+      });
+      onBoundsChange?.({ width: overlayWidth, height: containerRect.height - p * 2 });
     }
   }, [hasChassis]);
 
@@ -112,10 +139,56 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
       className={`relative w-full overflow-hidden rounded-xl ${className}`}
       style={{ height }}
     >
-      {/* ── Background: chassis image or SVG fallback ─────────────────────── */}
+      {/* ── Background: full-container gradient + grid ─────────────────────── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ width: '100%', height: '100%', zIndex: 0 }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)' }}
+        />
+        {showGrid && (
+          <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
+            <defs>
+              <pattern
+                id="canvas-grid"
+                width={GRID_SIZE}
+                height={GRID_SIZE}
+                patternUnits="userSpaceOnUse"
+              >
+                <line x1="0" y1="0" x2={GRID_SIZE} y2="0" stroke="#94a3b8" strokeWidth="0.5" opacity="0.4" />
+                <line x1="0" y1="0" x2="0" y2={GRID_SIZE} stroke="#94a3b8" strokeWidth="0.5" opacity="0.4" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#canvas-grid)" />
+          </svg>
+        )}
+      </div>
+
+      {/* ── Mirror line: always at container centre ────────────────────────── */}
+      {showMirror && (
+        <svg
+          className="absolute inset-0 pointer-events-none"
+          style={{ width: '100%', height: '100%', zIndex: 3 }}
+        >
+          <line
+            x1="50%"
+            y1="0"
+            x2="50%"
+            y2="100%"
+            stroke="#6366f1"
+            strokeWidth="1.5"
+            strokeDasharray="8 5"
+            opacity="0.7"
+          />
+        </svg>
+      )}
+
+      {/* ── Chassis image: centred in container, above gradient ─────────── */}
       <div
         className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        style={{ background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)' }}
+        style={{ zIndex: 1 }}
       >
         {hasChassis ? (
           <img
@@ -123,7 +196,7 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
             src={chassisSrc}
             alt="Vehicle chassis"
             className="max-w-full max-h-full"
-            style={{ objectFit: 'contain', opacity: 0.9 }}
+            style={{ objectFit: 'contain', opacity: 0.85 }}
             draggable={false}
             onLoad={handleImageLoad}
           />
@@ -148,6 +221,7 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
           top: imageBounds.top || 16,
           width: imageBounds.width || 'calc(100% - 32px)',
           height: imageBounds.height || 'calc(100% - 32px)',
+          zIndex: 2,
         }}
       >
         {children}

@@ -1,7 +1,8 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Pencil, CircleDot, Truck, Clock, TrendingDown } from 'lucide-react';
+import { ArrowLeft, Pencil, Truck, Clock, TrendingDown } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import Card, { CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -285,7 +286,7 @@ export default function TyreDetailPage() {
                 columns={historyColumns}
                 data={historyItems}
                 loading={historyLoading}
-                emptyIcon={CircleDot}
+                emptyIcon={TyreIcon}
                 emptyTitle="No mount history"
                 emptyMessage="This tyre has no replacement history."
                 skeletonRows={3}
@@ -294,7 +295,7 @@ export default function TyreDetailPage() {
           ) : !historyLoading ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                <CircleDot className="w-6 h-6 text-gray-400" />
+                <TyreIcon className="w-6 h-6 text-gray-400" />
               </div>
               <p className="text-sm font-medium text-gray-700">No mount history</p>
               <p className="text-xs text-gray-500 mt-1">Replacement history for this tyre will appear here.</p>

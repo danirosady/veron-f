@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, CircleDot, Eye, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Search } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
 import FilterBar from '@/components/list/FilterBar';
@@ -270,7 +271,7 @@ export default function TyreListPage() {
           sortOrder={sortOrder}
           onSort={handleSort}
           actions={actions}
-          emptyIcon={CircleDot}
+          emptyIcon={TyreIcon}
           emptyTitle="No tyres found"
           emptyMessage="There are no tyres matching your filters yet."
           emptyAction={() => navigate('/tyres/new')}

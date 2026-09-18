@@ -6,10 +6,10 @@ import {
   FolderKanban,
   Truck,
   Users,
-  CircleDot,
   RefreshCw,
   TrendingUp,
 } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import Card from '@/components/ui/Card';
 import Skeleton from '@/components/ui/Skeleton';
 import { dashboardAPI } from '@/api/dashboard';
@@ -148,7 +148,7 @@ export default function DashboardPage() {
       {/* Tyre Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={CircleDot}
+          icon={TyreIcon}
           label="Total Tyres"
           value={stats.total_tyres}
           sublabel={`${stats.mounted_tyres} mounted, ${stats.spare_tyres} spare`}
@@ -161,7 +161,7 @@ export default function DashboardPage() {
           colorClass="text-emerald-600"
         />
         <StatCard
-          icon={CircleDot}
+          icon={TyreIcon}
           label="Spare Tyres"
           value={stats.spare_tyres}
           colorClass="text-amber-600"

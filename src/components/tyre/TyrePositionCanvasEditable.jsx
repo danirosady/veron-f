@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Plus, Trash2, Save, RotateCcw, GripVertical, LayoutGrid, Settings2 } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Trash2, Save, RotateCcw, LayoutGrid, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import TyreCanvasBase, { TYRE_IMAGE } from './TyreCanvasBase';
 import DynamicFormationEditor from './DynamicFormationEditor';
@@ -9,24 +9,20 @@ import {
   mirrorX,
 } from '@/utils/formationUtils';
 
-// ─── Compute mirror_of for all positions using distance from center ─────────────
-// Inner/middle/outer pair semantics: furthest from center pairs together.
+const round = (v) => Math.round(v * 10000) / 10000;
+
+// ─── Compute mirror_of ───────────────────────────────────────────────────────
 
 function computeMirrorOf(positions) {
   if (!positions?.length) return positions;
-
-  // Group by axle
   const byAxle = {};
   positions.forEach(p => {
     if (!byAxle[p.axle]) byAxle[p.axle] = [];
     byAxle[p.axle].push(p);
   });
-
   const result = positions.map(p => ({ ...p }));
-
   Object.values(byAxle).forEach(axleTyres => {
     if (axleTyres.length < 2) return;
-    // Sort by distance from center (largest first = outermost)
     const sorted = [...axleTyres].sort((a, b) => Math.abs(b.x - 0.5) - Math.abs(a.x - 0.5));
     for (let i = 0; i < sorted.length; i += 2) {
       const tyreA = result.find(p => p.position === sorted[i].position);
@@ -37,7 +33,6 @@ function computeMirrorOf(positions) {
       }
     }
   });
-
   return result;
 }
 
@@ -46,7 +41,7 @@ const SIDE_OPTIONS = [
   { value: 'right', label: 'Right' },
 ];
 
-// ─── Editable Tyre Slot ────────────────────────────────────────────────────────
+// ─── Editable Tyre Slot ──────────────────────────────────────────────────────
 
 function EditableTyreSlot({ pos, isSelected, tyreWidth, tyreHeight, onSelect, onDragEnd }) {
   const elRef = useRef(null);
@@ -56,32 +51,42 @@ function EditableTyreSlot({ pos, isSelected, tyreWidth, tyreHeight, onSelect, on
     e.preventDefault();
     onSelect?.(pos);
     if (!elRef.current) return;
-
     const el = elRef.current;
     const overlay = el.parentElement;
     if (!overlay) return;
 
+    const overlayRect = overlay.getBoundingClientRect();
     const startMouseX = e.clientX;
     const startMouseY = e.clientY;
     const startX = pos.x;
     const startY = pos.y;
-    const overlayW = overlay.offsetWidth;
-    const overlayH = overlay.offsetHeight;
 
     const onMove = (me) => {
-      const dx = (me.clientX - startMouseX) / overlayW;
-      const dy = (me.clientY - startMouseY) / overlayH;
+      const dx = (me.clientX - startMouseX) / overlayRect.width;
+      const dy = (me.clientY - startMouseY) / overlayRect.height;
       const newX = Math.max(0.02, Math.min(0.98, startX + dx));
       const newY = Math.max(0.02, Math.min(0.98, startY + dy));
+
+      // Instantly move the dragged tyre — no lag
       el.style.left = `${newX * 100}%`;
       el.style.top = `${newY * 100}%`;
+
+      // Instantly move the mirror tyre too — no React re-render lag
+      if (pos.mirror_of) {
+        const mirrorEl = overlay.querySelector(`[data-tyre-slot][data-position="${pos.mirror_of}"]`);
+        if (mirrorEl) {
+          const mirrorNewX = round(mirrorX(newX));
+          mirrorEl.style.left = `${mirrorNewX * 100}%`;
+          mirrorEl.style.top = `${newY * 100}%`;
+        }
+      }
     };
 
     const onUp = (me) => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
-      const dx = (me.clientX - startMouseX) / overlayW;
-      const dy = (me.clientY - startMouseY) / overlayH;
+      const dx = (me.clientX - startMouseX) / overlayRect.width;
+      const dy = (me.clientY - startMouseY) / overlayRect.height;
       const newX = Math.max(0.02, Math.min(0.98, startX + dx));
       const newY = Math.max(0.02, Math.min(0.98, startY + dy));
       el.style.left = `${newX * 100}%`;
@@ -96,6 +101,8 @@ function EditableTyreSlot({ pos, isSelected, tyreWidth, tyreHeight, onSelect, on
   return (
     <div
       ref={elRef}
+      data-tyre-slot
+      data-position={pos.position}
       className={cn(
         'absolute cursor-grab active:cursor-grabbing select-none group transition-shadow',
         isSelected && 'z-20 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]'
@@ -105,30 +112,24 @@ function EditableTyreSlot({ pos, isSelected, tyreWidth, tyreHeight, onSelect, on
         top: `${pos.y * 100}%`,
         transform: 'translate(-50%, -50%)',
         zIndex: isSelected ? 20 : 1,
+        width: tyreWidth,
+        height: tyreHeight,
       }}
       onMouseDown={handleMouseDown}
     >
-      <div className="relative flex items-center justify-center" style={{ width: tyreWidth, height: tyreHeight }}>
+      <div className="relative flex items-center justify-center pointer-events-none" style={{ width: '100%', height: '100%' }}>
         <img
           src={TYRE_IMAGE}
           alt={pos.label}
           className="object-contain pointer-events-none select-none"
-          style={{ width: tyreWidth, height: tyreHeight }}
+          style={{ width: '100%', height: '100%' }}
           draggable={false}
         />
-        <div
-          className={cn(
-            'absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center transition-opacity',
-            isSelected ? 'bg-primary-500 text-white opacity-100' : 'bg-gray-300 text-white opacity-0 group-hover:opacity-100'
-          )}
-        >
-          <GripVertical className="w-3 h-3" />
-        </div>
       </div>
       <div
         className={cn(
-          'absolute left-1/2 -translate-x-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap',
-          isSelected ? 'bg-primary-500 text-white' : 'bg-gray-800 text-white',
+          'absolute left-1/2 -translate-x-1/2 text-[9px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap pointer-events-none',
+          isSelected ? 'bg-primary-500 text-white' : 'bg-gray-800 text-white'
         )}
         style={{ bottom: -2 }}
       >
@@ -138,7 +139,7 @@ function EditableTyreSlot({ pos, isSelected, tyreWidth, tyreHeight, onSelect, on
   );
 }
 
-// ─── Uncontrolled number input ──────────────────────────────────────────────────
+// ─── Uncontrolled number input ─────────────────────────────────────────────────
 
 function NumberInput({ value, onCommit, step = 0.01, min = 0, max = 1 }) {
   const inputRef = useRef(null);
@@ -168,7 +169,7 @@ function NumberInput({ value, onCommit, step = 0.01, min = 0, max = 1 }) {
   );
 }
 
-// ─── Tyre Property Editor ───────────────────────────────────────────────────────
+// ─── Tyre Property Editor ────────────────────────────────────────────────────
 
 function TyrePropertyEditor({ pos, onUpdate, onDelete, onDeselect }) {
   if (!pos) {
@@ -245,7 +246,7 @@ function TyrePropertyEditor({ pos, onUpdate, onDelete, onDeselect }) {
   );
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function TyrePositionCanvasEditable({
   positions = [],
@@ -253,6 +254,8 @@ export default function TyrePositionCanvasEditable({
   unitType = 'ADT_8POS',
   onSave,
   initialPositions = [],
+  form,
+  onFormChange,
 }) {
   const derivedFormation = positions.length > 0
     ? extractFormationFromPositions(positions)
@@ -276,8 +279,60 @@ export default function TyrePositionCanvasEditable({
   const [imageBounds, setImageBounds] = useState({ width: 0, height: 0 });
   const [activeTab, setActiveTab] = useState('formation');
 
-  const userModified = useRef(false);
+  // Ref to TyreCanvasBase so we can read the overlay's live dimensions
+  const canvasRef = useRef(null);
 
+  // Read overlay dimensions directly from TyreCanvasBase for tyre sizing
+  useEffect(() => {
+    const el = canvasRef.current?.getOverlayEl?.();
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      setImageBounds({ width: el.offsetWidth, height: el.offsetHeight });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // ── Pan / drag state ───────────────────────────────────────────────────────
+  const [panY, setPanY] = useState(0);
+  const isPanning = useRef(false);
+  const panStartY = useRef(null);
+  const panStartPanY = useRef(null);
+  const MAX_PAN = -200;
+
+  const handlePanStart = (e) => {
+    if (e.target.closest('[data-tyre-slot]') || e.target.closest('button') || e.target.closest('input')) return;
+    isPanning.current = true;
+    panStartY.current = e.clientY;
+    panStartPanY.current = panY;
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handlePanMove = useCallback((e) => {
+    if (!isPanning.current) return;
+    const deltaY = e.clientY - panStartY.current;
+    const newPanY = Math.max(MAX_PAN, Math.min(0, panStartPanY.current + deltaY));
+    setPanY(newPanY);
+  }, []);
+
+  const handlePanEnd = useCallback(() => {
+    if (!isPanning.current) return;
+    isPanning.current = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handlePanMove);
+    window.addEventListener('mouseup', handlePanEnd);
+    return () => {
+      window.removeEventListener('mousemove', handlePanMove);
+      window.removeEventListener('mouseup', handlePanEnd);
+    };
+  }, [handlePanMove, handlePanEnd]);
+
+  const userModified = useRef(false);
   const prevInitialKey = useRef(null);
   useEffect(() => {
     if (initialPositions.length === 0) return;
@@ -292,32 +347,78 @@ export default function TyrePositionCanvasEditable({
 
   const [formation, setFormation] = useState(derivedFormation);
 
-  const tyreWidth  = Math.max(100, Math.round(imageBounds.width * 0.25));
+  // Regenerate localPositions when formation changes (e.g. user edits count in Formation tab)
+  useEffect(() => {
+    if (userModified.current) return; // don't override manual edits
+    const generated = generatePositionsFromFormation(formation);
+    if (generated.length === 0) return;
+    // Guard: if derivedFormation counts match what we already have from saved data,
+    // the initialPositions effect already set localPositions correctly — skip this
+    // so we don't overwrite saved x,y with generated defaults.
+    const countsMatch = (() => {
+      const savedCounts = {};
+      localPositions.forEach(p => {
+        savedCounts[p.axle] = (savedCounts[p.axle] || 0) + 1;
+      });
+      const formCounts = {};
+      generated.forEach(p => {
+        formCounts[p.axle] = (formCounts[p.axle] || 0) + 1;
+      });
+      return JSON.stringify(savedCounts) === JSON.stringify(formCounts);
+    })();
+    if (countsMatch) {
+      console.log('[formation effect] counts match saved data — skipping to preserve x,y');
+      return;
+    }
+    console.log('[formation effect] regenerating — counts changed');
+    const AXLE_ORDER = ['poros_1', 'poros_2', 'poros_3', 'poros_4', 'poros_5'];
+    const axleRank = (p) => {
+      const idx = AXLE_ORDER.indexOf(p.axle);
+      return idx === -1 ? 99 : idx;
+    };
+    const sorted = [...generated].sort((a, b) => {
+      const ao = axleRank(a) - axleRank(b);
+      if (ao !== 0) return ao;
+      return a.x - b.x;
+    });
+    const renumbered = sorted.map((p, i) => ({
+      ...p,
+      position: String(i + 1),
+      label: `Tyre ${i + 1}`,
+    }));
+    const oldToNew = {};
+    sorted.forEach((origTyre, i) => {
+      oldToNew[origTyre.position] = renumbered[i].position;
+    });
+    const final = renumbered.map((newTyre, i) => ({
+      ...newTyre,
+      mirror_of: sorted[i].mirror_of ? oldToNew[sorted[i].mirror_of] : undefined,
+    }));
+    setLocalPositions(final);
+  }, [formation]);
+
+  const tyreWidth = Math.max(100, Math.round(imageBounds.width * 0.25));
   const tyreHeight = Math.max(120, Math.round(tyreWidth * 1.15));
 
-  const handleBoundsChange = useCallback((bounds) => {
-    setImageBounds(bounds);
-  }, []);
-
-  // ── Mirror pairing ──────────────────────────────────────────────────────────
-  // Uses mirror_of set at generation time (outer tyres pair with outer, inner with inner).
-
+  // ── Mirror pairing ─────────────────────────────────────────────────────────
   const findMirror = (tyres, tyre) => {
     if (!tyre.mirror_of) return null;
     return tyres.find(p => p.position === tyre.mirror_of) || null;
   };
 
-  // ── Drag ───────────────────────────────────────────────────────────────────
-
+  // ── Drag ────────────────────────────────────────────────────────────────────
   const handleDragEnd = useCallback((posNum, newX, newY) => {
+    const rx = round(newX);
+    const ry = round(newY);
     setLocalPositions((prev) => {
       const thisTyre = prev.find(p => p.position === posNum);
       if (!thisTyre) return prev;
       const mirror = findMirror(prev, thisTyre);
+      if (!mirror) return prev.map(p => p.position === posNum ? { ...p, x: rx, y: ry } : p);
       return prev.map((p) => {
-        if (p.position === posNum) return { ...p, x: newX, y: newY };
-        if (mirror && p.position === mirror.position) {
-          return { ...p, mirror_of: p.mirror_of, x: mirrorX(newX), y: newY };
+        if (p.position === posNum) return { ...p, x: rx, y: ry };
+        if (p.position === mirror.position) {
+          return { ...p, x: round(mirrorX(rx)), y: ry };
         }
         return p;
       });
@@ -325,46 +426,38 @@ export default function TyrePositionCanvasEditable({
   }, []);
 
   // ── Formation change ────────────────────────────────────────────────────────
-
   const handleFormationChange = useCallback((newFormation) => {
     userModified.current = true;
     const generated = generatePositionsFromFormation(newFormation);
-
     const AXLE_ORDER = ['poros_1', 'poros_2', 'poros_3', 'poros_4', 'poros_5'];
     const axleRank = (p) => {
       const idx = AXLE_ORDER.indexOf(p.axle);
       return idx === -1 ? 99 : idx;
     };
-
     const sorted = [...generated].sort((a, b) => {
       const ao = axleRank(a) - axleRank(b);
       if (ao !== 0) return ao;
       return a.x - b.x;
     });
-
     const renumbered = sorted.map((p, i) => ({
       ...p,
       position: String(i + 1),
       label: `Tyre ${i + 1}`,
     }));
-
     const oldToNew = {};
     sorted.forEach((origTyre, i) => {
       oldToNew[origTyre.position] = renumbered[i].position;
     });
-
     const final = renumbered.map((newTyre, i) => ({
       ...newTyre,
       mirror_of: sorted[i].mirror_of ? oldToNew[sorted[i].mirror_of] : undefined,
     }));
-
     setFormation(newFormation);
     setLocalPositions(final);
     setActiveTab('formation');
   }, []);
 
-  // ── Tyre property update ──────────────────────────────────────────────────
-
+  // ── Tyre property update ────────────────────────────────────────────────────
   const handleTyreUpdate = useCallback((updates) => {
     if (!selectedPos) return;
     setLocalPositions((prev) => {
@@ -379,8 +472,8 @@ export default function TyrePositionCanvasEditable({
           return {
             ...p,
             mirror_of: p.mirror_of,
-            x: updates.x !== undefined ? mirrorX(updates.x) : p.x,
-            y: updates.y !== undefined ? updates.y : p.y,
+            x: updates.x !== undefined ? round(mirrorX(round(updates.x))) : p.x,
+            y: updates.y !== undefined ? round(updates.y) : p.y,
           };
         }
         return p;
@@ -409,84 +502,84 @@ export default function TyrePositionCanvasEditable({
         ]
     );
     setSelectedPos(null);
+    setPanY(0);
   };
 
   const selectedPosition = localPositions.find((p) => p.position === selectedPos);
 
+  // ── Pan viewport height ────────────────────────────────────────────────────
+  const viewportHeight = panY < 0 ? `calc(100% + ${-panY}px)` : '100%';
+
   return (
-    <div className="flex h-[520px] gap-0 rounded-xl overflow-hidden border border-gray-200">
+    <div className="flex h-full gap-0 rounded-xl overflow-hidden border border-gray-200">
       {/* ── Canvas area ─────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 border-b border-gray-200">
           <span className="text-xs text-gray-500">{localPositions.length} ban</span>
           <div className="flex-1" />
-          <button
-            onClick={handleReset}
-            className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
-          >
-            <RotateCcw className="w-3 h-3" />
-            Reset
+          <button onClick={handleReset} className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors">
+            <RotateCcw className="w-3 h-3" />Reset
           </button>
-          <button
-            onClick={() => onSave?.(localPositions)}
-            className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 transition-colors"
-          >
-            <Save className="w-3 h-3" />
-            Simpan
+          <button onClick={() => onSave?.(localPositions)} className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 transition-colors">
+            <Save className="w-3 h-3" />Simpan
           </button>
         </div>
 
-        <div className="flex-1 relative overflow-hidden height-[800px]">
-          <TyreCanvasBase
-            unitType={unitType}
-            height={478}
-            onBoundsChange={handleBoundsChange}
-          >
-            <div className="relative w-full h-full">
-              {localPositions
-                .slice()
-                .sort((a, b) => {
-                  const ao = a.axle.localeCompare(b.axle);
-                  if (ao !== 0) return ao;
-                  return a.x - b.x;
-                })
-                .map((pos) => (
-                  <EditableTyreSlot
-                    key={pos.position}
-                    pos={pos}
-                    isSelected={selectedPos === pos.position}
-                    tyreWidth={tyreWidth}
-                    tyreHeight={tyreHeight}
-                    onSelect={(p) => {
-                      setSelectedPos(p.position);
-                      setActiveTab('properties');
-                    }}
-                    onDragEnd={handleDragEnd}
-                  />
-                ))}
-              {localPositions.length === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
-                      <LayoutGrid className="w-6 h-6 text-gray-400" />
+        {/* ── Pan viewport ─────────────────────────────────────── */}
+        <div
+          className="flex-1 relative overflow-hidden cursor-grab select-none"
+          style={{ height: viewportHeight, background: 'linear-gradient(to bottom, #f8fafc, #f1f5f9)'}}
+          onMouseDown={handlePanStart}
+        >
+          <div style={{ transform: `translateY(${panY}px)`, height: 720}}>
+            <TyreCanvasBase
+              ref={canvasRef}
+              unitType={unitType}
+              height={720}
+            >
+              <div className="relative w-full h-full">
+                {localPositions
+                  .slice()
+                  .sort((a, b) => {
+                    const ao = a.axle.localeCompare(b.axle);
+                    if (ao !== 0) return ao;
+                    return a.x - b.x;
+                  })
+                  .map((pos) => (
+                    <EditableTyreSlot
+                      key={pos.position}
+                      pos={pos}
+                      isSelected={selectedPos === pos.position}
+                      tyreWidth={tyreWidth}
+                      tyreHeight={tyreHeight}
+                      onSelect={(p) => {
+                        setSelectedPos(p.position);
+                        setActiveTab('properties');
+                      }}
+                      onDragEnd={handleDragEnd}
+                    />
+                  ))}
+                {localPositions.length === 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                      <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                        <LayoutGrid className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <p className="text-sm text-gray-500 font-medium">Belum ada formasi</p>
+                      <p className="text-xs text-gray-400 mt-1">Tab Formasi di kanan untuk atur jumlah ban</p>
                     </div>
-                    <p className="text-sm text-gray-500 font-medium">Belum ada formasi</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Tab "Formasi" di kanan untuk atur jumlah ban
-                    </p>
                   </div>
-                </div>
-              )}
-            </div>
-          </TyreCanvasBase>
-
+                )}
+              </div>
+            </TyreCanvasBase>
+          </div>
           <div className="absolute bottom-2 right-3 text-[9px] text-gray-400">
             Drag ban untuk reposisi
           </div>
         </div>
       </div>
 
-      {/* ── Right sidebar ───────────────────────────────────────────── */}
+      {/* ── Right sidebar ──────────────────────────────────────── */}
       <div className="w-72 bg-white border-l border-gray-200 flex flex-col">
         <div className="flex border-b border-gray-200">
           <button
@@ -516,17 +609,71 @@ export default function TyrePositionCanvasEditable({
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('unit')}
+            className={cn(
+              'flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-semibold transition-colors border-b-2',
+              activeTab === 'unit'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            )}
+          >
+            Unit
+          </button>
         </div>
 
         <div className="flex-1 overflow-hidden">
-          {activeTab === 'formation' ? (
+          {activeTab === 'formation' && (
             <DynamicFormationEditor
               formation={formation}
               maxPosition={maxPosition}
               onChange={handleFormationChange}
               onApply={handleFormationChange}
             />
-          ) : (
+          )}
+          {activeTab === 'unit' && (
+            <div className="flex flex-col h-full text-xs">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-200 bg-gray-50">
+                <span className="font-semibold text-gray-700">Info Unit</span>
+              </div>
+              <div className="px-3 py-2 space-y-2">
+                <div>
+                  <label className="block text-[10px] font-medium text-gray-400 mb-0.5">Unit Type Code</label>
+                  <input
+                    type="text"
+                    value={form?.unit_type ?? ''}
+                    onChange={(e) => onFormChange?.({ ...form, unit_type: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') })}
+                    placeholder="e.g. CUSTOM_8POS"
+                    disabled={!!form?.id}
+                    className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400"
+                  />
+                  <p className="text-[9px] text-gray-400 mt-0.5">Cant change after create</p>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-gray-400 mb-0.5">Display Name</label>
+                  <input
+                    type="text"
+                    value={form?.display_name ?? ''}
+                    onChange={(e) => onFormChange?.({ ...form, display_name: e.target.value })}
+                    placeholder="e.g. Custom 8 Position"
+                    className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-gray-400 mb-0.5">Max Position</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={form?.max_position ?? 6}
+                    onChange={(e) => onFormChange?.({ ...form, max_position: parseInt(e.target.value) || 1 })}
+                    className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          {activeTab === 'properties' && (
             <TyrePropertyEditor
               pos={selectedPosition}
               onUpdate={handleTyreUpdate}

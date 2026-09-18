@@ -6,6 +6,7 @@ export default function Card({
   className = '',
   padding = true,
   shadow = 'sm',
+  onClick,
 }) {
   const shadowClasses = {
     none: '',
@@ -16,10 +17,12 @@ export default function Card({
 
   return (
     <div
+      onClick={onClick}
       className={cn(
         'bg-white rounded-xl border border-gray-200',
         shadowClasses[shadow],
         padding && 'p-6',
+        onClick && 'cursor-pointer',
         className
       )}
     >

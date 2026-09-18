@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import AppShell from '@/components/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
+import { ToastProvider } from '@/components/ui/Toast';
 import CompanyListPage from '@/pages/company/CompanyListPage';
 import CompanyFormPage from '@/pages/company/CompanyFormPage';
 import ProjectListPage from '@/pages/project/ProjectListPage';
@@ -26,6 +27,9 @@ import UnitTypeTemplatePage from '@/pages/master-data/UnitTypeTemplatePage';
 import UserListPage from '@/pages/user/UserListPage';
 import UserFormPage from '@/pages/user/UserFormPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
+import ReplacementHomePage from '@/pages/replacement/ReplacementHomePage';
+import ReplacementCompanyProjectsPage from '@/pages/replacement/ReplacementCompanyProjectsPage';
+import ReplacementUnitPage from '@/pages/replacement/ReplacementUnitPage';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -57,56 +61,67 @@ function PublicRoute({ children }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <AppShell />
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="companies" element={<CompanyListPage />} />
-        <Route path="companies/new" element={<CompanyFormPage />} />
-        <Route path="companies/:id/edit" element={<CompanyFormPage />} />
-        <Route path="projects" element={<ProjectListPage />} />
-        <Route path="projects/new" element={<ProjectFormPage />} />
-        <Route path="projects/:id/edit" element={<ProjectFormPage />} />
-        <Route path="units" element={<UnitListPage />} />
-        <Route path="units/new" element={<UnitFormPage />} />
-        <Route path="units/:id" element={<UnitDetailPage />} />
-        <Route path="units/:id/edit" element={<UnitFormPage />} />
-        <Route path="units/:id/tyres" element={<UnitTyresPage />} />
-        <Route path="drivers" element={<DriverListPage />} />
-        <Route path="drivers/new" element={<DriverFormPage />} />
-        <Route path="drivers/:id/edit" element={<DriverFormPage />} />
-        <Route path="tyres" element={<TyreListPage />} />
-        <Route path="tyres/new" element={<TyreFormPage />} />
-        <Route path="tyres/:id" element={<TyreDetailPage />} />
-        <Route path="tyres/:id/edit" element={<TyreFormPage />} />
-        <Route path="replacements" element={<ReplacementListPage />} />
-        <Route path="replacements/new" element={<ReplacementFormPage />} />
-        <Route path="replacements/:id/edit" element={<ReplacementFormPage />} />
-        <Route path="reports/replacements" element={<ReplacementReportPage />} />
-        <Route path="reports/inventory" element={<InventoryReportPage />} />
-        <Route path="reports/schedule" element={<ScheduleReportPage />} />
-        <Route path="master" element={<MasterDataPage />} />
-        <Route path="master/unit-types" element={<UnitTypeTemplatePage />} />
-        <Route path="users" element={<UserListPage />} />
-        <Route path="users/new" element={<UserFormPage />} />
-        <Route path="users/:id/edit" element={<UserFormPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <ToastProvider>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <AppShell />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="companies" element={<CompanyListPage />} />
+          <Route path="companies/new" element={<CompanyFormPage />} />
+          <Route path="companies/:id/edit" element={<CompanyFormPage />} />
+          <Route path="projects" element={<ProjectListPage />} />
+          <Route path="projects/new" element={<ProjectFormPage />} />
+          <Route path="projects/:id/edit" element={<ProjectFormPage />} />
+          <Route path="units" element={<UnitListPage />} />
+          <Route path="units/new" element={<UnitFormPage />} />
+          <Route path="units/:id" element={<UnitDetailPage />} />
+          <Route path="units/:id/edit" element={<UnitFormPage />} />
+          <Route path="units/:id/tyres" element={<UnitTyresPage />} />
+          <Route path="drivers" element={<DriverListPage />} />
+          <Route path="drivers/new" element={<DriverFormPage />} />
+          <Route path="drivers/:id/edit" element={<DriverFormPage />} />
+          <Route path="tyres" element={<TyreListPage />} />
+          <Route path="tyres/new" element={<TyreFormPage />} />
+          <Route path="tyres/:id" element={<TyreDetailPage />} />
+          <Route path="tyres/:id/edit" element={<TyreFormPage />} />
+          <Route path="replacements" element={<ReplacementListPage />} />
+          <Route path="replacements/new" element={<ReplacementFormPage />} />
+          <Route path="replacements/:id/edit" element={<ReplacementFormPage />} />
+          <Route path="replacement" element={<ReplacementHomePage />} />
+          <Route
+            path="replacement/companies/:companyId/projects"
+            element={<ReplacementCompanyProjectsPage />}
+          />
+          <Route
+            path="replacement/projects/:projectId/units"
+            element={<ReplacementUnitPage />}
+          />
+          <Route path="reports/replacements" element={<ReplacementReportPage />} />
+          <Route path="reports/inventory" element={<InventoryReportPage />} />
+          <Route path="reports/schedule" element={<ScheduleReportPage />} />
+          <Route path="master" element={<MasterDataPage />} />
+          <Route path="master/unit-types" element={<UnitTypeTemplatePage />} />
+          <Route path="users" element={<UserListPage />} />
+          <Route path="users/new" element={<UserFormPage />} />
+          <Route path="users/:id/edit" element={<UserFormPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ToastProvider>
   );
 }

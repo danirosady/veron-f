@@ -9,7 +9,7 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
   tyresData = null,
   onPositionClick,
   mode = 'view',
-  height = 880,
+  height = 1200,
   className = '',
   isDraggingSpare = false,
 }, ref) {

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Download, Package, AlertTriangle, CircleDot, Truck, RefreshCw } from 'lucide-react';
+import { Download, Package, AlertTriangle, Truck, RefreshCw } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
 import FilterBar from '@/components/list/FilterBar';
@@ -317,7 +318,7 @@ export default function InventoryReportPage() {
         <Card padding>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-              <CircleDot className="w-5 h-5 text-gray-500" />
+              <TyreIcon className="w-5 h-5 text-gray-500" />
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500">Scrap</p>

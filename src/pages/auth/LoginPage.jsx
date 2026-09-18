@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CircleDot, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Button from '@/components/ui/Button';
@@ -51,7 +52,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-100 mb-4">
-            <CircleDot className="w-10 h-10 text-primary-600" />
+            <TyreIcon className="w-10 h-10 text-primary-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Tyre Management System</h1>
           <p className="text-gray-500 mt-1">Sign in to your account</p>

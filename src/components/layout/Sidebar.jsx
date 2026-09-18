@@ -6,7 +6,6 @@ import {
   FolderKanban,
   Truck,
   Users,
-  CircleDot,
   RefreshCw,
   BarChart3,
   Database,
@@ -17,10 +16,22 @@ import {
   Boxes,
   CalendarClock,
 } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
+  {
+    section: 'Company',
+    items: [
+      {
+        label: 'Tyre Replacement',
+        path: '/replacement',
+        icon: RefreshCw,
+        roles: ['superadmin', 'admin_company'],
+      },
+    ],
+  },
   {
     section: 'Management',
     items: [
@@ -57,7 +68,7 @@ const navItems = [
       {
         label: 'Tyres',
         path: '/tyres',
-        icon: CircleDot,
+        icon: TyreIcon,
         roles: ['superadmin', 'admin_company'],
       },
       {
@@ -136,7 +147,7 @@ export default function Sidebar({ isOpen, onClose }) {
       <div className="flex items-center justify-between px-4 py-5 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
-            <CircleDot className="w-5 h-5 text-white" />
+            <TyreIcon className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-gray-900">TMS</h1>

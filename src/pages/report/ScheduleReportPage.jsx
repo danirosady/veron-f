@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Download, Calendar, AlertCircle, Clock, RefreshCw, CircleDot } from 'lucide-react';
+import { Download, Calendar, AlertCircle, Clock, RefreshCw } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
 import FilterBar from '@/components/list/FilterBar';
@@ -421,7 +422,7 @@ export default function ScheduleReportPage() {
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}
-          emptyIcon={CircleDot}
+          emptyIcon={TyreIcon}
           emptyTitle="No tyres scheduled"
           emptyMessage="No tyres match the schedule criteria."
           skeletonRows={5}

@@ -90,7 +90,7 @@ function EmptySlot({ id, label, isDragging, isDraggingSpare, tyreWidth, tyreHeig
         showDragHint && 'border border-4 border-dashed border-primary-300 cursor-grab',
         showActiveDrop && 'border border-4 border-primary-500 bg-primary-50/60 cursor-grab scale-105',
       )}
-      style={{ width: 36, height: tyreHeight, ...(showActiveDrop ? { boxShadow: '0 0 0 3px rgba(59,130,246,0.25)' } : showDragHint ? { boxShadow: '0 0 0 2px rgba(59,130,246,0.15)' } : {}) }}
+      style={{ width: 60, height: 120, ...(showActiveDrop ? { boxShadow: '0 0 0 3px rgba(59,130,246,0.25)' } : showDragHint ? { boxShadow: '0 0 0 2px rgba(59,130,246,0.15)' } : {}) }}
     >
       <span className={cn(
         'text-[9px] font-semibold select-none transition-colors',

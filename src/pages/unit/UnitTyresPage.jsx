@@ -1,18 +1,18 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Search,
   Plus,
   X,
-  CircleDot,
   Gauge,
   RefreshCw,
   Edit3,
   Eye,
   GripVertical,
 } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, useDroppable } from '@dnd-kit/core';
 import { useDraggable } from '@dnd-kit/core';
 import Card, { CardHeader, CardTitle, CardBody } from '@/components/ui/Card';
@@ -265,7 +265,11 @@ function findPositionAtCoords(positions, nx, ny) {
 export default function UnitTyresPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+
+  const fromReplacement = location.state?.from === 'replacement';
+  const goBack = () => navigate(-1);
 
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [selectedTyre, setSelectedTyre] = useState(null);
@@ -368,6 +372,7 @@ export default function UnitTyresPage() {
       display_name: unitTypeConfig.display_name,
       max_position: unitTypeConfig.max_position,
       position_config: pos,
+      status: unitTypeConfig.status || 'active',
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unit-tyres', id] });
@@ -602,17 +607,17 @@ export default function UnitTyresPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate(`/units/${id}`)}>
+          <Button variant="ghost" onClick={goBack}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-2xl font-bold text-gray-900">Unit Tyres</h1>
         </div>
         <EmptyState
-          icon={CircleDot}
+          icon={TyreIcon}
           title="Gagal memuat ban unit"
           message="Silakan coba lagi atau kembali ke halaman unit."
           action={
-            <Button variant="outline" onClick={() => navigate(`/units/${id}`)}>
+            <Button variant="outline" onClick={goBack}>
               Kembali ke Unit
             </Button>
           }
@@ -632,7 +637,7 @@ export default function UnitTyresPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate(`/units/${id}`)}>
+            <Button variant="ghost" onClick={goBack}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
@@ -660,8 +665,8 @@ export default function UnitTyresPage() {
             <Button variant="ghost" size="sm" onClick={() => refetch()}>
               <RefreshCw className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate(`/units/${id}`)}>
-              Detail Unit
+            <Button variant="outline" size="sm" onClick={goBack}>
+              Kembali
             </Button>
             <Button
               variant={editMode ? 'primary' : 'outline'}
@@ -679,7 +684,7 @@ export default function UnitTyresPage() {
           <Card className="!p-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
-                <CircleDot className="w-4.5 h-4.5 text-primary-600" />
+                <TyreIcon className="w-4.5 h-4.5 text-primary-600" />
               </div>
               <div>
                 <p className="text-xs text-gray-500">Mounted</p>
@@ -737,7 +742,7 @@ export default function UnitTyresPage() {
                   onPositionClick={handlePositionClick}
                   onPositionChange={handlePositionChange}
                   mode={editMode ? 'edit' : 'view'}
-                  height={520}
+                  height={720}
                   isDraggingSpare={isDraggingSpare}
                 />
               </CardBody>
@@ -835,7 +840,7 @@ export default function UnitTyresPage() {
           onClose={closeActionModal}
           title={
             <div className="flex items-center gap-2">
-              <CircleDot className="w-5 h-5 text-primary-600" />
+              <TyreIcon className="w-5 h-5 text-primary-600" />
               <span>Position {selectedPosition}</span>
               {selectedTyre && <Badge size="sm" variant="mounted">Mounted</Badge>}
               {!selectedTyre && <Badge size="sm" variant="default">Empty</Badge>}
@@ -868,7 +873,7 @@ export default function UnitTyresPage() {
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: 'mount', label: 'Mount', Icon: Plus },
-                  { value: 'dismount', label: 'Dismount', Icon: CircleDot },
+                  { value: 'dismount', label: 'Dismount', Icon: TyreIcon },
                   { value: 'swap', label: 'Swap', Icon: RefreshCw },
                 ].map(({ value, label, Icon }) => (
                   <button

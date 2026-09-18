@@ -1,5 +1,5 @@
 import React from 'react';
-import { CircleDot } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_POSITIONS = ['FL', 'FR', 'RL', 'RR', 'EL', 'ER'];
@@ -27,7 +27,7 @@ export default function TyrePositionSelector({
             disabled && 'opacity-50 cursor-not-allowed'
           )}
         >
-          <CircleDot className={cn('w-5 h-5', selectedPosition === pos && 'text-primary-600')} />
+          <TyreIcon className={cn('w-5 h-5', selectedPosition === pos && 'text-primary-600')} />
           <span className="ml-1">{pos}</span>
         </button>
       ))}

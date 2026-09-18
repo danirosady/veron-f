@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Truck, Eye, CircleDot } from 'lucide-react';
+import { Plus, Pencil, Trash2, Truck, Eye } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
 import FilterBar from '@/components/list/FilterBar';
@@ -174,7 +175,7 @@ export default function UnitListPage() {
         className="p-1.5 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
         title="View Tyres"
       >
-        <CircleDot className="w-4 h-4" />
+        <TyreIcon className="w-4 h-4" />
       </button>
       <button
         onClick={() => navigate(`/units/${row.id}`)}

@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save, X, Plus, CircleDot, RefreshCw, Gauge, Pencil } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, RefreshCw, Gauge, Pencil } from 'lucide-react';
+import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import Card, { CardHeader, CardBody, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -423,7 +424,7 @@ export default function ReplacementFormPage() {
                       ) : (
                         <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 h-[520px] flex items-center justify-center">
                           <EmptyState
-                            icon={CircleDot}
+                            icon={TyreIcon}
                             title="No tyres loaded"
                             message="Select a unit to see its tyre positions."
                           />
@@ -643,7 +644,7 @@ export default function ReplacementFormPage() {
                               }
                               className="flex items-center gap-1 px-2 py-1 rounded-lg border-2 border-dashed border-red-200 bg-red-50 hover:bg-red-100 transition-colors text-xs"
                             >
-                              <CircleDot className="w-3 h-3 text-red-600" />
+                              <TyreIcon className="w-3 h-3 text-red-600" />
                               <span className="text-red-700 font-medium">
                                 {pos.label || pos.position}
                               </span>

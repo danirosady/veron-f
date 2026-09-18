@@ -10,4 +10,5 @@ export const unitsAPI = {
   assignTyre: (unitId, data) => api.post(`/units/${unitId}/tyres`, data),
   removeTyre: (unitId, position) => api.delete(`/units/${unitId}/tyres/${position}`),
   updateHM: (id, data) => api.put(`/units/${id}/hm`, data),
+  getTyreStats: (id) => api.get(`/units/${id}/tyre-stats`),
 };
