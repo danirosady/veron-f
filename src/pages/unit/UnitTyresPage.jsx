@@ -406,6 +406,11 @@ export default function UnitTyresPage() {
   const handlePositionClick = (position, tyre) => {
     setSelectedPosition(position);
     setSelectedTyre(tyre);
+    if (tyre) {
+      setAction('swap');
+    } else {
+      setAction('');
+    }
   };
 
   const handleSelectSpare = (tyre) => {
@@ -417,7 +422,8 @@ export default function UnitTyresPage() {
 
   const handleQueueAdd = () => {
     if (!action || !selectedPosition) return;
-    if ((action === 'mount' || action === 'swap') && !spareTyreId) return;
+    if (action === 'mount' && !spareTyreId) return;
+    if (action === 'swap' && (!spareTyreId || !selectedTyre)) return;
 
     const spareTyre = spareTyres.find((t) => String(t.id) === spareTyreId);
     setActionQueue((prev) => {
@@ -471,7 +477,9 @@ export default function UnitTyresPage() {
 
   const handleDirectSubmit = () => {
     if (!action || !selectedPosition) return;
-    if ((action === 'mount' || action === 'swap') && !spareTyreId) return;
+    if (action === 'mount' && !spareTyreId) return;
+    if (action === 'mount' && selectedTyre) return; // mount on occupied slot must use swap
+    if (action === 'swap' && !spareTyreId) return;
     submitMutation.mutate();
   };
 
@@ -885,7 +893,7 @@ export default function UnitTyresPage() {
                       setRtdInput('');
                       setDismountCondition('spare');
                     }}
-                    disabled={value !== 'mount' && !selectedTyre}
+                    disabled={(value === 'mount' && selectedTyre) || (value !== 'mount' && !selectedTyre)}
                     className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all text-xs font-semibold ${
                       action === value
                         ? 'border-primary-500 bg-primary-50 text-primary-700'
@@ -1078,13 +1086,13 @@ export default function UnitTyresPage() {
 
             {action && (
               <div className="flex gap-2 pt-2 border-t border-gray-200">
-                <Button variant="outline" className="flex-1" onClick={handleQueueAdd}>
+                <Button variant="outline" className="flex-1" onClick={handleQueueAdd} disabled={(action === 'mount' && selectedTyre) || (action === 'mount' && !spareTyreId) || (action === 'swap' && (!spareTyreId || !selectedTyre))}>
                   + Tambah ke Queue
                 </Button>
                 <Button
                   variant="primary"
                   className="flex-1"
-                  disabled={action === 'mount' && !spareTyreId || action === 'swap' && !spareTyreId}
+                  disabled={(action === 'mount' && !spareTyreId) || (action === 'mount' && selectedTyre) || (action === 'swap' && !spareTyreId)}
                   onClick={handleDirectSubmit}
                   loading={submitMutation.isPending}
                 >

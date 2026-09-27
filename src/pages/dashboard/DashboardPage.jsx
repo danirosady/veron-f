@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Building2,
   FolderKanban,
@@ -36,7 +37,7 @@ function StatCard({ icon: Icon, label, value, sublabel, colorClass }) {
   );
 }
 
-function TyreHealthBar({ mounted, spare, scrap, total }) {
+function TyreHealthBar({ mounted, spare, scrap, total, t }) {
   if (!total || total === 0) return null;
   const mountedPct = Math.round((mounted / total) * 100);
   const sparePct = Math.round((spare / total) * 100);
@@ -44,11 +45,11 @@ function TyreHealthBar({ mounted, spare, scrap, total }) {
 
   return (
     <Card>
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">Tyre Status Distribution</h3>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('dashboard.tyreHealth.title')}</h3>
       <div className="space-y-3">
         <div>
           <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Mounted</span>
+            <span>{t('tyre.status.mounted')}</span>
             <span>{mounted} ({mountedPct}%)</span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -57,7 +58,7 @@ function TyreHealthBar({ mounted, spare, scrap, total }) {
         </div>
         <div>
           <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Spare</span>
+            <span>{t('tyre.status.spare')}</span>
             <span>{spare} ({sparePct}%)</span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -66,7 +67,7 @@ function TyreHealthBar({ mounted, spare, scrap, total }) {
         </div>
         <div>
           <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Scrap</span>
+            <span>{t('dashboard.tyreHealth.scrap')}</span>
             <span>{scrap} ({scrapPct}%)</span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -79,6 +80,7 @@ function TyreHealthBar({ mounted, spare, scrap, total }) {
 }
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const { isSuperadmin } = usePermission();
 
   const { data, isLoading } = useQuery({
@@ -110,36 +112,37 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Overview of your tyre management system
+          {t('dashboard.subtitle')}
         </p>
       </div>
 
-      {/* Main Stats */}
+      {/* Main Stats - Company & Project */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={Building2}
-          label="Total Companies"
+          label={t('dashboard.summary.totalCompany')}
           value={stats.total_companies}
           colorClass="text-blue-600"
         />
         <StatCard
           icon={FolderKanban}
-          label="Total Projects"
+          label={t('dashboard.summary.totalProject')}
           value={stats.total_projects}
           colorClass="text-purple-600"
         />
         <StatCard
           icon={Truck}
-          label="Total Units"
+          label={t('dashboard.summary.totalUnit')}
           value={stats.total_units}
           colorClass="text-teal-600"
         />
         <StatCard
           icon={Users}
-          label="Total Drivers"
+          label={t('dashboard.summary.totalDriver')}
           value={stats.total_drivers}
           colorClass="text-orange-600"
         />
@@ -149,53 +152,54 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={TyreIcon}
-          label="Total Tyres"
+          label={t('dashboard.summary.totalTyre')}
           value={stats.total_tyres}
-          sublabel={`${stats.mounted_tyres} mounted, ${stats.spare_tyres} spare`}
+          sublabel={`${stats.mounted_tyres} ${t('tyre.status.mounted').toLowerCase()}, ${stats.spare_tyres} ${t('tyre.status.spare').toLowerCase()}`}
           colorClass="text-indigo-600"
         />
         <StatCard
           icon={TrendingUp}
-          label="Mounted Tyres"
+          label={t('dashboard.summary.mountedTyre')}
           value={stats.mounted_tyres}
           colorClass="text-emerald-600"
         />
         <StatCard
           icon={TyreIcon}
-          label="Spare Tyres"
+          label={t('dashboard.summary.spareTyre')}
           value={stats.spare_tyres}
           colorClass="text-amber-600"
         />
         <StatCard
           icon={RefreshCw}
-          label="Replacements"
+          label={t('menu.replacement')}
           value={stats.total_replacements}
-          sublabel={`${stats.replacements_this_month} this month`}
+          sublabel={`${stats.replacements_this_month} ${t('dashboard.summary.replacementThisMonthSuffix')}`}
           colorClass="text-pink-600"
         />
       </div>
 
-      {/* Tyre Health */}
+      {/* Tyre Health & Quick Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TyreHealthBar
           mounted={stats.mounted_tyres}
           spare={stats.spare_tyres}
           scrap={stats.scrap_tyres}
           total={stats.total_tyres}
+          t={t}
         />
         <Card>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Stats</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('dashboard.quickStats.title')}</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-600">Scrap Tyres</span>
+              <span className="text-sm text-gray-600">{t('dashboard.quickStats.scrapTyres')}</span>
               <span className="text-sm font-semibold text-red-600">{stats.scrap_tyres}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-600">Replacements This Month</span>
+              <span className="text-sm text-gray-600">{t('dashboard.quickStats.replacementsThisMonth')}</span>
               <span className="text-sm font-semibold text-blue-600">{stats.replacements_this_month}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-600">Mount Rate</span>
+              <span className="text-sm text-gray-600">{t('dashboard.quickStats.mountRate')}</span>
               <span className="text-sm font-semibold text-emerald-600">
                 {stats.total_tyres > 0
                   ? `${Math.round((stats.mounted_tyres / stats.total_tyres) * 100)}%`
@@ -203,7 +207,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="text-sm text-gray-600">Avg Tyres per Unit</span>
+              <span className="text-sm text-gray-600">{t('dashboard.quickStats.avgTyresPerUnit')}</span>
               <span className="text-sm font-semibold text-gray-900">
                 {stats.total_units > 0
                   ? (stats.total_tyres / stats.total_units).toFixed(1)

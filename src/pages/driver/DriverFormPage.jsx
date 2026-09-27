@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save } from 'lucide-react';
 import PageHeader from '@/components/list/PageHeader';
 import Card from '@/components/ui/Card';
@@ -26,6 +27,7 @@ const driverSchema = z.object({
 });
 
 export default function DriverFormPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -100,8 +102,8 @@ export default function DriverFormPage() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <PageHeader
-          title={isEdit ? 'Edit Driver' : 'New Driver'}
-          subtitle={isEdit ? 'Update driver information' : 'Add a new driver'}
+          title={isEdit ? t('driver.title.edit') : t('driver.title.create')}
+          subtitle={isEdit ? t('driver.subtitle.edit') : t('driver.subtitle.create')}
         />
       </div>
 
@@ -115,53 +117,53 @@ export default function DriverFormPage() {
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Name" required error={errors.name?.message}>
+                <FormField label={t('driver.label.name')} required error={errors.name?.message}>
                   <Input
-                    placeholder="Driver name"
+                    placeholder={t('driver.placeholder.name')}
                     {...register('name')}
                     error={errors.name?.message}
                   />
                 </FormField>
 
-                <FormField label="Employee ID" error={errors.employee_id?.message}>
+                <FormField label={t('driver.label.employeeId')} error={errors.employee_id?.message}>
                   <Input
-                    placeholder="Employee ID (optional)"
+                    placeholder={t('driver.placeholder.employeeId')}
                     {...register('employee_id')}
                     error={errors.employee_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Company" required error={errors.company_id?.message}>
+                <FormField label={t('driver.label.company')} required error={errors.company_id?.message}>
                   <Select
                     options={companies.map((c) => ({ value: c.id, label: c.name }))}
-                    placeholder="Select company"
+                    placeholder={t('driver.placeholder.selectCompany')}
                     disabled={!isSuperadmin()}
                     {...register('company_id')}
                     error={errors.company_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Phone" error={errors.phone?.message}>
+                <FormField label={t('driver.label.phone')} error={errors.phone?.message}>
                   <Input
-                    placeholder="Phone number"
+                    placeholder={t('driver.placeholder.phone')}
                     {...register('phone')}
                     error={errors.phone?.message}
                   />
                 </FormField>
 
-                <FormField label="License Number" error={errors.license_number?.message}>
+                <FormField label={t('driver.label.licenseNumber')} error={errors.license_number?.message}>
                   <Input
-                    placeholder="Driver's license number"
+                    placeholder={t('driver.placeholder.licenseNumber')}
                     {...register('license_number')}
                     error={errors.license_number?.message}
                   />
                 </FormField>
 
-                <FormField label="Status" error={errors.status?.message}>
+                <FormField label={t('common.label.status')} error={errors.status?.message}>
                   <Select
                     options={[
-                      { value: 'active', label: 'Active' },
-                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'active', label: t('common.status.active') },
+                      { value: 'inactive', label: t('common.status.inactive') },
                     ]}
                     {...register('status')}
                     error={errors.status?.message}
@@ -171,17 +173,17 @@ export default function DriverFormPage() {
 
               {saveMutation.isError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {saveMutation.error?.response?.data?.message || 'Failed to save driver.'}
+                  {saveMutation.error?.response?.data?.message || t('errors.saveError')}
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
                 <Button variant="outline" type="button" onClick={() => navigate('/drivers')}>
-                  Cancel
+                  {t('common.button.cancel')}
                 </Button>
                 <Button type="submit" loading={saveMutation.isLoading}>
                   <Save className="w-4 h-4" />
-                  {isEdit ? 'Update Driver' : 'Create Driver'}
+                  {isEdit ? t('driver.button.update') : t('driver.button.create')}
                 </Button>
               </div>
             </div>

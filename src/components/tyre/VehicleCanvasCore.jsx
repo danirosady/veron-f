@@ -18,7 +18,7 @@ import { getRtdColor } from '@/utils/format';
  */
 export default function VehicleCanvasCore({
   positions = [],
-  unitType = 'ADT_8POS',
+  unitType = 'ADT_10POS',
   onPositionClick,
   selectedPosition,
   enableSwap = false,
@@ -29,20 +29,22 @@ export default function VehicleCanvasCore({
 }) {
   const [imageBounds, setImageBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
 
+  // Store the forwarded ref object so useEffect can write to it.
+  // Declared before the useEffect that reads it.
+  const localOverlayRefRef = useRef(null);
+
   // Register the whole canvas overlay as a single droppable target
   const { setNodeRef } = useDroppable({ id: 'canvas-droppable' });
 
-  // Sync TyreCanvasBase's forwarded ref (which carries overlayRect + imageBounds) to parent
-  useEffect(() => {
-    if (canvasOverlayRef) canvasOverlayRef.current = localOverlayRefRef.current;
-  });
-
-  // Store the forwarded ref object so useEffect can write to it
-  const localOverlayRefRef = useRef(null);
   const localOverlayRef = useCallback((el) => {
     setNodeRef(el);
     localOverlayRefRef.current = el;
   }, [setNodeRef]);
+
+  // Sync TyreCanvasBase's forwarded ref to parent (for drag coord calculations)
+  useEffect(() => {
+    if (canvasOverlayRef) canvasOverlayRef.current = localOverlayRefRef.current;
+  }, []);
 
   // Proportional tyre size: 25% of image width, height = 1.15 × width
   // Fallback to fixed minimum so tyres are visible even before ResizeObserver fires

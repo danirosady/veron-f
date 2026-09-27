@@ -15,7 +15,9 @@ import {
   History,
   Boxes,
   CalendarClock,
+  Settings as SettingsIcon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { TyreIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,29 +81,6 @@ const navItems = [
       },
     ],
   },
-  // {
-  //   section: 'Reports',
-  //   items: [
-  //     {
-  //       label: 'Replacement History',
-  //       path: '/reports/replacements',
-  //       icon: History,
-  //       roles: ['superadmin', 'admin_company'],
-  //     },
-  //     {
-  //       label: 'Inventory',
-  //       path: '/reports/inventory',
-  //       icon: Boxes,
-  //       roles: ['superadmin', 'admin_company'],
-  //     },
-  //     {
-  //       label: 'Schedule',
-  //       path: '/reports/schedule',
-  //       icon: CalendarClock,
-  //       roles: ['superadmin', 'admin_company'],
-  //     },
-  //   ],
-  // },
   {
     section: 'Configuration',
     items: [
@@ -123,6 +102,12 @@ const navItems = [
         icon: UserCog,
         roles: ['superadmin'],
       },
+      {
+        label: 'Settings',
+        path: '/settings',
+        icon: SettingsIcon,
+        roles: ['superadmin', 'admin_company'],
+      },
     ],
   },
 ];
@@ -130,7 +115,27 @@ const navItems = [
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const userRole = user?.role;
+
+  // Translation map for menu items
+  const labelMap = {
+    'Tyre Replacement': t('menu.replacement'),
+    'Dashboard': t('menu.dashboard'),
+    'Companies': t('menu.company'),
+    'Projects': t('menu.project'),
+    'Units': t('menu.unit'),
+    'Drivers': t('menu.driver'),
+    'Tyres': t('menu.tyre'),
+    'Replacements': t('menu.replacement'),
+    'Master Data': t('menu.master'),
+    'Tyre Position Templates': 'Tyre Position Templates',
+    'Users': t('menu.user'),
+    'Settings': t('menu.settings'),
+    'Company': 'Company',
+    'Management': 'Management',
+    'Configuration': 'Configuration',
+  };
 
   const filteredNav = navItems
     .map((section) => ({
@@ -167,7 +172,7 @@ export default function Sidebar({ isOpen, onClose }) {
         {filteredNav.map((section) => (
           <div key={section.section}>
             <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              {section.section}
+              {labelMap[section.section] || section.section}
             </p>
             <div className="space-y-1">
               {section.items.map((item) => {
@@ -192,7 +197,7 @@ export default function Sidebar({ isOpen, onClose }) {
                         isActive && 'text-primary-600'
                       )}
                     />
-                    {item.label}
+                    {labelMap[item.label] || item.label}
                   </NavLink>
                 );
               })}

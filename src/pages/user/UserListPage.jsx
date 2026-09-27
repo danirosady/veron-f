@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, UserCog, Eye } from 'lucide-react';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
-import FilterBar from '@/components/list/FilterBar';
+import SearchFilterBar from '@/components/list/SearchFilterBar';
 import Pagination from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -12,7 +12,6 @@ import Badge from '@/components/ui/Badge';
 import ConfirmDialog from '@/components/form/ConfirmDialog';
 import { usersAPI } from '@/api/users';
 import { usePermission } from '@/hooks/usePermission';
-import { COMMON_STATUS_OPTIONS } from '@/utils/constants';
 import { titleCase } from '@/utils/format';
 
 export default function UserListPage() {
@@ -20,7 +19,9 @@ export default function UserListPage() {
   const queryClient = useQueryClient();
   const { isSuperadmin } = usePermission();
 
-  const [filters, setFilters] = useState({ role: '', status: '' });
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
+  const [role, setRole] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [page, setPage] = useState(1);
@@ -29,10 +30,10 @@ export default function UserListPage() {
 
   const params = useMemo(() => {
     const p = { page, per_page: perPage, sort_by: sortBy, sort_order: sortOrder };
-    if (filters.role) p.role = filters.role;
-    if (filters.status) p.status = filters.status;
+    if (role && role !== 'all') p.role = role;
+    if (status && status !== 'all') p.status = status;
     return p;
-  }, [page, perPage, sortBy, sortOrder, filters]);
+  }, [page, perPage, sortBy, sortOrder, role, status]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', params],
@@ -53,14 +54,20 @@ export default function UserListPage() {
   const totalItems = meta.total ?? users.length;
   const totalPages = meta.last_page ?? Math.max(1, Math.ceil(totalItems / perPage));
 
+  // Client-side search filter
+  const filtered = useMemo(() => {
+    if (!search.trim()) return users;
+    const q = search.toLowerCase();
+    return users.filter(
+      (u) =>
+        (u.name || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q)
+    );
+  }, [users, search]);
+
   const handleSort = (key, order) => {
     setSortBy(key);
     setSortOrder(order);
-    setPage(1);
-  };
-
-  const handleResetFilters = () => {
-    setFilters({ role: '', status: '' });
     setPage(1);
   };
 
@@ -146,33 +153,38 @@ export default function UserListPage() {
         }
       />
 
-      <FilterBar
-        filters={[
-          {
-            key: 'role',
-            label: 'Role',
-            type: 'select',
-            options: [
-              { value: 'superadmin', label: 'Superadmin' },
-              { value: 'admin_company', label: 'Admin Company' },
-            ],
-          },
-          {
-            key: 'status',
-            label: 'Status',
-            type: 'select',
-            options: COMMON_STATUS_OPTIONS,
-          },
-        ]}
-        values={filters}
-        onChange={(v) => { setFilters(v); setPage(1); }}
-        onReset={handleResetFilters}
-      />
-
       <Card padding={false}>
+        <div className="p-4 space-y-3">
+          <SearchFilterBar
+            search={search}
+            onSearchChange={(v) => { setSearch(v); setPage(1); }}
+            searchPlaceholder="Search by name or email..."
+            statusValue={status}
+            onStatusChange={(v) => { setStatus(v); setPage(1); }}
+            statusOptions={[
+              { value: 'all', label: 'All' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+            ]}
+          >
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600 whitespace-nowrap">Role:</label>
+              <select
+                value={role}
+                onChange={(e) => { setRole(e.target.value); setPage(1); }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-40"
+              >
+                <option value="all">All Roles</option>
+                <option value="superadmin">Superadmin</option>
+                <option value="admin_company">Admin Company</option>
+              </select>
+            </div>
+          </SearchFilterBar>
+        </div>
+
         <DataTable
           columns={columns}
-          data={users}
+          data={filtered}
           loading={isLoading}
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -180,9 +192,9 @@ export default function UserListPage() {
           actions={actions}
           emptyIcon={UserCog}
           emptyTitle="No users found"
-          emptyMessage="There are no users matching your filters yet."
-          emptyAction={isSuperadmin() ? () => navigate('/users/new') : undefined}
-          emptyActionLabel={isSuperadmin() ? 'Add User' : undefined}
+          emptyMessage={search ? "No users match your search." : "There are no users yet."}
+          emptyAction={search ? undefined : (isSuperadmin() ? () => navigate('/users/new') : undefined)}
+          emptyActionLabel={search ? undefined : (isSuperadmin() ? "Add User" : undefined)}
         />
         {totalItems > 0 && (
           <div className="px-4 py-3 border-t border-gray-200">

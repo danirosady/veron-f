@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, Truck, Eye } from 'lucide-react';
 import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
-import FilterBar from '@/components/list/FilterBar';
+import SearchFilterBar from '@/components/list/SearchFilterBar';
 import Pagination from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -18,8 +18,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import { formatNumber, titleCase } from '@/utils/format';
 
-const UNIT_STATUS_OPTIONS = [
-  { value: '', label: 'All Statuses' },
+const UNIT_STATUS_PILLS = [
+  { value: 'all', label: 'All' },
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
   { value: 'maintenance', label: 'Maintenance' },
@@ -31,11 +31,10 @@ export default function UnitListPage() {
   const { user } = useAuth();
   const { isSuperadmin } = usePermission();
 
-  const [filters, setFilters] = useState({
-    status: '',
-    company_id: '',
-    project_id: '',
-  });
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
+  const [companyId, setCompanyId] = useState('');
+  const [projectId, setProjectId] = useState('');
   const [sortBy, setSortBy] = useState('unit_id');
   const [sortOrder, setSortOrder] = useState('asc');
   const [page, setPage] = useState(1);
@@ -44,8 +43,8 @@ export default function UnitListPage() {
 
   const effectiveCompanyId = useMemo(() => {
     if (!isSuperadmin()) return user?.company_id || '';
-    return filters.company_id;
-  }, [filters.company_id, isSuperadmin, user]);
+    return companyId;
+  }, [companyId, isSuperadmin, user]);
 
   const params = useMemo(() => {
     const p = {
@@ -54,11 +53,11 @@ export default function UnitListPage() {
       sort_by: sortBy,
       sort_order: sortOrder,
     };
-    if (filters.status) p.status = filters.status;
+    if (status && status !== 'all') p.status = status;
     if (effectiveCompanyId) p.company_id = effectiveCompanyId;
-    if (filters.project_id) p.project_id = filters.project_id;
+    if (projectId) p.project_id = projectId;
     return p;
-  }, [page, perPage, sortBy, sortOrder, filters, effectiveCompanyId]);
+  }, [page, perPage, sortBy, sortOrder, status, effectiveCompanyId, projectId]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['units', params],
@@ -97,23 +96,24 @@ export default function UnitListPage() {
   const companies = companiesData?.data?.data || companiesData?.data || [];
   const projects = projectsData?.data?.data || projectsData?.data || [];
 
-  const companyOptions = [
-    { value: '', label: 'All Companies' },
-    ...companies.map((c) => ({ value: c.id, label: c.name })),
-  ];
-  const projectOptions = [
-    { value: '', label: 'All Projects' },
-    ...projects.map((p) => ({ value: p.id, label: p.name })),
-  ];
+  const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
+  const projectOptions = projects.map((p) => ({ value: p.id, label: p.name }));
+
+  // Client-side search filter
+  const filtered = useMemo(() => {
+    if (!search.trim()) return units;
+    const q = search.toLowerCase();
+    return units.filter(
+      (u) =>
+        (u.unit_id || '').toLowerCase().includes(q) ||
+        (u.plate_number || '').toLowerCase().includes(q) ||
+        (u.unit_model || '').toLowerCase().includes(q)
+    );
+  }, [units, search]);
 
   const handleSort = (key, order) => {
     setSortBy(key);
     setSortOrder(order);
-    setPage(1);
-  };
-
-  const handleResetFilters = () => {
-    setFilters({ status: '', company_id: '', project_id: '' });
     setPage(1);
   };
 
@@ -201,29 +201,6 @@ export default function UnitListPage() {
     </div>
   );
 
-  const filterDefs = [
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: UNIT_STATUS_OPTIONS,
-    },
-  ];
-  if (isSuperadmin()) {
-    filterDefs.push({
-      key: 'company_id',
-      label: 'Company',
-      type: 'select',
-      options: companyOptions,
-    });
-  }
-  filterDefs.push({
-    key: 'project_id',
-    label: 'Project',
-    type: 'select',
-    options: projectOptions,
-  });
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -237,17 +214,50 @@ export default function UnitListPage() {
         }
       />
 
-      <FilterBar
-        filters={filterDefs}
-        values={filters}
-        onChange={(v) => { setFilters(v); setPage(1); }}
-        onReset={handleResetFilters}
-      />
-
       <Card padding={false}>
+        <div className="p-4 space-y-3">
+          <SearchFilterBar
+            search={search}
+            onSearchChange={(v) => { setSearch(v); setPage(1); }}
+            searchPlaceholder="Search by unit ID, plate, model..."
+            statusValue={status}
+            onStatusChange={(v) => { setStatus(v); setPage(1); }}
+            statusOptions={UNIT_STATUS_PILLS}
+          >
+            {isSuperadmin() && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-600 whitespace-nowrap">Company:</label>
+                <select
+                  value={companyId}
+                  onChange={(e) => { setCompanyId(e.target.value); setPage(1); }}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-40"
+                >
+                  <option value="">All Companies</option>
+                  {companyOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600 whitespace-nowrap">Project:</label>
+              <select
+                value={projectId}
+                onChange={(e) => { setProjectId(e.target.value); setPage(1); }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-40"
+              >
+                <option value="">All Projects</option>
+                {projectOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </SearchFilterBar>
+        </div>
+
         <DataTable
           columns={columns}
-          data={units}
+          data={filtered}
           loading={isLoading}
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -255,9 +265,9 @@ export default function UnitListPage() {
           actions={actions}
           emptyIcon={Truck}
           emptyTitle="No units found"
-          emptyMessage="There are no units matching your filters yet."
-          emptyAction={() => navigate('/units/new')}
-          emptyActionLabel="Add Unit"
+          emptyMessage={search || status !== 'all' ? "No units match your search or filter." : "There are no units yet."}
+          emptyAction={search ? undefined : () => navigate('/units/new')}
+          emptyActionLabel={search ? undefined : "Add Unit"}
         />
         {totalItems > 0 && (
           <div className="px-4 py-3 border-t border-gray-200">

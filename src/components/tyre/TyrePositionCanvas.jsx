@@ -15,7 +15,7 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
 }, ref) {
   const [selectedPosition, setSelectedPosition] = useState(null);
 
-  const unitType = unitTypeConfig?.unit_type || 'ADT_8POS';
+  const unitType = unitTypeConfig?.unit_type || 'ADT_10POS';
 
   // Merge positions with tyre data
   const mergedPositions = useMemo(() => {

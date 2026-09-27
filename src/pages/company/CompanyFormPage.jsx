@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save } from 'lucide-react';
 import PageHeader from '@/components/list/PageHeader';
 import Card from '@/components/ui/Card';
@@ -25,6 +26,7 @@ const companySchema = z.object({
 });
 
 export default function CompanyFormPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -89,8 +91,8 @@ export default function CompanyFormPage() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <PageHeader
-          title={isEdit ? 'Edit Company' : 'New Company'}
-          subtitle={isEdit ? 'Update company information' : 'Add a new company to the system'}
+          title={isEdit ? t('company.title.edit') : t('company.title.create')}
+          subtitle={isEdit ? t('company.subtitle.edit') : t('company.subtitle.create')}
         />
       </div>
 
@@ -106,52 +108,52 @@ export default function CompanyFormPage() {
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Company Name" required error={errors.name?.message}>
+                <FormField label={t('company.label.name')} required error={errors.name?.message}>
                   <Input
-                    placeholder="Enter company name"
+                    placeholder={t('company.placeholder.name')}
                     {...register('name')}
                     error={errors.name?.message}
                   />
                 </FormField>
 
-                <FormField label="Code" error={errors.code?.message}>
+                <FormField label={t('company.label.code')} error={errors.code?.message}>
                   <Input
-                    placeholder="Company code (optional)"
+                    placeholder={t('company.placeholder.code')}
                     {...register('code')}
                     error={errors.code?.message}
                   />
                 </FormField>
 
-                <FormField label="Contact Person" error={errors.contact_person?.message}>
+                <FormField label={t('company.label.contactPerson')} error={errors.contact_person?.message}>
                   <Input
-                    placeholder="Contact person name"
+                    placeholder={t('company.placeholder.contactPerson')}
                     {...register('contact_person')}
                     error={errors.contact_person?.message}
                   />
                 </FormField>
 
-                <FormField label="Phone" error={errors.phone?.message}>
+                <FormField label={t('company.label.phone')} error={errors.phone?.message}>
                   <Input
-                    placeholder="Phone number"
+                    placeholder={t('company.placeholder.phone')}
                     {...register('phone')}
                     error={errors.phone?.message}
                   />
                 </FormField>
 
-                <FormField label="Email" error={errors.email?.message}>
+                <FormField label={t('company.label.email')} error={errors.email?.message}>
                   <Input
                     type="email"
-                    placeholder="company@example.com"
+                    placeholder={t('company.placeholder.email')}
                     {...register('email')}
                     error={errors.email?.message}
                   />
                 </FormField>
 
-                <FormField label="Status" error={errors.status?.message}>
+                <FormField label={t('common.label.status')} error={errors.status?.message}>
                   <Select
                     options={[
-                      { value: 'active', label: 'Active' },
-                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'active', label: t('common.status.active') },
+                      { value: 'inactive', label: t('common.status.inactive') },
                     ]}
                     {...register('status')}
                     error={errors.status?.message}
@@ -159,10 +161,10 @@ export default function CompanyFormPage() {
                 </FormField>
               </div>
 
-              <FormField label="Address" error={errors.address?.message}>
+              <FormField label={t('company.label.address')} error={errors.address?.message}>
                 <Textarea
                   rows={3}
-                  placeholder="Company address (optional)"
+                  placeholder={t('company.placeholder.address')}
                   {...register('address')}
                   error={errors.address?.message}
                 />
@@ -170,17 +172,17 @@ export default function CompanyFormPage() {
 
               {saveMutation.isError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {saveMutation.error?.response?.data?.message || 'Failed to save company.'}
+                  {saveMutation.error?.response?.data?.message || t('errors.saveError')}
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
                 <Button variant="outline" type="button" onClick={() => navigate('/companies')}>
-                  Cancel
+                  {t('common.button.cancel')}
                 </Button>
                 <Button type="submit" loading={saveMutation.isLoading}>
                   <Save className="w-4 h-4" />
-                  {isEdit ? 'Update Company' : 'Create Company'}
+                  {isEdit ? t('company.button.update') : t('company.button.create')}
                 </Button>
               </div>
             </div>

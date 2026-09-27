@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save } from 'lucide-react';
 import PageHeader from '@/components/list/PageHeader';
 import Card from '@/components/ui/Card';
@@ -28,6 +29,7 @@ const projectSchema = z.object({
 });
 
 export default function ProjectFormPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -105,8 +107,8 @@ export default function ProjectFormPage() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <PageHeader
-          title={isEdit ? 'Edit Project' : 'New Project'}
-          subtitle={isEdit ? 'Update project information' : 'Create a new project'}
+          title={isEdit ? t('project.title.edit') : t('project.title.create')}
+          subtitle={isEdit ? t('project.subtitle.edit') : t('project.subtitle.create')}
         />
       </div>
 
@@ -120,45 +122,45 @@ export default function ProjectFormPage() {
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Project Name" required error={errors.name?.message}>
+                <FormField label={t('project.label.name')} required error={errors.name?.message}>
                   <Input
-                    placeholder="Enter project name"
+                    placeholder={t('project.placeholder.name')}
                     {...register('name')}
                     error={errors.name?.message}
                   />
                 </FormField>
 
-                <FormField label="Company" required error={errors.company_id?.message}>
+                <FormField label={t('project.label.company')} required error={errors.company_id?.message}>
                   <Select
                     options={companyOptions}
-                    placeholder="Select company"
+                    placeholder={t('company.placeholder.name')}
                     disabled={!isSuperadmin()}
                     {...register('company_id')}
                     error={errors.company_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Location" error={errors.location?.message}>
+                <FormField label={t('project.label.location')} error={errors.location?.message}>
                   <Input
-                    placeholder="Project location"
+                    placeholder={t('project.placeholder.location')}
                     {...register('location')}
                     error={errors.location?.message}
                   />
                 </FormField>
 
-                <FormField label="Status" error={errors.status?.message}>
+                <FormField label={t('common.label.status')} error={errors.status?.message}>
                   <Select
                     options={[
-                      { value: 'active', label: 'Active' },
-                      { value: 'inactive', label: 'Inactive' },
-                      { value: 'completed', label: 'Completed' },
+                      { value: 'active', label: t('common.status.active') },
+                      { value: 'inactive', label: t('common.status.inactive') },
+                      { value: 'completed', label: t('common.status.completed') },
                     ]}
                     {...register('status')}
                     error={errors.status?.message}
                   />
                 </FormField>
 
-                <FormField label="Start Date" error={errors.start_date?.message}>
+                <FormField label={t('project.label.startDate')} error={errors.start_date?.message}>
                   <Input
                     type="date"
                     {...register('start_date')}
@@ -166,7 +168,7 @@ export default function ProjectFormPage() {
                   />
                 </FormField>
 
-                <FormField label="End Date" error={errors.end_date?.message}>
+                <FormField label={t('project.label.endDate')} error={errors.end_date?.message}>
                   <Input
                     type="date"
                     {...register('end_date')}
@@ -175,10 +177,10 @@ export default function ProjectFormPage() {
                 </FormField>
               </div>
 
-              <FormField label="Description" error={errors.description?.message}>
+              <FormField label={t('project.label.description')} error={errors.description?.message}>
                 <Textarea
                   rows={3}
-                  placeholder="Project description (optional)"
+                  placeholder={t('project.placeholder.description')}
                   {...register('description')}
                   error={errors.description?.message}
                 />
@@ -186,17 +188,17 @@ export default function ProjectFormPage() {
 
               {saveMutation.isError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {saveMutation.error?.response?.data?.message || 'Failed to save project.'}
+                  {saveMutation.error?.response?.data?.message || t('errors.saveError')}
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
                 <Button variant="outline" type="button" onClick={() => navigate('/projects')}>
-                  Cancel
+                  {t('common.button.cancel')}
                 </Button>
                 <Button type="submit" loading={saveMutation.isLoading}>
                   <Save className="w-4 h-4" />
-                  {isEdit ? 'Update Project' : 'Create Project'}
+                  {isEdit ? t('project.button.update') : t('project.button.create')}
                 </Button>
               </div>
             </div>

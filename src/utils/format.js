@@ -14,7 +14,14 @@ export const formatDate = (date) => {
 export const formatDateTime = (date) => {
   if (!date) return '-';
   try {
-    return new Date(date).toLocaleString('id-ID');
+    return new Date(date).toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   } catch {
     return '-';
   }
@@ -45,11 +52,11 @@ export const calculateRTDAvg = (rtd1, rtd2) => {
 };
 
 export const getRtdColor = (rtd) => {
-  if (rtd === null || rtd === undefined) return 'default';
-  if (rtd < 5) return 'scrap';
-  if (rtd < 10) return 'dismounted';
-  if (rtd < 20) return 'warning';
-  return 'spare';
+  if (rtd === null || rtd === undefined) return '#94a3b8'; // gray-400
+  if (rtd < 5)  return '#ef4444'; // red-500
+  if (rtd < 10) return '#f97316'; // orange-500
+  if (rtd < 20) return '#eab308'; // yellow-500
+  return '#22c55e'; // green-500
 };
 
 export const capitalize = (str) => {
@@ -64,4 +71,16 @@ export const titleCase = (str) => {
     .split(/[\s_-]+/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+};
+
+export const formatDuration = (date) => {
+  if (!date) return '-';
+  try {
+    const ms = new Date() - new Date(date);
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    return `${days} Days, ${hours} Hours`;
+  } catch {
+    return '-';
+  }
 };

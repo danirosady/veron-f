@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Search, Building2, MapPin, FolderKanban } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -9,7 +10,7 @@ import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import { companiesAPI } from '@/api/companies';
 
-function CompanyCard({ company, onClick }) {
+function CompanyCard({ company, onClick, t }) {
   return (
     <Card
       className="hover:shadow-md cursor-pointer transition-shadow"
@@ -25,7 +26,7 @@ function CompanyCard({ company, onClick }) {
             <h3 className="font-semibold text-gray-900">{company.name}</h3>
           </div>
           <Badge variant={company.status === 'active' ? 'active' : 'inactive'}>
-            {company.status === 'active' ? 'Active' : 'Inactive'}
+            {company.status === 'active' ? t('common.status.active') : t('common.status.inactive')}
           </Badge>
         </div>
 
@@ -38,7 +39,7 @@ function CompanyCard({ company, onClick }) {
 
         <div className="flex items-center gap-2 text-sm text-gray-700 font-medium mt-3 pt-3 border-t border-gray-100">
           <FolderKanban className="w-4 h-4 text-gray-400" />
-          <span>{company.total_projects} projects</span>
+          <span>{company.total_projects} {t('replacement.label.projects')}</span>
         </div>
       </div>
     </Card>
@@ -46,6 +47,7 @@ function CompanyCard({ company, onClick }) {
 }
 
 export default function ReplacementCompanyPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
@@ -62,16 +64,16 @@ export default function ReplacementCompanyPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Select Company</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('replacement.title.selectCompany')}</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Choose a company to view its projects for tyre replacement
+          {t('replacement.subtitle.company')}
         </p>
       </div>
 
       <div className="mb-4 relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
-          placeholder="Search company..."
+          placeholder={t('replacement.placeholder.searchCompany')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 max-w-md"
@@ -87,8 +89,8 @@ export default function ReplacementCompanyPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Building2}
-          title="No companies found"
-          description={search ? 'Try a different search term' : 'No companies available'}
+          title={t('replacement.empty.noCompany')}
+          description={search ? t('replacement.empty.noProjectFilter') : t('replacement.empty.noCompanyDesc')}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -97,6 +99,7 @@ export default function ReplacementCompanyPage() {
               key={company.id}
               company={company}
               onClick={() => navigate(`/replacement/companies/${company.id}/projects`)}
+              t={t}
             />
           ))}
         </div>

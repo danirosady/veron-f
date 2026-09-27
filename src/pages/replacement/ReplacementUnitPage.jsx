@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
-  Search,
   Truck,
   ChevronRight,
   ArrowLeft,
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
+import SearchFilterBar from '@/components/list/SearchFilterBar';
 import { unitsAPI } from '@/api/units';
 import { TyreIcon } from '@/components/icons';
 
-function UnitCard({ unit, onClick }) {
+function UnitCard({ unit, onClick, t }) {
   const { data: statsData } = useQuery({
     queryKey: ['unit-tyre-stats', unit.id],
     queryFn: () => unitsAPI.getTyreStats(unit.id),
@@ -42,8 +42,8 @@ function UnitCard({ unit, onClick }) {
               <p className="text-xs text-gray-400">{unit.plate_number}</p>
             )}
           </div>
-          <Badge variant={unit.status === 'active' ? 'active' : 'inactive'}>
-            {unit.status === 'active' ? 'Active' : 'Inactive'}
+          <Badge variant={unit.status === 'active' ? 'active' : unit.status === 'maintenance' ? 'maintenance' : 'inactive'}>
+            {unit.status === 'active' ? t('common.status.active') : unit.status === 'maintenance' ? t('common.status.maintenance') : t('common.status.inactive')}
           </Badge>
         </div>
 
@@ -52,21 +52,21 @@ function UnitCard({ unit, onClick }) {
         <div className="flex flex-wrap gap-1.5 mb-3">
           {good > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-xs font-medium border border-green-200">
-              Good: {good}
+              {t('replacement.label.good')}: {good}
             </span>
           )}
           {warning > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
-              Warn: {warning}
+              {t('replacement.label.warning')}: {warning}
             </span>
           )}
           {critical > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-xs font-medium border border-red-200">
-              Crit: {critical}
+              {t('replacement.label.critical')}: {critical}
             </span>
           )}
           {good === 0 && warning === 0 && critical === 0 && (
-            <span className="text-xs text-gray-400">No tyres</span>
+            <span className="text-xs text-gray-400">{t('replacement.label.noTyres')}</span>
           )}
         </div>
 
@@ -77,7 +77,7 @@ function UnitCard({ unit, onClick }) {
             <span className="text-gray-400">/ {unit.max_position}</span>
           </div>
           {spare > 0 && (
-            <span className="text-xs text-gray-400">· {spare} spare</span>
+            <span className="text-xs text-gray-400">· {spare} {t('replacement.label.spare')}</span>
           )}
         </div>
       </div>
@@ -108,13 +108,16 @@ function UnitCardSkeleton() {
 }
 
 export default function ReplacementUnitPage() {
+  const { t } = useTranslation();
+  const { projectId, companyId } = useParams();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const { data: unitsData, isLoading } = useQuery({
-    queryKey: ['replacement-units'],
-    queryFn: () => unitsAPI.list({ per_page: 100 }),
+    queryKey: ['replacement-units', projectId],
+    queryFn: () => unitsAPI.list({ per_page: 100, project_id: projectId }),
+    enabled: !!projectId,
   });
 
   const units = unitsData?.data?.data ?? [];
@@ -130,9 +133,9 @@ export default function ReplacementUnitPage() {
   });
 
   const tabs = [
-    { label: 'All', value: 'all' },
-    { label: 'Active', value: 'active' },
-    { label: 'Inactive', value: 'inactive' },
+    { label: t('replacement.tab.all'), value: 'all' },
+    { label: t('replacement.tab.active'), value: 'active' },
+    { label: t('replacement.tab.inactive'), value: 'inactive' },
   ];
 
   return (
@@ -140,46 +143,30 @@ export default function ReplacementUnitPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
           <Link
-            to="/replacement"
+            to={`/replacement/companies/${companyId}/projects`}
             className="flex items-center gap-1 hover:text-gray-700"
           >
             <ArrowLeft className="w-4 h-4" />
-            Projects
+            {t('replacement.nav.projects')}
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Units</span>
+          <span className="text-gray-900 font-medium">{t('replacement.nav.units')}</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Select Unit</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('replacement.title.selectUnit')}</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Choose a unit to manage tyre replacement
+          {t('replacement.subtitle.unit')}
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search unit ID, plate, or model..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                statusFilter === tab.value
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="mb-4">
+        <SearchFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t('replacement.placeholder.searchUnit')}
+          statusValue={statusFilter}
+          onStatusChange={setStatusFilter}
+          statusOptions={tabs}
+        />
       </div>
 
       {isLoading ? (
@@ -191,8 +178,8 @@ export default function ReplacementUnitPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Truck}
-          title="No units found"
-          description={search || statusFilter !== 'all' ? 'Try adjusting your filters' : 'No units in this project'}
+          title={t('replacement.empty.noUnit')}
+          description={search || statusFilter !== 'all' ? t('replacement.empty.noUnitFilter') : t('replacement.empty.noUnitDesc')}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -201,6 +188,7 @@ export default function ReplacementUnitPage() {
               key={unit.id}
               unit={unit}
               onClick={() => navigate(`/units/${unit.id}/tyres`, { state: { from: 'replacement' } })}
+              t={t}
             />
           ))}
         </div>

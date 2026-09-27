@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Menu, ChevronDown, User, LogOut, Settings } from 'lucide-react';
+import { Menu, ChevronDown, User, LogOut, Settings, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 
 export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -17,7 +20,7 @@ export default function Header({ onMenuClick }) {
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
 
   const breadcrumbs = [
-    { label: 'Home', path: '/' },
+    { label: t('menu.dashboard'), path: '/' },
     ...pathSegments.map((seg, idx) => ({
       label: seg.replace(/-/g, ' '),
       path: '/' + pathSegments.slice(0, idx + 1).join('/'),
@@ -73,6 +76,18 @@ export default function Header({ onMenuClick }) {
           </nav>
         </div>
 
+        {/* Language Switcher */}
+        <div className="flex items-center gap-3 mr-4">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
+            <Globe className="w-4 h-4 text-gray-500" />
+            <LanguageSwitcher />
+          </div>
+          {/* Mobile language switcher */}
+          <div className="sm:hidden">
+            <LanguageSwitcher variant="buttons" className="text-xs" />
+          </div>
+        </div>
+
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -102,7 +117,7 @@ export default function Header({ onMenuClick }) {
                 className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 <User className="w-4 h-4" />
-                Profile
+                {t('menu.profile')}
               </button>
 
               <button
@@ -110,7 +125,7 @@ export default function Header({ onMenuClick }) {
                 className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 <Settings className="w-4 h-4" />
-                Settings
+                {t('menu.settings')}
               </button>
 
               <div className="border-t border-gray-100 mt-2 pt-2">
@@ -119,7 +134,7 @@ export default function Header({ onMenuClick }) {
                   className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 >
                   <LogOut className="w-4 h-4" />
-                  Sign out
+                  {t('menu.logout')}
                 </button>
               </div>
             </div>

@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Eye, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
 import { TyreIcon } from '@/components/icons';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
-import FilterBar from '@/components/list/FilterBar';
-import SearchInput from '@/components/form/SearchInput';
+import SearchFilterBar from '@/components/list/SearchFilterBar';
 import Pagination from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -20,19 +20,33 @@ import { usePermission } from '@/hooks/usePermission';
 import { TYRE_STATUS_OPTIONS } from '@/utils/constants';
 import { formatNumber, getRtdColor } from '@/utils/format';
 
+const TYRE_STATUS_PILLS_ID = [
+  { value: 'spare', label: 'Cadangan' },
+  { value: 'mounted', label: 'Terpasang' },
+  { value: 'dismounted', label: 'Lepas' },
+  { value: 'scrap', label: 'Rusak' },
+];
+
+const TYRE_STATUS_PILLS_EN = [
+  { value: 'spare', label: 'Spare' },
+  { value: 'mounted', label: 'Mounted' },
+  { value: 'dismounted', label: 'Dismounted' },
+  { value: 'scrap', label: 'Scrap' },
+];
+
 export default function TyreListPage() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { isSuperadmin } = usePermission();
+  const isIndonesian = i18n.language === 'id';
 
-  const [filters, setFilters] = useState({
-    status: '',
-    company_id: '',
-    brand_id: '',
-    size_id: '',
-  });
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
+  const [companyId, setCompanyId] = useState('');
+  const [brandId, setBrandId] = useState('');
+  const [sizeId, setSizeId] = useState('');
   const [sortBy, setSortBy] = useState('serial_number');
   const [sortOrder, setSortOrder] = useState('asc');
   const [page, setPage] = useState(1);
@@ -41,8 +55,8 @@ export default function TyreListPage() {
 
   const effectiveCompanyId = useMemo(() => {
     if (!isSuperadmin()) return user?.company_id || '';
-    return filters.company_id;
-  }, [filters.company_id, isSuperadmin, user]);
+    return companyId;
+  }, [companyId, isSuperadmin, user]);
 
   const params = useMemo(() => {
     const p = {
@@ -51,13 +65,13 @@ export default function TyreListPage() {
       sort_by: sortBy,
       sort_order: sortOrder,
     };
-    if (filters.status) p.status = filters.status;
-    if (filters.brand_id) p.brand_id = filters.brand_id;
-    if (filters.size_id) p.size_id = filters.size_id;
+    if (status && status !== 'all') p.status = status;
+    if (brandId) p.brand_id = brandId;
+    if (sizeId) p.size_id = sizeId;
     if (effectiveCompanyId) p.company_id = effectiveCompanyId;
-    if (search) p.search = search;
+    if (search.trim()) p.search = search.trim();
     return p;
-  }, [page, perPage, sortBy, sortOrder, filters, effectiveCompanyId, search]);
+  }, [page, perPage, sortBy, sortOrder, status, brandId, sizeId, effectiveCompanyId, search]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['tyres', params],
@@ -98,44 +112,51 @@ export default function TyreListPage() {
   const brands = brandsData?.data?.data || brandsData?.data || [];
   const sizes = sizesData?.data?.data || sizesData?.data || [];
 
+  const brandOptions = brands.map((b) => ({ value: b.id, label: b.name }));
+  const sizeOptions = sizes.map((s) => ({ value: s.id, label: s.name }));
+  const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
+
+  const statusPills = isIndonesian ? TYRE_STATUS_PILLS_ID : TYRE_STATUS_PILLS_EN;
+
   const handleSort = (key, order) => {
     setSortBy(key);
     setSortOrder(order);
     setPage(1);
   };
 
-  const handleResetFilters = () => {
-    setFilters({ status: '', company_id: '', brand_id: '', size_id: '' });
-    setSearch('');
-    setPage(1);
+  const getStatusBadge = (statusValue) => {
+    const statusLabel = statusValue
+      ? t(`tyre.status.${statusValue}`, statusValue)
+      : '-';
+    return <Badge variant={statusValue || 'default'} size="sm">{statusLabel}</Badge>;
   };
 
   const columns = [
     {
       key: 'barcode',
-      header: 'Barcode',
+      header: t('tyre.label.barcode'),
       sortable: true,
       render: (v) => <span className="font-mono text-xs">{v || '-'}</span>,
     },
     {
       key: 'serial_number',
-      header: 'Serial Number',
+      header: t('tyre.label.serialNumber'),
       sortable: true,
       render: (v) => <span className="font-medium text-gray-900">{v}</span>,
     },
     {
       key: 'brand',
-      header: 'Brand',
+      header: t('tyre.label.brand'),
       render: (_, row) => row.brand?.name || row.brand_name || '-',
     },
     {
       key: 'size',
-      header: 'Size',
+      header: t('tyre.label.size'),
       render: (_, row) => row.size?.name || row.size_name || '-',
     },
     {
       key: 'pattern',
-      header: 'Pattern',
+      header: t('tyre.label.pattern'),
       render: (_, row) => row.pattern?.name || row.pattern_name || '-',
     },
     {
@@ -161,13 +182,13 @@ export default function TyreListPage() {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('common.label.status'),
       sortable: true,
-      render: (v) => <Badge variant={v || 'default'} size="sm">{v || '-'}</Badge>,
+      render: (v) => getStatusBadge(v),
     },
     {
       key: 'unit_id',
-      header: 'Mounted Unit',
+      header: t('tyre.label.mountedUnit'),
       render: (_, row) => {
         const u = row.unit;
         if (!u) return '-';
@@ -176,7 +197,7 @@ export default function TyreListPage() {
     },
     {
       key: 'mounted_position',
-      header: 'Position',
+      header: t('tyre.label.position'),
       render: (v) => v || '-',
     },
   ];
@@ -186,83 +207,94 @@ export default function TyreListPage() {
       <button
         onClick={() => navigate(`/tyres/${row.id}`)}
         className="p-1.5 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-        title="View"
+        title={t('common.button.view')}
       >
         <Eye className="w-4 h-4" />
       </button>
       <button
         onClick={() => navigate(`/tyres/${row.id}/edit`)}
         className="p-1.5 rounded text-blue-600 hover:bg-blue-50"
-        title="Edit"
+        title={t('common.button.edit')}
       >
         <Pencil className="w-4 h-4" />
       </button>
       <button
         onClick={() => setDeleteTarget(row)}
         className="p-1.5 rounded text-red-600 hover:bg-red-50"
-        title="Delete"
+        title={t('common.button.delete')}
       >
         <Trash2 className="w-4 h-4" />
       </button>
     </div>
   );
 
-  const filterDefs = [
-    { key: 'status', label: 'Status', type: 'select', options: TYRE_STATUS_OPTIONS },
-    { key: 'brand_id', label: 'Brand', type: 'select', options: [
-      { value: '', label: 'All Brands' },
-      ...brands.map((b) => ({ value: b.id, label: b.name })),
-    ] },
-    { key: 'size_id', label: 'Size', type: 'select', options: [
-      { value: '', label: 'All Sizes' },
-      ...sizes.map((s) => ({ value: s.id, label: s.name })),
-    ] },
-  ];
-  if (isSuperadmin()) {
-    filterDefs.push({
-      key: 'company_id',
-      label: 'Company',
-      type: 'select',
-      options: [
-        { value: '', label: 'All Companies' },
-        ...companies.map((c) => ({ value: c.id, label: c.name })),
-      ],
-    });
-  }
-
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tyres"
-        subtitle="Manage all tyres in the system"
+        title={t('tyre.title.list')}
+        subtitle={t('tyre.subtitle.list')}
         actions={
           <Button onClick={() => navigate('/tyres/new')}>
             <Plus className="w-4 h-4" />
-            Add Tyre
+            {t('tyre.button.add')}
           </Button>
         }
       />
 
       <Card padding={false}>
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <SearchInput
-              value={search}
-              onChange={(v) => { setSearch(v); setPage(1); }}
-              placeholder="Search by barcode or serial number..."
-            />
-          </div>
+        <div className="p-4 space-y-3">
+          <SearchFilterBar
+            search={search}
+            onSearchChange={(v) => { setSearch(v); setPage(1); }}
+            searchPlaceholder={t('tyre.placeholder.search')}
+            statusValue={status}
+            onStatusChange={(v) => { setStatus(v); setPage(1); }}
+            statusOptions={[{ value: 'all', label: t('tyre.tab.all') }, ...statusPills]}
+          >
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600 whitespace-nowrap">{t('tyre.filter.brand')}:</label>
+              <select
+                value={brandId}
+                onChange={(e) => { setBrandId(e.target.value); setPage(1); }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-40"
+              >
+                <option value="">{t('tyre.filter.allBrands')}</option>
+                {brandOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600 whitespace-nowrap">{t('tyre.filter.size')}:</label>
+              <select
+                value={sizeId}
+                onChange={(e) => { setSizeId(e.target.value); setPage(1); }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-40"
+              >
+                <option value="">{t('tyre.filter.allSizes')}</option>
+                {sizeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            {isSuperadmin() && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-600 whitespace-nowrap">{t('tyre.filter.company')}:</label>
+                <select
+                  value={companyId}
+                  onChange={(e) => { setCompanyId(e.target.value); setPage(1); }}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white min-w-40"
+                >
+                  <option value="">{t('tyre.filter.allCompanies')}</option>
+                  {companyOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </SearchFilterBar>
         </div>
-        <FilterBar
-          filters={filterDefs}
-          values={filters}
-          onChange={(v) => { setFilters(v); setPage(1); }}
-          onReset={handleResetFilters}
-          className="border-0 rounded-none"
-        />
-      </Card>
 
-      <Card padding={false}>
         <DataTable
           columns={columns}
           data={tyres}
@@ -272,10 +304,10 @@ export default function TyreListPage() {
           onSort={handleSort}
           actions={actions}
           emptyIcon={TyreIcon}
-          emptyTitle="No tyres found"
-          emptyMessage="There are no tyres matching your filters yet."
-          emptyAction={() => navigate('/tyres/new')}
-          emptyActionLabel="Add Tyre"
+          emptyTitle={t('tyre.empty.title')}
+          emptyMessage={search || status !== 'all' ? t('tyre.empty.searchMatch') : t('tyre.empty.message')}
+          emptyAction={search || status !== 'all' ? undefined : () => navigate('/tyres/new')}
+          emptyActionLabel={search || status !== 'all' ? undefined : t('tyre.button.add')}
         />
         {totalItems > 0 && (
           <div className="px-4 py-3 border-t border-gray-200">
@@ -296,9 +328,9 @@ export default function TyreListPage() {
         onConfirm={async () => {
           if (deleteTarget) await deleteMutation.mutateAsync(deleteTarget.id);
         }}
-        title="Delete Tyre"
-        message={`Are you sure you want to delete tyre "${deleteTarget?.serial_number}"?`}
-        confirmText="Delete"
+        title={t('tyre.confirm.deleteTitle')}
+        message={t('tyre.confirm.deleteMessage', { name: deleteTarget?.serial_number })}
+        confirmText={t('common.button.delete')}
         loading={deleteMutation.isLoading}
       />
     </div>

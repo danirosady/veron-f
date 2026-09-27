@@ -1,0 +1,727 @@
+{
+  "common": {
+    "appName": "Tyre Management System",
+    "button": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add",
+      "search": "Search",
+      "export": "Export",
+      "confirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "prev": "Previous",
+      "refresh": "Refresh",
+      "close": "Close",
+      "submit": "Submit",
+      "reset": "Reset",
+      "download": "Download",
+      "upload": "Upload",
+      "filter": "Filter",
+      "clear": "Clear",
+      "apply": "Apply",
+      "retry": "Retry",
+      "login": "Login",
+      "logout": "Logout",
+      "register": "Register",
+      "view": "View"
+    },
+    "label": {
+      "name": "Name",
+      "description": "Description",
+      "status": "Status",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "total": "Total",
+      "search": "Search",
+      "filter": "Filter",
+      "all": "All",
+      "yes": "Yes",
+      "no": "No",
+      "noData": "No data",
+      "loading": "Loading...",
+      "required": "Required",
+      "optional": "Optional",
+      "details": "Details",
+      "information": "Information",
+      "settings": "Settings",
+      "language": "Language",
+      "selectLanguage": "Select Language"
+    },
+    "empty": {
+      "title": "No Data",
+      "message": "There is nothing here yet."
+    },
+    "table": {
+      "noData": "No data available",
+      "loading": "Loading...",
+      "showing": "Showing {{from}} - {{to}} of {{total}}",
+      "rowsPerPage": "Rows per page",
+      "selected": "{{count}} selected",
+      "selectAll": "Select all"
+    },
+    "pagination": {
+      "first": "First",
+      "last": "Last",
+      "next": "Next",
+      "prev": "Previous",
+      "page": "Page",
+      "of": "of",
+      "rowsPerPage": "Rows per page"
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Delete",
+      "deleteMessage": "Are you sure you want to delete this data?",
+      "saveTitle": "Confirm Save",
+      "saveMessage": "Are you sure you want to save this data?",
+      "logoutTitle": "Confirm Logout",
+      "logoutMessage": "Are you sure you want to logout?"
+    },
+    "toast": {
+      "saveSuccess": "Data saved successfully",
+      "deleteSuccess": "Data deleted successfully",
+      "updateSuccess": "Data updated successfully",
+      "createSuccess": "Data created successfully",
+      "error": "An error occurred",
+      "warning": "Warning",
+      "info": "Information",
+      "success": "Success",
+      "failed": "Failed",
+      "exportSuccess": "Export successful",
+      "importSuccess": "Import successful"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "draft": "Draft",
+      "published": "Published",
+      "maintenance": "Maintenance"
+    }
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "company": "Company",
+    "project": "Project",
+    "unit": "Unit",
+    "driver": "Driver",
+    "tyre": "Tyre",
+    "replacement": "Replacement",
+    "report": "Report",
+    "user": "User",
+    "master": "Master Data",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "validation": {
+    "required": "This field is required",
+    "minLength": "Minimum {{min}} characters",
+    "maxLength": "Maximum {{max}} characters",
+    "email": "Invalid email format",
+    "number": "Must be a number",
+    "date": "Invalid date format",
+    "pattern": "Format does not match",
+    "match": "Does not match {{field}}",
+    "min": "Minimum value is {{min}}",
+    "max": "Maximum value is {{max}}",
+    "phone": "Invalid phone number format",
+    "url": "Invalid URL format",
+    "fileSize": "Maximum file size is {{max}}",
+    "fileType": "Invalid file type",
+    "unique": "Data already exists"
+  },
+  "errors": {
+    "networkError": "Connection failed. Check your network.",
+    "serverError": "Server is having issues. Please try again.",
+    "notFound": "Data not found",
+    "unauthorized": "You don't have access",
+    "forbidden": "Access denied",
+    "unknownError": "An unknown error occurred",
+    "fetchError": "Failed to fetch data",
+    "saveError": "Failed to save data",
+    "deleteError": "Failed to delete data",
+    "updateError": "Failed to update data",
+    "loginFailed": "Login failed. Check your email and password.",
+    "sessionExpired": "Your session has expired. Please login again.",
+    "validationError": "Please fix the errors in the form",
+    "duplicateError": "Duplicate data found",
+    "connectionError": "Cannot connect to server"
+  },
+  "auth": {
+    "title": {
+      "login": "Login",
+      "logout": "Logout",
+      "forgotPassword": "Forgot Password",
+      "resetPassword": "Reset Password",
+      "changePassword": "Change Password"
+    },
+    "label": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "newPassword": "New Password",
+      "oldPassword": "Old Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?"
+    },
+    "button": {
+      "login": "Login",
+      "logout": "Logout",
+      "forgotPassword": "Send Reset Link",
+      "resetPassword": "Reset Password",
+      "changePassword": "Change Password"
+    },
+    "message": {
+      "loginSuccess": "Login successful",
+      "logoutSuccess": "Logout successful",
+      "passwordResetSent": "Password reset link has been sent to your email",
+      "passwordResetSuccess": "Password has been reset successfully",
+      "passwordChangeSuccess": "Password has been changed successfully"
+    },
+    "placeholder": {
+      "email": "Enter email",
+      "password": "Enter password"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "subtitle": "Tyre Management System Summary",
+    "summary": {
+      "totalCompany": "Total Companies",
+      "totalProject": "Total Projects",
+      "totalUnit": "Total Units",
+      "totalTyre": "Total Tyres",
+      "totalDriver": "Total Drivers",
+      "mountedTyre": "Mounted Tyres",
+      "spareTyre": "Spare Tyres",
+      "replacementThisMonth": "Replacements This Month",
+      "replacementThisMonthSuffix": "this month"
+    },
+    "tyreHealth": {
+      "title": "Tyre Status Distribution",
+      "scrap": "Scrap"
+    },
+    "quickStats": {
+      "title": "Quick Stats",
+      "scrapTyres": "Scrap Tyres",
+      "replacementsThisMonth": "Replacements This Month",
+      "mountRate": "Mount Rate",
+      "avgTyresPerUnit": "Avg Tyres per Unit"
+    },
+    "chart": {
+      "title": "Tyre Replacement Chart",
+      "tyreByStatus": "Tyres by Status",
+      "replacementTrend": "Replacement Trend"
+    },
+    "recentActivity": "Recent Activity",
+    "quickAction": "Quick Action"
+  },
+  "company": {
+    "title": {
+      "list": "Company List",
+      "create": "Add Company",
+      "edit": "Edit Company",
+      "detail": "Company Details"
+    },
+    "subtitle": {
+      "list": "Manage all companies in the system",
+      "create": "Add a new company to the system",
+      "edit": "Update company information"
+    },
+    "button": {
+      "add": "Add Company",
+      "create": "Create Company",
+      "update": "Update Company"
+    },
+    "label": {
+      "name": "Company Name",
+      "address": "Address",
+      "phone": "Phone Number",
+      "email": "Email",
+      "contactPerson": "Contact Person",
+      "province": "Province",
+      "city": "City",
+      "postalCode": "Postal Code",
+      "taxId": "Tax ID",
+      "projects": "Projects",
+      "units": "Units",
+      "drivers": "Drivers",
+      "code": "Code"
+    },
+    "placeholder": {
+      "name": "Enter company name",
+      "code": "Company code (optional)",
+      "address": "Company address (optional)",
+      "phone": "Phone number",
+      "email": "company@example.com",
+      "contactPerson": "Contact person name",
+      "search": "Search companies..."
+    },
+    "filter": {
+      "all": "All"
+    },
+    "empty": {
+      "title": "No Companies Yet",
+      "message": "There are no companies yet.",
+      "search": "No companies match your search."
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Delete",
+      "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+    },
+    "message": {
+      "createSuccess": "Company added successfully",
+      "deleteSuccess": "Company deleted successfully",
+      "updateSuccess": "Company updated successfully"
+    },
+    "placeholder": {
+      "name": "Enter company name",
+      "address": "Enter full address",
+      "phone": "Enter phone number",
+      "email": "Enter email"
+    }
+  },
+  "project": {
+    "title": {
+      "list": "Project List",
+      "create": "Add Project",
+      "edit": "Edit Project",
+      "detail": "Project Details"
+    },
+    "subtitle": {
+      "list": "Manage all projects in the system",
+      "create": "Add a new project to the system",
+      "edit": "Update project information"
+    },
+    "button": {
+      "add": "Add Project",
+      "create": "Create Project",
+      "update": "Update Project"
+    },
+    "label": {
+      "name": "Project Name",
+      "code": "Project Code",
+      "description": "Description",
+      "company": "Company",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "status": "Status",
+      "location": "Location",
+      "manager": "Manager",
+      "units": "Units",
+      "drivers": "Drivers"
+    },
+    "placeholder": {
+      "name": "Enter project name",
+      "code": "Project code (optional)",
+      "description": "Project description (optional)",
+      "location": "Project location",
+      "search": "Search projects..."
+    },
+    "empty": {
+      "title": "No Projects Yet",
+      "message": "There are no projects yet.",
+      "search": "No projects match your search."
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Delete",
+      "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone."
+    },
+    "message": {
+      "createSuccess": "Project added successfully",
+      "deleteSuccess": "Project deleted successfully",
+      "updateSuccess": "Project updated successfully"
+    }
+  },
+  "unit": {
+    "title": {
+      "list": "Unit List",
+      "create": "Add Unit",
+      "edit": "Edit Unit",
+      "detail": "Unit Details"
+    },
+    "label": {
+      "plateNumber": "Plate Number",
+      "vehicleType": "Vehicle Type",
+      "brand": "Brand",
+      "model": "Model",
+      "year": "Year",
+      "project": "Project",
+      "company": "Company",
+      "driver": "Driver",
+      "tyres": "Tyres",
+      "lastService": "Last Service",
+      "nextService": "Next Service",
+      "odometer": "Odometer",
+      "hourMeter": "Hour Meter"
+    },
+    "vehicleType": {
+      "truck": "Truck",
+      "bus": "Bus",
+      "car": "Car",
+      "motorcycle": "Motorcycle",
+      "forklift": "Forklift",
+      "heavy": "Heavy Equipment"
+    },
+    "message": {
+      "createSuccess": "Unit added successfully",
+      "deleteSuccess": "Unit deleted successfully",
+      "updateSuccess": "Unit updated successfully"
+    }
+  },
+  "driver": {
+    "title": {
+      "list": "Driver List",
+      "create": "Add Driver",
+      "edit": "Edit Driver",
+      "detail": "Driver Details"
+    },
+    "subtitle": {
+      "list": "Manage all drivers in the system",
+      "create": "Add a new driver to the system",
+      "edit": "Update driver information"
+    },
+    "button": {
+      "add": "Add Driver",
+      "create": "Create Driver",
+      "update": "Update Driver"
+    },
+    "label": {
+      "name": "Driver Name",
+      "employeeId": "Employee ID",
+      "phone": "Phone Number",
+      "email": "Email",
+      "project": "Project",
+      "company": "Company",
+      "licenseNumber": "License Number",
+      "licenseType": "License Type",
+      "joinDate": "Join Date",
+      "status": "Status"
+    },
+    "placeholder": {
+      "name": "Driver name",
+      "employeeId": "Employee ID (optional)",
+      "phone": "Phone number",
+      "licenseNumber": "Driver's license number",
+      "search": "Search by name, employee ID, phone...",
+      "selectCompany": "Select company"
+    },
+    "empty": {
+      "title": "No Drivers Yet",
+      "message": "There are no drivers matching your filters.",
+      "searchMatch": "No drivers match your search."
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Delete",
+      "deleteMessage": "Are you sure you want to delete driver \"{{name}}\"? This action cannot be undone."
+    },
+    "tab": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "licenseType": {
+      "a": "License A",
+      "b1": "License B1",
+      "b2": "License B2",
+      "c": "License C",
+      "d": "License D"
+    },
+    "message": {
+      "createSuccess": "Driver added successfully",
+      "deleteSuccess": "Driver deleted successfully",
+      "updateSuccess": "Driver updated successfully"
+    }
+  },
+  "tyre": {
+    "title": {
+      "list": "Tyre List",
+      "create": "Add Tyre",
+      "edit": "Edit Tyre",
+      "detail": "Tyre Details"
+    },
+    "subtitle": {
+      "list": "Manage all tyres in the system",
+      "create": "Add a new tyre to inventory",
+      "edit": "Update tyre information"
+    },
+    "button": {
+      "add": "Add Tyre",
+      "create": "Create Tyre",
+      "update": "Update Tyre"
+    },
+    "placeholder": {
+      "serialNumber": "Tyre serial number",
+      "barcode": "Barcode (optional)",
+      "selectBrand": "Select brand",
+      "selectSize": "Select size",
+      "selectType": "Select type",
+      "selectPattern": "Select pattern",
+      "selectCompany": "Select company",
+      "search": "Search by barcode or serial number...",
+      "otd": "Original tread depth (mm)",
+      "rtd": "Current tread depth (mm)"
+    },
+    "empty": {
+      "title": "No Tyres Yet",
+      "message": "There are no tyres in the system.",
+      "searchMatch": "No tyres match your search or filter."
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Delete",
+      "deleteMessage": "Are you sure you want to delete tyre \"{{name}}\"? This action cannot be undone."
+    },
+    "tab": {
+      "all": "All"
+    },
+    "label": {
+      "serialNumber": "Serial Number",
+      "barcode": "Barcode",
+      "brand": "Brand",
+      "size": "Size",
+      "type": "Type",
+      "pattern": "Pattern",
+      "dot": "DOT",
+      "purchaseDate": "Purchase Date",
+      "purchasePrice": "Purchase Price",
+      "warranty": "Warranty",
+      "status": "Status",
+      "position": "Position",
+      "unit": "Unit",
+      "mountedUnit": "Mounted Unit",
+      "company": "Company",
+      "project": "Project",
+      "currentOdometer": "Current Odometer",
+      "initialDepth": "Initial Depth",
+      "currentDepth": "Current Depth",
+      "minDepth": "Minimum Depth",
+      "mountDate": "Mount Date",
+      "dismountDate": "Dismount Date",
+      "reason": "Reason",
+      "remarks": "Remarks",
+      "otd": "OTD (Original Tread Depth)",
+      "rtd": "RTD (Current Tread Depth)"
+    },
+    "status": {
+      "spare": "Spare",
+      "mounted": "Mounted",
+      "dismounted": "Dismounted",
+      "disposed": "Disposed",
+      "retread": "Retread",
+      "transfer": "Transferred",
+      "scrap": "Scrap"
+    },
+    "filter": {
+      "brand": "Brand",
+      "size": "Size",
+      "company": "Company",
+      "allBrands": "All Brands",
+      "allSizes": "All Sizes",
+      "allCompanies": "All Companies"
+    },
+    "position": {
+      "FL": "Front Left",
+      "FR": "Front Right",
+      "RL": "Rear Left",
+      "RR": "Rear Right",
+      "SL": "Side Left",
+      "SR": "Side Right",
+      "SPARE": "Spare"
+    },
+    "type": {
+      "radial": "Radial",
+      "bias": "Bias",
+      "solid": "Solid"
+    },
+    "message": {
+      "createSuccess": "Tyre added successfully",
+      "deleteSuccess": "Tyre deleted successfully",
+      "updateSuccess": "Tyre updated successfully",
+      "mountSuccess": "Tyre mounted successfully",
+      "dismountSuccess": "Tyre dismounted successfully"
+    }
+  },
+  "replacement": {
+    "title": {
+      "list": "Replacement List",
+      "create": "Tyre Replacement",
+      "detail": "Replacement Details",
+      "selectCompany": "Select Company",
+      "selectProject": "Select Project",
+      "selectUnit": "Select Unit"
+    },
+    "subtitle": {
+      "company": "Choose a company to view its projects for tyre replacement",
+      "project": "Choose a project to view its units for tyre replacement",
+      "unit": "Choose a unit to manage tyre replacement"
+    },
+    "tab": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "placeholder": {
+      "searchCompany": "Search company...",
+      "searchProject": "Search project...",
+      "searchUnit": "Search unit ID, plate, or model..."
+    },
+    "empty": {
+      "noCompany": "No companies",
+      "noCompanyDesc": "No companies available",
+      "noProject": "No projects found",
+      "noProjectDesc": "There are no projects matching your filters.",
+      "noProjectFilter": "Try adjusting your filters",
+      "noUnit": "No units found",
+      "noUnitDesc": "No units in this project",
+      "noUnitFilter": "Try adjusting your filters"
+    },
+    "label": {
+      "replacementNumber": "Replacement Number",
+      "date": "Date",
+      "unit": "Unit",
+      "driver": "Driver",
+      "project": "Project",
+      "company": "Company",
+      "oldTyre": "Old Tyre",
+      "newTyre": "New Tyre",
+      "position": "Position",
+      "reason": "Reason",
+      "odometer": "Odometer",
+      "notes": "Notes",
+      "approvedBy": "Approved By",
+      "approvedDate": "Approved Date",
+      "projects": "projects",
+      "units": "units",
+      "good": "Good",
+      "warning": "Warn",
+      "critical": "Crit",
+      "noTyres": "No tyres",
+      "spare": "spare",
+      "ongoing": "Ongoing"
+    },
+    "nav": {
+      "companies": "Companies",
+      "projects": "Projects",
+      "units": "Units"
+    },
+    "reason": {
+      "worn": "Worn",
+      "damage": "Damage",
+      "puncture": "Puncture",
+      "scheduled": "Scheduled",
+      "transfer": "Project Transfer"
+    },
+    "message": {
+      "createSuccess": "Replacement recorded successfully",
+      "deleteSuccess": "Replacement deleted successfully"
+    }
+  },
+  "report": {
+    "title": {
+      "list": "Report List",
+      "tyreInventory": "Tyre Inventory Report",
+      "replacementHistory": "Replacement History",
+      "tyreCondition": "Tyre Condition",
+      "costAnalysis": "Cost Analysis"
+    },
+    "label": {
+      "reportType": "Report Type",
+      "dateRange": "Date Range",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "company": "Company",
+      "project": "Project",
+      "unit": "Unit",
+      "export": "Export",
+      "generate": "Generate",
+      "print": "Print"
+    },
+    "message": {
+      "generateSuccess": "Report generated successfully",
+      "exportSuccess": "Report exported successfully"
+    }
+  },
+  "user": {
+    "title": {
+      "list": "User List",
+      "create": "Add User",
+      "edit": "Edit User",
+      "profile": "My Profile",
+      "changePassword": "Change Password"
+    },
+    "label": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "company": "Company",
+      "phone": "Phone",
+      "status": "Status",
+      "lastLogin": "Last Login",
+      "createdAt": "Created"
+    },
+    "role": {
+      "admin": "Administrator",
+      "manager": "Manager",
+      "operator": "Operator",
+      "viewer": "Viewer"
+    },
+    "message": {
+      "createSuccess": "User added successfully",
+      "deleteSuccess": "User deleted successfully",
+      "updateSuccess": "User updated successfully",
+      "passwordChangeSuccess": "Password changed successfully"
+    }
+  },
+  "master": {
+    "title": {
+      "list": "Master Data"
+    },
+    "label": {
+      "tyreBrand": "Tyre Brand",
+      "tyreSize": "Tyre Size",
+      "vehicleType": "Vehicle Type",
+      "positionType": "Position Type"
+    },
+    "message": {
+      "createSuccess": "Data added successfully",
+      "deleteSuccess": "Data deleted successfully",
+      "updateSuccess": "Data updated successfully"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "label": {
+      "general": "General",
+      "appearance": "Appearance",
+      "notification": "Notification",
+      "security": "Security",
+      "language": "Language",
+      "theme": "Theme",
+      "darkMode": "Dark Mode",
+      "lightMode": "Light Mode",
+      "auto": "Auto"
+    },
+    "language": {
+      "title": "Language Settings",
+      "description": "Select your preferred language",
+      "current": "Current Language",
+      "indonesian": "Indonesia",
+      "english": "English"
+    },
+    "message": {
+      "saveSuccess": "Settings saved successfully",
+      "resetSuccess": "Settings reset successfully"
+    }
+  }
+}

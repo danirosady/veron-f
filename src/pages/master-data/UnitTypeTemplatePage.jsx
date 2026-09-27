@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -15,62 +15,75 @@ import ConfirmDialog from '@/components/form/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import TyrePositionCanvasEditable from '@/components/tyre/TyrePositionCanvasEditable';
 import { masterAPI } from '@/api/master';
+import { VEHICLE_CHASSIS_IMAGES } from '@/utils/vehicleLayouts';
 
 // ─── Mini Preview ─────────────────────────────────────────────────────────
 
 function TemplatePreview({ config }) {
-  if (!config?.position_config?.length) {
-    return (
-      <div className="h-24 bg-gray-50 rounded-lg flex items-center justify-center text-xs text-gray-400">
-        No positions configured
-      </div>
-    );
-  }
+  const chassisSrc = VEHICLE_CHASSIS_IMAGES[config.unit_type];
+  const positions = config.position_config || [];
+  const containerRef = useRef(null);
+  const [tyreSize, setTyreSize] = useState(16);
 
-  // Group positions by axle
-  const axleGroups = {};
-  config.position_config.forEach((p) => {
-    const axle = p.axle || 'unknown';
-    if (!axleGroups[axle]) axleGroups[axle] = [];
-    axleGroups[axle].push(p);
-  });
-
-  const axleLabels = {
-    poros_1: 'POROS 1',
-    poros_2: 'POROS 2',
-    poros_3: 'POROS 3',
-    poros_4: 'POROS 4',
-    poros_5: 'POROS 5',
-  };
-
-  const axleOrder = ['poros_1', 'poros_2', 'poros_3', 'poros_4', 'poros_5'];
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => setTyreSize(Math.round(el.clientWidth * 0.1));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   return (
-    <div className="h-24 flex flex-col items-center justify-center gap-1 bg-gradient-to-b from-slate-50 to-gray-50 rounded-lg border border-gray-200 overflow-hidden px-2 py-2">
-      {axleOrder.map((axle) => {
-        const slots = axleGroups[axle];
-        if (!slots?.length) return null;
-        return (
-          <div key={axle} className="flex items-center gap-0.5">
-            <span className="text-[7px] text-gray-400 font-medium w-6 text-right">{axleLabels[axle] || axle}</span>
-            {slots.sort((a, b) => (a.side?.includes('left') ? 0 : 1) - (b.side?.includes('left') ? 0 : 1)).map((slot, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-center"
-                title={slot.label}
-              >
-                <img
-                  src="/tyre-pattern.png"
-                  alt={slot.label}
-                  className="object-contain opacity-60"
-                  style={{ width: 10, height: 12 }}
-                  draggable={false}
-                />
-              </div>
-            ))}
-          </div>
-        );
-      })}
+    <div
+      ref={containerRef}
+      className="aspect-[16/9] bg-gradient-to-b from-slate-100 to-gray-100 rounded-lg border border-gray-200 overflow-hidden relative"
+    >
+      {chassisSrc ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img
+            src={chassisSrc}
+            alt="Vehicle chassis"
+            className="h-full object-contain opacity-60"
+            draggable={false}
+          />
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-xs text-gray-400 italic">No chassis</div>
+        </div>
+      )}
+
+      {/* Center mirror line */}
+      <div className="absolute left-1/2 top-0 bottom-0 w-px border-l border-dashed border-gray-400 opacity-40" />
+
+      {/* Tyre icons: scaled inward to fit inside chassis body area */}
+      {positions.map((pos, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{
+            left: `${(0.50  + pos.x * 1) * 50}%`,
+            top: `${(0.03 + pos.y * 1) * 100}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <img
+            src="/tyre-pattern.png"
+            alt={pos.label}
+            className="object-contain opacity-90"
+            style={{ width: tyreSize, height: tyreSize * 1.1 }}
+            draggable={false}
+          />
+        </div>
+      ))}
+
+      {positions.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-xs text-gray-400">No positions configured</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -179,13 +192,14 @@ function TemplateEditorModal({ isOpen, onClose, template }) {
   useEffect(() => {
     if (template) {
       setForm({
+        id: template.id,
         unit_type: template.unit_type || '',
         display_name: template.display_name || '',
         max_position: template.max_position || 6,
       });
       setLocalPositions(template.position_config || []);
     } else {
-      setForm({ unit_type: '', display_name: '', max_position: 6 });
+      setForm({ id: null, unit_type: '', display_name: '', max_position: 6 });
       setLocalPositions([]);
     }
   }, [template, isOpen]);
@@ -299,10 +313,10 @@ export default function UnitTypeTemplatePage() {
 
       {/* Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
-              <div className="h-24 bg-gray-100 rounded-lg mb-4" />
+              <div className="aspect-[16/9] bg-gray-100 rounded-lg mb-4" />
               <div className="h-4 bg-gray-100 rounded w-2/3 mb-2" />
               <div className="h-3 bg-gray-100 rounded w-1/3" />
             </div>
@@ -321,7 +335,7 @@ export default function UnitTypeTemplatePage() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
           {templates.map((template) => (
             <TemplateCard
               key={template.id}

@@ -10,7 +10,7 @@ import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/list/DataTable';
 import { tyresAPI } from '@/api/tyres';
 import { replacementsAPI } from '@/api/replacements';
-import { formatDate, formatNumber, calculatePercentWorn, getRtdColor, titleCase } from '@/utils/format';
+import { formatDate, formatDateTime, formatNumber, formatDuration, calculatePercentWorn, getRtdColor, titleCase } from '@/utils/format';
 import { TYRE_STATUS_LABELS } from '@/utils/constants';
 
 export default function TyreDetailPage() {
@@ -33,13 +33,10 @@ export default function TyreDetailPage() {
   const historyItems = historyData?.data?.data || historyData?.data || [];
 
   const rtd = tyre?.rtd;
-  const otd = tyre?.depth_new;
+  const otd = tyre?.otd;
   const percentWorn = (otd && rtd != null) ? calculatePercentWorn(otd, rtd) : null;
 
-  const mountDate = tyre?.mount_date;
-  const daysMounted = mountDate
-    ? Math.floor((new Date() - new Date(mountDate)) / (1000 * 60 * 60 * 24))
-    : null;
+  const currentMount = tyre?.current_mount || null;
 
   const getRtdBadgeVariant = (val) => {
     const color = getRtdColor(val);
@@ -54,7 +51,7 @@ export default function TyreDetailPage() {
     {
       key: 'replacement_date',
       header: 'Date',
-      render: (v) => formatDate(v),
+      render: (v) => formatDateTime(v),
     },
     {
       key: 'unit',
@@ -106,17 +103,6 @@ export default function TyreDetailPage() {
   ];
 
   // Current mount info from tyre record
-  const currentMount = tyre?.unit
-    ? {
-        unit: tyre.unit,
-        position: tyre.position,
-        mountDate: tyre.mount_date,
-        mountHm: tyre.mount_hm,
-        daysMounted,
-      }
-    : null;
-
-  // Separate current mount from history
   const previousMounts = historyItems.filter((h) => h.id !== tyre?.current_replacement_id);
 
   return (
@@ -187,7 +173,7 @@ export default function TyreDetailPage() {
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-1">Type</p>
-                <p className="text-sm text-gray-900">{tyre.type?.name || tyre.type_name || '-'}</p>
+                <p className="text-sm text-gray-900">{tyre.type || '-'}</p>
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-1">OTD (New)</p>
@@ -236,33 +222,33 @@ export default function TyreDetailPage() {
             </div>
           </CardHeader>
           <CardBody>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <p className="text-xs font-medium text-gray-500">Unit</p>
                 <p className="text-sm font-semibold text-gray-900">
-                  {currentMount.unit.plate_number || currentMount.unit.code || '-'}
+                  {currentMount?.unit?.plate_number || currentMount?.unit?.unit_id || '-'}
                 </p>
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">Position</p>
-                <Badge variant="default" size="sm">{currentMount.position || '-'}</Badge>
+                <Badge variant="default" size="sm">{currentMount?.position || '-'}</Badge>
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">Mount Date</p>
-                <p className="text-sm text-gray-900">{formatDate(currentMount.mountDate)}</p>
+                <p className="text-sm text-gray-900">{formatDateTime(currentMount?.mount_date)}</p>
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">Mount HM</p>
                 <p className="text-sm text-gray-900">
-                  {currentMount.mountHm != null ? formatNumber(currentMount.mountHm, 0) : '-'}
+                  {currentMount?.mount_hm != null ? formatNumber(currentMount.mount_hm, 0) : '-'}
                 </p>
               </div>
-              {daysMounted !== null && (
+              {currentMount?.mount_date && (
                 <div>
                   <p className="text-xs font-medium text-gray-500">Days Mounted</p>
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4 text-gray-400" />
-                    <p className="text-sm text-gray-900">{daysMounted} days</p>
+                    <p className="text-sm text-gray-900">{formatDuration(currentMount.mount_date)}</p>
                   </div>
                 </div>
               )}

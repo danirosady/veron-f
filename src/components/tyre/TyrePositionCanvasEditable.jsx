@@ -251,7 +251,7 @@ function TyrePropertyEditor({ pos, onUpdate, onDelete, onDeselect }) {
 export default function TyrePositionCanvasEditable({
   positions = [],
   maxPosition = 10,
-  unitType = 'ADT_8POS',
+  unitType = 'ADT_10POS',
   onSave,
   initialPositions = [],
   form,

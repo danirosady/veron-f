@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Save } from 'lucide-react';
 import PageHeader from '@/components/list/PageHeader';
 import Card from '@/components/ui/Card';
@@ -28,10 +29,11 @@ const tyreSchema = z.object({
   depth_new: z.string().min(1, 'OTD is required'),
   cost: z.string().optional().or(z.literal('')),
   purchase_date: z.string().optional().or(z.literal('')),
-  status: z.enum(['new_tyre', 'spare', 'mounted', 'dismounted', 'repair', 'scrap']).default('new_tyre'),
+  status: z.enum(['spare', 'mounted', 'dismounted', 'scrap']).default('spare'),
 });
 
 export default function TyreFormPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -88,61 +90,81 @@ export default function TyreFormPage() {
       depth_new: '',
       cost: '',
       purchase_date: '',
-      status: 'new_tyre',
+      status: 'spare',
     },
   });
 
+  const types = typesData?.data?.data || typesData?.data || [];
+
   useEffect(() => {
     if (tyreData && isEdit) {
-      const t = tyreData.data?.data || tyreData.data;
+      const t_data = tyreData.data?.data || tyreData.data;
+      // type is stored as string (e.g. "Radial"), match by name to find id
+      const matchedType = types.find((tp) => tp.name === t_data.type);
       reset({
-        serial_number: t.serial_number || '',
-        barcode: t.barcode || '',
-        company_id: t.company_id ? String(t.company_id) : '',
-        brand_id: t.brand_id ? String(t.brand_id) : '',
-        size_id: t.size_id ? String(t.size_id) : '',
-        type_id: t.type_id ? String(t.type_id) : '',
-        pattern_id: t.pattern_id ? String(t.pattern_id) : '',
-        depth_new: t.otd ? String(t.otd) : '',
-        cost: t.cost ? String(t.cost) : '',
-        purchase_date: t.purchase_date ? t.purchase_date.substring(0, 10) : '',
-        status: t.status || 'new_tyre',
+        serial_number: t_data.serial_number || '',
+        barcode: t_data.barcode || '',
+        company_id: t_data.company_id ? String(t_data.company_id) : '',
+        brand_id: t_data.brand_id ? String(t_data.brand_id) : '',
+        size_id: t_data.size_id ? String(t_data.size_id) : '',
+        type_id: matchedType ? String(matchedType.id) : '',
+        pattern_id: t_data.pattern_id ? String(t_data.pattern_id) : '',
+        depth_new: t_data.rtd ? String(t_data.rtd) : '',
+        cost: t_data.cost ? String(t_data.cost) : '',
+        purchase_date: t_data.purchase_date ? t_data.purchase_date.substring(0, 10) : '',
+        status: t_data.status || 'spare',
       });
     }
-  }, [tyreData, isEdit, reset]);
+  }, [tyreData, isEdit, reset, types]);
 
   const saveMutation = useMutation({
     mutationFn: (data) =>
       isEdit ? tyresAPI.update(id, data) : tyresAPI.create(data),
     onSuccess: async () => {
+      if (isEdit) {
+        await queryClient.invalidateQueries({ queryKey: ['tyre', id] });
+      }
       await queryClient.invalidateQueries({ queryKey: ['tyres'] });
       navigate('/tyres');
     },
   });
 
   const onSubmit = (data) => {
-    console.log('[DEBUG] Form data:', data);
     const otd = Number(data.depth_new);
-    const payload = {
-      serial_number: data.serial_number,
-      barcode: data.barcode,
-      company_id: data.company_id ? Number(data.company_id) : Number(user?.company_id),
-      brand_id: Number(data.brand_id),
-      size_id: Number(data.size_id),
-      pattern_id: data.pattern_id ? Number(data.pattern_id) : null,
-      otd: otd,
-      rtd: otd,
-      cost: data.cost ? Number(data.cost) : 0,
-      remarks: data.remarks || '',
-    };
-    console.log('[DEBUG] Payload:', payload);
-    saveMutation.mutate(payload);
+
+    if (isEdit) {
+      // Edit: send all editable fields (only non-empty values)
+      const rtd = Number(data.depth_new);
+      const selectedType = types.find((tp) => String(tp.id) === String(data.type_id));
+      const payload = {
+        rtd,
+        remarks: data.remarks || '',
+      };
+      if (data.brand_id) payload.brand_id = Number(data.brand_id);
+      if (data.size_id) payload.size_id = Number(data.size_id);
+      if (data.pattern_id) payload.pattern_id = Number(data.pattern_id);
+      if (selectedType) payload.type = selectedType.name;
+      saveMutation.mutate(payload);
+    } else {
+      // Create: full payload
+      const payload = {
+        serial_number: data.serial_number,
+        barcode: data.barcode,
+        company_id: data.company_id ? Number(data.company_id) : Number(user?.company_id),
+        brand_id: Number(data.brand_id),
+        size_id: Number(data.size_id),
+        pattern_id: data.pattern_id ? Number(data.pattern_id) : null,
+        otd: otd,
+        rtd: otd,
+        remarks: data.remarks || '',
+      };
+      saveMutation.mutate(payload);
+    }
   };
 
   const companies = companiesData?.data?.data || companiesData?.data || [];
   const brands = brandsData?.data?.data || brandsData?.data || [];
   const sizes = sizesData?.data?.data || sizesData?.data || [];
-  const types = typesData?.data?.data || typesData?.data || [];
   const patterns = patternsData?.data?.data || patternsData?.data || [];
 
   return (
@@ -152,8 +174,8 @@ export default function TyreFormPage() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <PageHeader
-          title={isEdit ? 'Edit Tyre' : 'New Tyre'}
-          subtitle={isEdit ? 'Update tyre information' : 'Add a new tyre to inventory'}
+          title={isEdit ? t('tyre.title.edit') : t('tyre.title.create')}
+          subtitle={isEdit ? t('tyre.subtitle.edit') : t('tyre.subtitle.create')}
         />
       </div>
 
@@ -167,125 +189,112 @@ export default function TyreFormPage() {
           ) : (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Serial Number" required error={errors.serial_number?.message}>
+                <FormField label={t('tyre.label.serialNumber')} required error={errors.serial_number?.message}>
                   <Input
-                    placeholder="Serial number"
+                    placeholder={t('tyre.placeholder.serialNumber')}
                     {...register('serial_number')}
                     error={errors.serial_number?.message}
+                    disabled={isEdit}
+                    className={isEdit ? 'bg-gray-100 cursor-not-allowed' : ''}
                   />
                 </FormField>
 
-                <FormField label="Barcode" error={errors.barcode?.message}>
+                <FormField label={t('tyre.label.barcode')} error={errors.barcode?.message}>
                   <Input
-                    placeholder="Barcode (optional)"
+                    placeholder={t('tyre.placeholder.barcode')}
                     {...register('barcode')}
                     error={errors.barcode?.message}
+                    disabled={isEdit}
+                    className={isEdit ? 'bg-gray-100 cursor-not-allowed' : ''}
                   />
                 </FormField>
+              </div>
 
-                <FormField label="Company" required={isSuperadmin()} error={errors.company_id?.message}>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <FormField label={t('tyre.label.company')} error={errors.company_id?.message}>
                   <Select
                     options={companies.map((c) => ({ value: c.id, label: c.name }))}
-                    placeholder="Select company"
-                    disabled={!isSuperadmin()}
+                    placeholder={t('tyre.placeholder.selectCompany')}
+                    disabled={isEdit || !isSuperadmin()}
                     {...register('company_id')}
                     error={errors.company_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Status" error={errors.status?.message}>
+                <FormField label={t('common.label.status')} error={errors.status?.message}>
                   <Select
                     options={[
-                      { value: 'new_tyre', label: 'New Tyre' },
-                      { value: 'spare', label: 'Spare' },
-                      { value: 'mounted', label: 'Mounted' },
-                      { value: 'dismounted', label: 'Dismounted' },
-                      { value: 'repair', label: 'Repair' },
-                      { value: 'scrap', label: 'Scrap' },
+                      { value: 'spare', label: t('tyre.status.spare') },
+                      { value: 'mounted', label: t('tyre.status.mounted') },
+                      { value: 'dismounted', label: t('tyre.status.dismounted') },
+                      { value: 'scrap', label: t('tyre.status.scrap') },
                     ]}
                     {...register('status')}
+                    disabled={isEdit}
                     error={errors.status?.message}
                   />
                 </FormField>
 
-                <FormField label="Brand" required error={errors.brand_id?.message}>
+                <FormField label={t('tyre.label.brand')} required error={errors.brand_id?.message}>
                   <Select
                     options={brands.map((b) => ({ value: b.id, label: b.name }))}
-                    placeholder="Select brand"
+                    placeholder={t('tyre.placeholder.selectBrand')}
                     {...register('brand_id')}
                     error={errors.brand_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Size" required error={errors.size_id?.message}>
+                <FormField label={t('tyre.label.size')} required error={errors.size_id?.message}>
                   <Select
                     options={sizes.map((s) => ({ value: s.id, label: s.name }))}
-                    placeholder="Select size"
+                    placeholder={t('tyre.placeholder.selectSize')}
                     {...register('size_id')}
                     error={errors.size_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Type" error={errors.type_id?.message}>
+                <FormField label={t('tyre.label.type')} error={errors.type_id?.message}>
                   <Select
-                    options={types.map((t) => ({ value: t.id, label: t.name }))}
-                    placeholder="Select type"
+                    options={types.map((tp) => ({ value: tp.id, label: tp.name }))}
+                    placeholder={t('tyre.placeholder.selectType')}
                     {...register('type_id')}
                     error={errors.type_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Pattern" error={errors.pattern_id?.message}>
+                <FormField label={t('tyre.label.pattern')} error={errors.pattern_id?.message}>
                   <Select
                     options={patterns.map((p) => ({ value: p.id, label: p.name }))}
-                    placeholder="Select pattern"
+                    placeholder={t('tyre.placeholder.selectPattern')}
                     {...register('pattern_id')}
                     error={errors.pattern_id?.message}
                   />
                 </FormField>
 
-                <FormField label="Original Tread Depth (OTD)" required error={errors.depth_new?.message}>
+                <FormField label={isEdit ? t('tyre.label.rtd') : t('tyre.label.otd')} required error={errors.depth_new?.message}>
                   <Input
                     type="number"
                     step="0.1"
-                    placeholder="e.g. 25.0"
+                    placeholder={isEdit ? t('tyre.placeholder.rtd') : t('tyre.placeholder.otd')}
                     {...register('depth_new')}
                     error={errors.depth_new?.message}
-                  />
-                </FormField>
-
-                <FormField label="Cost" error={errors.cost?.message}>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...register('cost')}
-                    error={errors.cost?.message}
-                  />
-                </FormField>
-
-                <FormField label="Purchase Date" error={errors.purchase_date?.message}>
-                  <Input
-                    type="date"
-                    {...register('purchase_date')}
-                    error={errors.purchase_date?.message}
                   />
                 </FormField>
               </div>
 
               {saveMutation.isError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {saveMutation.error?.response?.data?.message || 'Failed to save tyre.'}
+                  {saveMutation.error?.response?.data?.message || t('errors.saveError')}
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
                 <Button variant="outline" type="button" onClick={() => navigate('/tyres')}>
-                  Cancel
+                  {t('common.button.cancel')}
                 </Button>
                 <Button type="submit" loading={saveMutation.isLoading}>
                   <Save className="w-4 h-4" />
-                  {isEdit ? 'Update Tyre' : 'Create Tyre'}
+                  {isEdit ? t('tyre.button.update') : t('tyre.button.create')}
                 </Button>
               </div>
             </div>

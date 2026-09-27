@@ -14,14 +14,14 @@ const TYRE_IMAGE = '/tyre-pattern.png';
  *
  * Usage:
  * ```jsx
- * <TyreCanvasBase ref={overlayRef} unitType="ADT_8POS" height={520}>
+ * <TyreCanvasBase ref={overlayRef} unitType="ADT_10POS" height={520}>
  *   {slots.map(s => <TyreSlot key={s.id} {...s} />)}
  * </TyreCanvasBase>
  * ```
  *
  * Props
  * -----
- * unitType       : string — key into VEHICLE_CHASSIS_IMAGES (e.g. 'ADT_8POS')
+ * unitType       : string — key into VEHICLE_CHASSIS_IMAGES (e.g. 'ADT_10POS')
  * height         : number — container height in px (default 520)
  * onBoundsChange : (bounds) => void — called with {width, height} when image bounds change
  * showGrid       : bool   — show background grid (default true)
@@ -32,7 +32,7 @@ const TYRE_IMAGE = '/tyre-pattern.png';
 const GRID_SIZE = 40;
 const TyreCanvasBase = forwardRef(function TyreCanvasBase({
   children,
-  unitType = 'ADT_8POS',
+  unitType = 'ADT_10POS',
   height = '100%',
   onBoundsChange,
   showGrid = true,
@@ -42,6 +42,10 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
   const containerRef = useRef(null);
   const imageRef = useRef(null);
   const overlayRef = useRef(null);
+
+  // Rendered image bounds relative to container top-left (pixels)
+  const [imageBounds, setImageBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Expose overlay element + its rendered bounding rect + image bounds via forwardRef
   useEffect(() => {
@@ -54,11 +58,7 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
       // Also expose image bounds so parent can normalize pointer coords to image-relative
       ref.imageBounds = imageBounds;
     }
-  });
-
-  // Rendered image bounds relative to container top-left (pixels)
-  const [imageBounds, setImageBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
-  const [imageLoaded, setImageLoaded] = useState(false);
+  }, [imageBounds]);
 
   const chassisSrc = VEHICLE_CHASSIS_IMAGES[unitType] || null;
   const hasChassis = Boolean(chassisSrc);
@@ -136,7 +136,7 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full overflow-hidden rounded-xl ${className}`}
+      className={`relative w-full overflow-visible rounded-xl ${className}`}
       style={{ height }}
     >
       {/* ── Background: full-container gradient + grid ─────────────────────── */}

@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Plus, Pencil, Trash2, Building2, Eye } from 'lucide-react';
 import PageHeader from '@/components/list/PageHeader';
 import DataTable from '@/components/list/DataTable';
-import FilterBar from '@/components/list/FilterBar';
+import SearchFilterBar from '@/components/list/SearchFilterBar';
 import Pagination from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -12,15 +13,16 @@ import Badge from '@/components/ui/Badge';
 import ConfirmDialog from '@/components/form/ConfirmDialog';
 import { companiesAPI } from '@/api/companies';
 import { usePermission } from '@/hooks/usePermission';
-import { COMMON_STATUS_OPTIONS } from '@/utils/constants';
 import { titleCase } from '@/utils/format';
 
 export default function CompanyListPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isSuperadmin } = usePermission();
 
-  const [filters, setFilters] = useState({ status: '' });
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [page, setPage] = useState(1);
@@ -34,9 +36,9 @@ export default function CompanyListPage() {
       sort_by: sortBy,
       sort_order: sortOrder,
     };
-    if (filters.status) p.status = filters.status;
+    if (status && status !== 'all') p.status = status;
     return p;
-  }, [page, perPage, sortBy, sortOrder, filters]);
+  }, [page, perPage, sortBy, sortOrder, status]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['companies', params],
@@ -57,21 +59,28 @@ export default function CompanyListPage() {
   const totalItems = meta.total ?? companies.length;
   const totalPages = meta.last_page ?? Math.max(1, Math.ceil(totalItems / perPage));
 
+  // Client-side search filter
+  const filtered = useMemo(() => {
+    if (!search.trim()) return companies;
+    const q = search.toLowerCase();
+    return companies.filter(
+      (c) =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.code || '').toLowerCase().includes(q) ||
+        (c.contact_person || '').toLowerCase().includes(q)
+    );
+  }, [companies, search]);
+
   const handleSort = (key, order) => {
     setSortBy(key);
     setSortOrder(order);
     setPage(1);
   };
 
-  const handleResetFilters = () => {
-    setFilters({ status: '' });
-    setPage(1);
-  };
-
   const columns = [
     {
       key: 'name',
-      header: 'Name',
+      header: t('company.label.name'),
       sortable: true,
       render: (_, row) => (
         <div>
@@ -84,26 +93,26 @@ export default function CompanyListPage() {
     },
     {
       key: 'contact_person',
-      header: 'Contact Person',
+      header: t('company.label.contactPerson'),
       render: (v) => v || '-',
     },
     {
       key: 'phone',
-      header: 'Phone',
+      header: t('company.label.phone'),
       render: (v) => v || '-',
     },
     {
       key: 'email',
-      header: 'Email',
+      header: t('company.label.email'),
       render: (v) => v || '-',
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('common.label.status'),
       sortable: true,
       render: (v) => (
         <Badge variant={v === 'active' ? 'active' : 'inactive'} size="sm">
-          {titleCase(v)}
+          {v === 'active' ? t('common.status.active') : t('common.status.inactive')}
         </Badge>
       ),
     },
@@ -114,7 +123,7 @@ export default function CompanyListPage() {
       <button
         onClick={() => navigate(`/companies/${row.id}`)}
         className="p-1.5 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-        title="View"
+        title={t('common.button.view') || 'View'}
       >
         <Eye className="w-4 h-4" />
       </button>
@@ -123,14 +132,14 @@ export default function CompanyListPage() {
           <button
             onClick={() => navigate(`/companies/${row.id}/edit`)}
             className="p-1.5 rounded text-blue-600 hover:bg-blue-50"
-            title="Edit"
+            title={t('common.button.edit')}
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => setDeleteTarget(row)}
             className="p-1.5 rounded text-red-600 hover:bg-red-50"
-            title="Delete"
+            title={t('common.button.delete')}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -142,46 +151,46 @@ export default function CompanyListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Companies"
-        subtitle="Manage all companies in the system"
+        title={t('company.title.list')}
+        subtitle={t('company.subtitle.list')}
         actions={
           isSuperadmin() && (
             <Button onClick={() => navigate('/companies/new')}>
               <Plus className="w-4 h-4" />
-              Add Company
+              {t('company.button.add')}
             </Button>
           )
         }
       />
 
-      <FilterBar
-        filters={[
-          {
-            key: 'status',
-            label: 'Status',
-            type: 'select',
-            options: COMMON_STATUS_OPTIONS,
-          },
-        ]}
-        values={filters}
-        onChange={(v) => { setFilters(v); setPage(1); }}
-        onReset={handleResetFilters}
-      />
-
       <Card padding={false}>
+        <div className="p-4">
+          <SearchFilterBar
+            search={search}
+            onSearchChange={(v) => { setSearch(v); setPage(1); }}
+            searchPlaceholder={t('company.placeholder.search') || 'Search companies...'}
+            statusValue={status}
+            onStatusChange={(v) => { setStatus(v); setPage(1); }}
+            statusOptions={[
+              { value: 'all', label: t('company.filter.all') || 'All' },
+              { value: 'active', label: t('common.status.active') },
+              { value: 'inactive', label: t('common.status.inactive') },
+            ]}
+          />
+        </div>
         <DataTable
           columns={columns}
-          data={companies}
+          data={filtered}
           loading={isLoading}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}
           actions={actions}
           emptyIcon={Building2}
-          emptyTitle="No companies found"
-          emptyMessage="There are no companies matching your filters yet."
+          emptyTitle={t('company.empty.title')}
+          emptyMessage={search ? t('company.empty.search') : t('company.empty.message')}
           emptyAction={isSuperadmin() ? () => navigate('/companies/new') : undefined}
-          emptyActionLabel={isSuperadmin() ? 'Add Company' : undefined}
+          emptyActionLabel={isSuperadmin() ? t('company.button.add') : undefined}
         />
         {totalItems > 0 && (
           <div className="px-4 py-3 border-t border-gray-200">
@@ -202,9 +211,9 @@ export default function CompanyListPage() {
         onConfirm={async () => {
           if (deleteTarget) await deleteMutation.mutateAsync(deleteTarget.id);
         }}
-        title="Delete Company"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('company.confirm.deleteTitle')}
+        message={t('company.confirm.deleteMessage', { name: deleteTarget?.name })}
+        confirmText={t('common.button.delete')}
         loading={deleteMutation.isLoading}
       />
     </div>

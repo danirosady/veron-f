@@ -1,0 +1,728 @@
+{
+  "common": {
+    "appName": "Tyre Management System",
+    "button": {
+      "save": "Simpan",
+      "cancel": "Batal",
+      "delete": "Hapus",
+      "edit": "Edit",
+      "add": "Tambah",
+      "search": "Cari",
+      "maintenance": "Pemeliharaan",
+      "export": "Export",
+      "confirm": "Konfirmasi",
+      "back": "Kembali",
+      "next": "Selanjutnya",
+      "prev": "Sebelumnya",
+      "refresh": "Refresh",
+      "close": "Tutup",
+      "submit": "Submit",
+      "reset": "Reset",
+      "download": "Download",
+      "upload": "Upload",
+      "filter": "Filter",
+      "clear": "Bersihkan",
+      "apply": "Terapkan",
+      "retry": "Coba Lagi",
+      "login": "Masuk",
+      "logout": "Keluar",
+      "register": "Daftar",
+      "view": "Lihat"
+    },
+    "label": {
+      "name": "Nama",
+      "description": "Deskripsi",
+      "status": "Status",
+      "createdAt": "Dibuat",
+      "updatedAt": "Diubah",
+      "actions": "Aksi",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "total": "Total",
+      "search": "Pencarian",
+      "filter": "Filter",
+      "all": "Semua",
+      "yes": "Ya",
+      "no": "Tidak",
+      "noData": "Tidak ada data",
+      "loading": "Memuat...",
+      "required": "Wajib diisi",
+      "optional": "Opsional",
+      "details": "Detail",
+      "information": "Informasi",
+      "settings": "Pengaturan",
+      "language": "Bahasa",
+      "selectLanguage": "Pilih Bahasa"
+    },
+    "empty": {
+      "title": "Tidak Ada Data",
+      "message": "Belum ada data di sini."
+    },
+    "table": {
+      "noData": "Tidak ada data",
+      "loading": "Memuat...",
+      "showing": "Menampilkan {{from}} - {{to}} dari {{total}}",
+      "rowsPerPage": "Baris per halaman",
+      "selected": "{{count}} dipilih",
+      "selectAll": "Pilih semua"
+    },
+    "pagination": {
+      "first": "Pertama",
+      "last": "Terakhir",
+      "next": "Selanjutnya",
+      "prev": "Sebelumnya",
+      "page": "Halaman",
+      "of": "dari",
+      "rowsPerPage": "Baris per halaman"
+    },
+    "confirm": {
+      "deleteTitle": "Konfirmasi Hapus",
+      "deleteMessage": "Apakah Anda yakin ingin menghapus data ini?",
+      "saveTitle": "Konfirmasi Simpan",
+      "saveMessage": "Apakah Anda yakin ingin menyimpan data ini?",
+      "logoutTitle": "Konfirmasi Keluar",
+      "logoutMessage": "Apakah Anda yakin ingin keluar dari aplikasi?"
+    },
+    "toast": {
+      "saveSuccess": "Data berhasil disimpan",
+      "deleteSuccess": "Data berhasil dihapus",
+      "updateSuccess": "Data berhasil diperbarui",
+      "createSuccess": "Data berhasil dibuat",
+      "error": "Terjadi kesalahan",
+      "warning": "Peringatan",
+      "info": "Informasi",
+      "success": "Berhasil",
+      "failed": "Gagal",
+      "exportSuccess": "Export berhasil",
+      "importSuccess": "Import berhasil"
+    },
+    "status": {
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "pending": "Menunggu",
+      "approved": "Disetujui",
+      "rejected": "Ditolak",
+      "completed": "Selesai",
+      "cancelled": "Dibatalkan",
+      "draft": "Draft",
+      "published": "Dipublikasikan",
+      "maintenance": "Pemeliharaan"
+    }
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "company": "Perusahaan",
+    "project": "Proyek",
+    "unit": "Unit",
+    "driver": "Driver",
+    "tyre": "Ban",
+    "replacement": "Penggantian",
+    "report": "Laporan",
+    "user": "Pengguna",
+    "master": "Master Data",
+    "settings": "Pengaturan",
+    "profile": "Profil",
+    "logout": "Keluar"
+  },
+  "validation": {
+    "required": "Field ini wajib diisi",
+    "minLength": "Minimal {{min}} karakter",
+    "maxLength": "Maksimal {{max}} karakter",
+    "email": "Format email tidak valid",
+    "number": "Harus berupa angka",
+    "date": "Format tanggal tidak valid",
+    "pattern": "Format tidak sesuai",
+    "match": "Tidak cocok dengan {{field}}",
+    "min": "Nilai minimal {{min}}",
+    "max": "Nilai maksimal {{max}}",
+    "phone": "Format nomor telepon tidak valid",
+    "url": "Format URL tidak valid",
+    "fileSize": "Ukuran file maksimal {{max}}",
+    "fileType": "Tipe file tidak valid",
+    "unique": "Data sudah ada"
+  },
+  "errors": {
+    "networkError": "Koneksi gagal. Periksa jaringan Anda.",
+    "serverError": "Server sedang mengalami masalah. Silakan coba lagi.",
+    "notFound": "Data tidak ditemukan",
+    "unauthorized": "Anda tidak memiliki akses",
+    "forbidden": "Akses ditolak",
+    "unknownError": "Terjadi kesalahan yang tidak diketahui",
+    "fetchError": "Gagal mengambil data",
+    "saveError": "Gagal menyimpan data",
+    "deleteError": "Gagal menghapus data",
+    "updateError": "Gagal memperbarui data",
+    "loginFailed": "Login gagal. Periksa email dan password.",
+    "sessionExpired": "Sesi Anda telah berakhir. Silakan login kembali.",
+    "validationError": "Mohon perbaiki kesalahan pada form",
+    "duplicateError": "Data duplikat ditemukan",
+    "connectionError": "Tidak dapat terhubung ke server"
+  },
+  "auth": {
+    "title": {
+      "login": "Masuk",
+      "logout": "Keluar",
+      "forgotPassword": "Lupa Password",
+      "resetPassword": "Reset Password",
+      "changePassword": "Ubah Password"
+    },
+    "label": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Konfirmasi Password",
+      "newPassword": "Password Baru",
+      "oldPassword": "Password Lama",
+      "rememberMe": "Ingat saya",
+      "forgotPassword": "Lupa password?"
+    },
+    "button": {
+      "login": "Masuk",
+      "logout": "Keluar",
+      "forgotPassword": "Kirim Link Reset",
+      "resetPassword": "Reset Password",
+      "changePassword": "Ubah Password"
+    },
+    "message": {
+      "loginSuccess": "Login berhasil",
+      "logoutSuccess": "Logout berhasil",
+      "passwordResetSent": "Link reset password telah dikirim ke email Anda",
+      "passwordResetSuccess": "Password berhasil direset",
+      "passwordChangeSuccess": "Password berhasil diubah"
+    },
+    "placeholder": {
+      "email": "Masukkan email",
+      "password": "Masukkan password"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Selamat Datang",
+    "subtitle": "Ringkasan Sistem Manajemen Ban",
+    "summary": {
+      "totalCompany": "Total Perusahaan",
+      "totalProject": "Total Proyek",
+      "totalUnit": "Total Unit",
+      "totalTyre": "Total Ban",
+      "totalDriver": "Total Driver",
+      "mountedTyre": "Ban Terpasang",
+      "spareTyre": "Ban Cadangan",
+      "replacementThisMonth": "Penggantian Bulan Ini",
+      "replacementThisMonthSuffix": "bulan ini"
+    },
+    "tyreHealth": {
+      "title": "Distribusi Status Ban",
+      "scrap": "Rusak"
+    },
+    "quickStats": {
+      "title": "Statistik Cepat",
+      "scrapTyres": "Ban Rusak",
+      "replacementsThisMonth": "Penggantian Bulan Ini",
+      "mountRate": "Tingkat Pemasangan",
+      "avgTyresPerUnit": "Rata-rata Ban per Unit"
+    },
+    "chart": {
+      "title": "Grafik Penggantian Ban",
+      "tyreByStatus": "Ban Berdasarkan Status",
+      "replacementTrend": "Trend Penggantian"
+    },
+    "recentActivity": "Aktivitas Terbaru",
+    "quickAction": "Aksi Cepat"
+  },
+  "company": {
+    "title": {
+      "list": "Daftar Perusahaan",
+      "create": "Tambah Perusahaan",
+      "edit": "Edit Perusahaan",
+      "detail": "Detail Perusahaan"
+    },
+    "subtitle": {
+      "list": "Kelola semua perusahaan dalam sistem",
+      "create": "Tambah perusahaan baru ke sistem",
+      "edit": "Perbarui informasi perusahaan"
+    },
+    "button": {
+      "add": "Tambah Perusahaan",
+      "create": "Buat Perusahaan",
+      "update": "Perbarui Perusahaan"
+    },
+    "label": {
+      "name": "Nama Perusahaan",
+      "address": "Alamat",
+      "phone": "Nomor Telepon",
+      "email": "Email",
+      "contactPerson": "Orang Kontak",
+      "province": "Provinsi",
+      "city": "Kota/Kabupaten",
+      "postalCode": "Kode Pos",
+      "taxId": "NPWP",
+      "projects": "Proyek",
+      "units": "Unit",
+      "drivers": "Driver",
+      "code": "Kode"
+    },
+    "placeholder": {
+      "name": "Masukkan nama perusahaan",
+      "code": "Kode perusahaan (opsional)",
+      "address": "Alamat lengkap perusahaan (opsional)",
+      "phone": "Nomor telepon",
+      "email": "email@perusahaan.com",
+      "contactPerson": "Nama orang kontak",
+      "search": "Cari perusahaan..."
+    },
+    "filter": {
+      "all": "Semua"
+    },
+    "empty": {
+      "title": "Belum Ada Perusahaan",
+      "message": "Belum ada perusahaan.",
+      "search": "Tidak ada perusahaan yang cocok dengan pencarian."
+    },
+    "confirm": {
+      "deleteTitle": "Konfirmasi Hapus",
+      "deleteMessage": "Apakah Anda yakin ingin menghapus \"{{name}}\"? Tindakan ini tidak dapat dibatalkan."
+    },
+    "message": {
+      "createSuccess": "Perusahaan berhasil ditambahkan",
+      "deleteSuccess": "Perusahaan berhasil dihapus",
+      "updateSuccess": "Perusahaan berhasil diperbarui"
+    },
+    "placeholder": {
+      "name": "Masukkan nama perusahaan",
+      "address": "Masukkan alamat lengkap",
+      "phone": "Masukkan nomor telepon",
+      "email": "Masukkan email"
+    }
+  },
+  "project": {
+    "title": {
+      "list": "Daftar Proyek",
+      "create": "Tambah Proyek",
+      "edit": "Edit Proyek",
+      "detail": "Detail Proyek"
+    },
+    "subtitle": {
+      "list": "Kelola semua proyek dalam sistem",
+      "create": "Tambah proyek baru ke sistem",
+      "edit": "Perbarui informasi proyek"
+    },
+    "button": {
+      "add": "Tambah Proyek",
+      "create": "Buat Proyek",
+      "update": "Perbarui Proyek"
+    },
+    "label": {
+      "name": "Nama Proyek",
+      "code": "Kode Proyek",
+      "description": "Deskripsi",
+      "company": "Perusahaan",
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Berakhir",
+      "status": "Status",
+      "location": "Lokasi",
+      "manager": "Manager",
+      "units": "Unit",
+      "drivers": "Driver"
+    },
+    "placeholder": {
+      "name": "Masukkan nama proyek",
+      "code": "Kode proyek (opsional)",
+      "description": "Deskripsi proyek (opsional)",
+      "location": "Lokasi proyek",
+      "search": "Cari proyek..."
+    },
+    "empty": {
+      "title": "Belum Ada Proyek",
+      "message": "Belum ada proyek.",
+      "search": "Tidak ada proyek yang cocok dengan pencarian."
+    },
+    "confirm": {
+      "deleteTitle": "Konfirmasi Hapus",
+      "deleteMessage": "Apakah Anda yakin ingin menghapus \"{{name}}\"? Tindakan ini tidak dapat dibatalkan."
+    },
+    "message": {
+      "createSuccess": "Proyek berhasil ditambahkan",
+      "deleteSuccess": "Proyek berhasil dihapus",
+      "updateSuccess": "Proyek berhasil diperbarui"
+    }
+  },
+  "unit": {
+    "title": {
+      "list": "Daftar Unit",
+      "create": "Tambah Unit",
+      "edit": "Edit Unit",
+      "detail": "Detail Unit"
+    },
+    "label": {
+      "plateNumber": "Nomor Plat",
+      "vehicleType": "Tipe Kendaraan",
+      "brand": "Merek",
+      "model": "Model",
+      "year": "Tahun",
+      "project": "Proyek",
+      "company": "Perusahaan",
+      "driver": "Driver",
+      "tyres": "Ban",
+      "lastService": "Servis Terakhir",
+      "nextService": "Servis Berikutnya",
+      "odometer": "Odometer",
+      "hourMeter": "Hour Meter"
+    },
+    "vehicleType": {
+      "truck": "Truk",
+      "bus": "Bus",
+      "car": "Mobil",
+      "motorcycle": "Motor",
+      "forklift": "Forklift",
+      "heavy": "Alat Berat"
+    },
+    "message": {
+      "createSuccess": "Unit berhasil ditambahkan",
+      "deleteSuccess": "Unit berhasil dihapus",
+      "updateSuccess": "Unit berhasil diperbarui"
+    }
+  },
+  "driver": {
+    "title": {
+      "list": "Daftar Driver",
+      "create": "Tambah Driver",
+      "edit": "Edit Driver",
+      "detail": "Detail Driver"
+    },
+    "subtitle": {
+      "list": "Kelola semua driver dalam sistem",
+      "create": "Tambah driver baru ke sistem",
+      "edit": "Perbarui informasi driver"
+    },
+    "button": {
+      "add": "Tambah Driver",
+      "create": "Buat Driver",
+      "update": "Perbarui Driver"
+    },
+    "label": {
+      "name": "Nama Driver",
+      "employeeId": "ID Karyawan",
+      "phone": "Nomor HP",
+      "email": "Email",
+      "project": "Proyek",
+      "company": "Perusahaan",
+      "licenseNumber": "Nomor SIM",
+      "licenseType": "Tipe SIM",
+      "joinDate": "Tanggal Bergabung",
+      "status": "Status"
+    },
+    "placeholder": {
+      "name": "Nama driver",
+      "employeeId": "ID karyawan (opsional)",
+      "phone": "Nomor telepon",
+      "licenseNumber": "Nomor SIM driver",
+      "search": "Cari berdasarkan nama, ID karyawan, telepon...",
+      "selectCompany": "Pilih perusahaan"
+    },
+    "empty": {
+      "title": "Belum Ada Driver",
+      "message": "Belum ada driver yang cocok dengan filter Anda.",
+      "searchMatch": "Tidak ada driver yang cocok dengan pencarian."
+    },
+    "confirm": {
+      "deleteTitle": "Konfirmasi Hapus",
+      "deleteMessage": "Apakah Anda yakin ingin menghapus driver \"{{name}}\"? Tindakan ini tidak dapat dibatalkan."
+    },
+    "tab": {
+      "all": "Semua",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif"
+    },
+    "licenseType": {
+      "a": "SIM A",
+      "b1": "SIM B1",
+      "b2": "SIM B2",
+      "c": "SIM C",
+      "d": "SIM D"
+    },
+    "message": {
+      "createSuccess": "Driver berhasil ditambahkan",
+      "deleteSuccess": "Driver berhasil dihapus",
+      "updateSuccess": "Driver berhasil diperbarui"
+    }
+  },
+  "tyre": {
+    "title": {
+      "list": "Daftar Ban",
+      "create": "Tambah Ban",
+      "edit": "Edit Ban",
+      "detail": "Detail Ban"
+    },
+    "subtitle": {
+      "list": "Kelola semua ban dalam sistem",
+      "create": "Tambah ban baru ke inventaris",
+      "edit": "Perbarui informasi ban"
+    },
+    "button": {
+      "add": "Tambah Ban",
+      "create": "Buat Ban",
+      "update": "Perbarui Ban"
+    },
+    "placeholder": {
+      "serialNumber": "Nomor seri ban",
+      "barcode": "Barcode (opsional)",
+      "selectBrand": "Pilih merek",
+      "selectSize": "Pilih ukuran",
+      "selectType": "Pilih tipe",
+      "selectPattern": "Pilih pola",
+      "selectCompany": "Pilih perusahaan",
+      "search": "Cari berdasarkan barcode atau nomor seri...",
+      "otd": "Kedalaman tapak awal (mm)",
+      "rtd": "Kedalaman tapak saat ini (mm)"
+    },
+    "empty": {
+      "title": "Belum Ada Ban",
+      "message": "Belum ada ban dalam sistem.",
+      "searchMatch": "Tidak ada ban yang cocok dengan pencarian atau filter."
+    },
+    "confirm": {
+      "deleteTitle": "Konfirmasi Hapus",
+      "deleteMessage": "Apakah Anda yakin ingin menghapus ban \"{{name}}\"? Tindakan ini tidak dapat dibatalkan."
+    },
+    "tab": {
+      "all": "Semua"
+    },
+    "label": {
+      "serialNumber": "Nomor Seri",
+      "barcode": "Barcode",
+      "brand": "Merek",
+      "size": "Ukuran",
+      "type": "Tipe",
+      "pattern": "Pola",
+      "dot": "DOT",
+      "purchaseDate": "Tanggal Pembelian",
+      "purchasePrice": "Harga Pembelian",
+      "warranty": "Garansi",
+      "status": "Status",
+      "position": "Posisi",
+      "unit": "Unit",
+      "mountedUnit": "Unit Terpasang",
+      "company": "Perusahaan",
+      "project": "Proyek",
+      "currentOdometer": "Odometer Saat Ini",
+      "initialDepth": "Kedalaman Awal",
+      "currentDepth": "Kedalaman Saat Ini",
+      "minDepth": "Kedalaman Minimum",
+      "mountDate": "Tanggal Pasang",
+      "dismountDate": "Tanggal Lepas",
+      "reason": "Alasan",
+      "remarks": "Keterangan",
+      "otd": "OTD (Kedalaman Awal)",
+      "rtd": "RTD (Kedalaman Saat Ini)"
+    },
+    "status": {
+      "spare": "Cadangan",
+      "mounted": "Terpasang",
+      "dismounted": "Lepas",
+      "disposed": "Dibuang",
+      "retread": "Sosek",
+      "transfer": "Dipindahkan",
+      "scrap": "Rusak"
+    },
+    "filter": {
+      "brand": "Merek",
+      "size": "Ukuran",
+      "company": "Perusahaan",
+      "allBrands": "Semua Merek",
+      "allSizes": "Semua Ukuran",
+      "allCompanies": "Semua Perusahaan"
+    },
+    "position": {
+      "FL": "Depan Kiri",
+      "FR": "Depan Kanan",
+      "RL": "Belakang Kiri",
+      "RR": "Belakang Kanan",
+      "SL": "Samping Kiri",
+      "SR": "Samping Kanan",
+      "SPARE": "Cadangan"
+    },
+    "type": {
+      "radial": "Radial",
+      "bias": "Bias",
+      "solid": "Solid"
+    },
+    "message": {
+      "createSuccess": "Ban berhasil ditambahkan",
+      "deleteSuccess": "Ban berhasil dihapus",
+      "updateSuccess": "Ban berhasil diperbarui",
+      "mountSuccess": "Ban berhasil terpasang",
+      "dismountSuccess": "Ban berhasil dilepas"
+    }
+  },
+  "replacement": {
+    "title": {
+      "list": "Daftar Penggantian",
+      "create": "Penggantian Ban",
+      "detail": "Detail Penggantian",
+      "selectCompany": "Pilih Perusahaan",
+      "selectProject": "Pilih Proyek",
+      "selectUnit": "Pilih Unit"
+    },
+    "subtitle": {
+      "company": "Pilih perusahaan untuk melihat proyek penggantian ban",
+      "project": "Pilih proyek untuk melihat unitnya",
+      "unit": "Pilih unit untuk mengelola penggantian ban"
+    },
+    "tab": {
+      "all": "Semua",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif"
+    },
+    "placeholder": {
+      "searchCompany": "Cari perusahaan...",
+      "searchProject": "Cari proyek...",
+      "searchUnit": "Cari ID unit, plat, atau model..."
+    },
+    "empty": {
+      "noCompany": "Tidak ada perusahaan",
+      "noCompanyDesc": "Tidak ada perusahaan yang tersedia",
+      "noProject": "Tidak ada proyek",
+      "noProjectDesc": "Tidak ada proyek yang cocok dengan filter Anda",
+      "noProjectFilter": "Coba sesuaikan filter Anda",
+      "noUnit": "Tidak ada unit",
+      "noUnitDesc": "Tidak ada unit di proyek ini",
+      "noUnitFilter": "Coba sesuaikan filter Anda"
+    },
+    "label": {
+      "replacementNumber": "Nomor Penggantian",
+      "date": "Tanggal",
+      "unit": "Unit",
+      "driver": "Driver",
+      "project": "Proyek",
+      "company": "Perusahaan",
+      "oldTyre": "Ban Lama",
+      "newTyre": "Ban Baru",
+      "position": "Posisi",
+      "reason": "Alasan",
+      "odometer": "Odometer",
+      "notes": "Catatan",
+      "approvedBy": "Disetujui Oleh",
+      "approvedDate": "Tanggal Approve",
+      "projects": "proyek",
+      "units": "unit",
+      "good": "Baik",
+      "warning": "Peringatan",
+      "critical": "Kritis",
+      "noTyres": "Tanpa ban",
+      "spare": "cadangan",
+      "ongoing": "Berlangsung"
+    },
+    "nav": {
+      "companies": "Perusahaan",
+      "projects": "Proyek",
+      "units": "Unit"
+    },
+    "reason": {
+      "worn": "Aus",
+      "damage": "Rusak",
+      "puncture": "Kempes",
+      "scheduled": "Jadwal",
+      "transfer": "Pindah Proyek"
+    },
+    "message": {
+      "createSuccess": "Penggantian berhasil dicatat",
+      "deleteSuccess": "Penggantian berhasil dihapus"
+    }
+  },
+  "report": {
+    "title": {
+      "list": "Daftar Laporan",
+      "tyreInventory": "Laporan Inventaris Ban",
+      "replacementHistory": "Riwayat Penggantian",
+      "tyreCondition": "Kondisi Ban",
+      "costAnalysis": "Analisis Biaya"
+    },
+    "label": {
+      "reportType": "Tipe Laporan",
+      "dateRange": "Rentang Tanggal",
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Berakhir",
+      "company": "Perusahaan",
+      "project": "Proyek",
+      "unit": "Unit",
+      "export": "Export",
+      "generate": "Generate",
+      "print": "Cetak"
+    },
+    "message": {
+      "generateSuccess": "Laporan berhasil digenerate",
+      "exportSuccess": "Laporan berhasil diexport"
+    }
+  },
+  "user": {
+    "title": {
+      "list": "Daftar Pengguna",
+      "create": "Tambah Pengguna",
+      "edit": "Edit Pengguna",
+      "profile": "Profil Saya",
+      "changePassword": "Ubah Password"
+    },
+    "label": {
+      "name": "Nama",
+      "email": "Email",
+      "role": "Role",
+      "company": "Perusahaan",
+      "phone": "Telepon",
+      "status": "Status",
+      "lastLogin": "Login Terakhir",
+      "createdAt": "Dibuat"
+    },
+    "role": {
+      "admin": "Administrator",
+      "manager": "Manager",
+      "operator": "Operator",
+      "viewer": "Viewer"
+    },
+    "message": {
+      "createSuccess": "Pengguna berhasil ditambahkan",
+      "deleteSuccess": "Pengguna berhasil dihapus",
+      "updateSuccess": "Pengguna berhasil diperbarui",
+      "passwordChangeSuccess": "Password berhasil diubah"
+    }
+  },
+  "master": {
+    "title": {
+      "list": "Master Data"
+    },
+    "label": {
+      "tyreBrand": "Merek Ban",
+      "tyreSize": "Ukuran Ban",
+      "vehicleType": "Tipe Kendaraan",
+      "positionType": "Tipe Posisi"
+    },
+    "message": {
+      "createSuccess": "Data berhasil ditambahkan",
+      "deleteSuccess": "Data berhasil dihapus",
+      "updateSuccess": "Data berhasil diperbarui"
+    }
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "label": {
+      "general": "Umum",
+      "appearance": "Tampilan",
+      "notification": "Notifikasi",
+      "security": "Keamanan",
+      "language": "Bahasa",
+      "theme": "Tema",
+      "darkMode": "Mode Gelap",
+      "lightMode": "Mode Terang",
+      "auto": "Otomatis"
+    },
+    "language": {
+      "title": "Pengaturan Bahasa",
+      "description": "Pilih bahasa yang ingin Anda gunakan",
+      "current": "Bahasa Saat Ini",
+      "indonesian": "Indonesia",
+      "english": "English"
+    },
+    "message": {
+      "saveSuccess": "Pengaturan berhasil disimpan",
+      "resetSuccess": "Pengaturan berhasil direset"
+    }
+  }
+}

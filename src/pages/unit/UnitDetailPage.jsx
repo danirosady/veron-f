@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Pencil, Truck, Plus, History } from 'lucide-react';
@@ -9,7 +9,6 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/list/DataTable';
 import { unitsAPI } from '@/api/units';
-import { tyresAPI } from '@/api/tyres';
 import { replacementsAPI } from '@/api/replacements';
 import { usePermission } from '@/hooks/usePermission';
 import { formatDate, formatNumber, titleCase } from '@/utils/format';
@@ -35,9 +34,9 @@ export default function UnitDetailPage() {
     enabled: Boolean(id),
   });
 
-  const { data: tyresData, isLoading: tyresLoading } = useQuery({
+  const { data: unitTyresData, isLoading: tyresLoading } = useQuery({
     queryKey: ['unit-tyres', id],
-    queryFn: () => tyresAPI.list({ unit_id: id, status: 'mounted' }),
+    queryFn: () => unitsAPI.getTyres(id),
     enabled: Boolean(id),
   });
 
@@ -54,7 +53,19 @@ export default function UnitDetailPage() {
   });
 
   const unit = unitData?.data?.data || unitData?.data;
-  const mountedTyres = tyresData?.data?.data || tyresData?.data || [];
+
+  // Extract mounted tyres from the unit tyres response
+  const mountedTyres = useMemo(() => {
+    const positions = unitTyresData?.data?.positions || unitTyresData?.data?.data?.positions || [];
+    // Filter only positions that have a tyre mounted
+    return positions
+      .filter(pos => pos.tyre)
+      .map(pos => ({
+        ...pos.tyre,
+        position: pos.position,
+      }));
+  }, [unitTyresData]);
+
   const historyItems = historyData?.data?.data || historyData?.data || [];
   const historyMeta = historyData?.data?.meta || historyData?.meta || {};
 

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
-  Search,
   MapPin,
   Calendar,
   Truck,
@@ -10,13 +10,13 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
+import SearchFilterBar from '@/components/list/SearchFilterBar';
 import { projectsAPI } from '@/api/projects';
 
-function ProjectCard({ project, onClick }) {
+function ProjectCard({ project, onClick, t }) {
   const start = project.start_date
     ? new Date(project.start_date).toLocaleDateString('en-GB', {
         day: '2-digit',
@@ -42,7 +42,7 @@ function ProjectCard({ project, onClick }) {
         <div className="flex items-start justify-between mb-3">
           <h3 className="font-semibold text-gray-900">{project.name}</h3>
           <Badge variant={project.status === 'active' ? 'active' : 'inactive'}>
-            {project.status === 'active' ? 'Active' : 'Inactive'}
+            {project.status === 'active' ? t('common.status.active') : t('common.status.inactive')}
           </Badge>
         </div>
 
@@ -57,14 +57,14 @@ function ProjectCard({ project, onClick }) {
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
             <Calendar className="w-4 h-4" />
             <span>
-              {start || '—'} – {end || 'Ongoing'}
+              {start || '—'} – {end || t('replacement.label.ongoing')}
             </span>
           </div>
         )}
 
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mt-3 pt-3 border-t border-gray-100">
           <Truck className="w-4 h-4 text-gray-400" />
-          <span>{project.total_units} units</span>
+          <span>{project.total_units} {t('replacement.label.units')}</span>
         </div>
       </div>
     </Card>
@@ -72,6 +72,7 @@ function ProjectCard({ project, onClick }) {
 }
 
 export default function ReplacementProjectPage({ companyId, showBack }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -96,9 +97,9 @@ export default function ReplacementProjectPage({ companyId, showBack }) {
   });
 
   const tabs = [
-    { label: 'All', value: 'all' },
-    { label: 'Active', value: 'active' },
-    { label: 'Inactive', value: 'inactive' },
+    { label: t('replacement.tab.all'), value: 'all' },
+    { label: t('replacement.tab.active'), value: 'active' },
+    { label: t('replacement.tab.inactive'), value: 'inactive' },
   ];
 
   return (
@@ -111,43 +112,27 @@ export default function ReplacementProjectPage({ companyId, showBack }) {
               className="flex items-center gap-1 hover:text-gray-700"
             >
               <ArrowLeft className="w-4 h-4" />
-              Companies
+              {t('replacement.nav.companies')}
             </Link>
           )}
           <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Projects</span>
+          <span className="text-gray-900 font-medium">{t('replacement.nav.projects')}</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Select Project</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('replacement.title.selectProject')}</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Choose a project to view its units for tyre replacement
+          {t('replacement.subtitle.project')}
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search project..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                statusFilter === tab.value
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="mb-4">
+        <SearchFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t('replacement.placeholder.searchProject')}
+          statusValue={statusFilter}
+          onStatusChange={setStatusFilter}
+          statusOptions={tabs}
+        />
       </div>
 
       {isLoading ? (
@@ -159,8 +144,8 @@ export default function ReplacementProjectPage({ companyId, showBack }) {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Truck}
-          title="No projects found"
-          description={search || statusFilter !== 'all' ? 'Try adjusting your filters' : 'No projects available'}
+          title={t('replacement.empty.noProject')}
+          description={search || statusFilter !== 'all' ? t('replacement.empty.noProjectFilter') : t('replacement.empty.noProjectDesc')}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -168,7 +153,8 @@ export default function ReplacementProjectPage({ companyId, showBack }) {
             <ProjectCard
               key={project.id}
               project={project}
-              onClick={() => navigate(`/replacement/projects/${project.id}/units`)}
+              onClick={() => navigate(`/replacement/companies/${companyId}/projects/${project.id}/units`)}
+              t={t}
             />
           ))}
         </div>
