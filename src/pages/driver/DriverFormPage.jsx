@@ -16,6 +16,7 @@ import { driversAPI } from '@/api/drivers';
 import { companiesAPI } from '@/api/companies';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 const driverSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -34,6 +35,7 @@ export default function DriverFormPage() {
   const { user } = useAuth();
   const { isSuperadmin } = usePermission();
   const isEdit = Boolean(id);
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: driverData, isLoading: loadingDriver } = useQuery({
     queryKey: ['driver', id],
@@ -74,8 +76,10 @@ export default function DriverFormPage() {
         license_number: d.license_number || '',
         status: d.status || 'active',
       });
+      // Set breadcrumb
+      setBreadcrumb(d.name || `Driver #${id}`);
     }
-  }, [driverData, isEdit, reset]);
+  }, [driverData, isEdit, id, reset, setBreadcrumb]);
 
   const saveMutation = useMutation({
     mutationFn: (data) =>

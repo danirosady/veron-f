@@ -1,5 +1,8 @@
 import React, { useState, useMemo, useCallback, forwardRef } from 'react';
 import VehicleCanvasCore from './VehicleCanvasCore';
+import UnitStatsBalloon from './UnitStatsBalloon';
+import SparePanelBalloon from './SparePanelBalloon';
+import ActionQueueBalloon from './ActionQueueBalloon';
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -12,6 +15,22 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
   height = 1200,
   className = '',
   isDraggingSpare = false,
+  // Balloon data props — rendered directly inside canvas
+  unit = null,
+  totalMounted = 0,
+  totalSpare = 0,
+  actionQueueLength = 0,
+  spareTyres = [],
+  searchSpare = '',
+  onSearchSpare,
+  onSelectSpare,
+  selectedSpareTyreId = null,
+  // Action queue balloon
+  actionQueue = [],
+  onRemoveQueue,
+  onClearQueue,
+  onSubmitQueue,
+  isSubmitting = false,
 }, ref) {
   const [selectedPosition, setSelectedPosition] = useState(null);
 
@@ -54,6 +73,29 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
           canvasOverlayRef={ref}
         />
 
+        {/* Balloons — rendered directly here, positioned absolutely inside the container */}
+        <UnitStatsBalloon
+          unit={unit}
+          totalMounted={totalMounted}
+          totalSpare={totalSpare}
+          actionQueueLength={actionQueueLength}
+          maxPosition={unitTypeConfig?.max_position}
+        />
+        <SparePanelBalloon
+          tyres={spareTyres}
+          search={searchSpare}
+          onSearch={onSearchSpare}
+          onSelect={onSelectSpare}
+          selectedTyreId={selectedSpareTyreId}
+        />
+        <ActionQueueBalloon
+          queue={actionQueue}
+          onRemove={onRemoveQueue}
+          onClearAll={onClearQueue}
+          onSubmitAll={onSubmitQueue}
+          isSubmitting={isSubmitting}
+        />
+
         {/* Edit mode indicator */}
         {mode === 'edit' && (
           <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-amber-100 text-amber-700 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-amber-300 shadow-sm z-10">
@@ -66,7 +108,7 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-3">
+      <div className="flex flex-wrap items-center justify-center gap-4 mt-1">
         <LegendItem color="#d1d5db" label="Empty" dashed />
         <LegendItem color="#22c55e" label="RTD ≥ 20mm" />
         <LegendItem color="#eab308" label="RTD 10–19mm" />

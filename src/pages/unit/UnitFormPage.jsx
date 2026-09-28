@@ -17,6 +17,7 @@ import { projectsAPI } from '@/api/projects';
 import { masterAPI } from '@/api/master';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 const unitSchema = z.object({
   unit_id: z.string().min(1, 'Unit ID is required').max(50),
@@ -26,7 +27,6 @@ const unitSchema = z.object({
   plate_number: z.string().max(50).optional().or(z.literal('')),
   tyre_size_default: z.string().min(1, 'Tyre Size Default is required').max(50),
   unit_type: z.string().min(1, 'Type is required'),
-  max_position: z.string().min(1, 'Max Position is required'),
   current_hm: z.string().optional().or(z.literal('')),
   status: z.enum(['active', 'inactive', 'maintenance']).default('active'),
 });
@@ -38,6 +38,7 @@ export default function UnitFormPage() {
   const { user } = useAuth();
   const { isSuperadmin } = usePermission();
   const isEdit = Boolean(id);
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: unitData, isLoading: loadingUnit } = useQuery({
     queryKey: ['unit', id],
@@ -89,7 +90,6 @@ export default function UnitFormPage() {
       plate_number: '',
       tyre_size_default: '',
       unit_type: '',
-      max_position: '',
       current_hm: '',
       status: 'active',
     },
@@ -108,12 +108,13 @@ export default function UnitFormPage() {
         plate_number: u.plate_number || '',
         tyre_size_default: u.tyre_size_default || '',
         unit_type: u.unit_type || '',
-        max_position: u.max_position ? String(u.max_position) : '',
         current_hm: u.current_hm ? String(u.current_hm) : '',
         status: u.status || 'active',
       });
+      // Set breadcrumb
+      setBreadcrumb(u.unit_id || u.plate_number || `Unit #${id}`);
     }
-  }, [unitData, isEdit, reset]);
+  }, [unitData, isEdit, id, reset, setBreadcrumb]);
 
   const watchedCompanyId = watch('company_id');
   useEffect(() => {
@@ -137,7 +138,6 @@ export default function UnitFormPage() {
       ...data,
       company_id: Number(data.company_id),
       project_id: Number(data.project_id),
-      max_position: Number(data.max_position),
       current_hm: data.current_hm ? Number(data.current_hm) : 0,
     };
     saveMutation.mutate(payload);
@@ -231,14 +231,16 @@ export default function UnitFormPage() {
                   />
                 </FormField>
 
-                <FormField label="Max Position" required error={errors.max_position?.message}>
-                  <Input
-                    type="number"
-                    placeholder="e.g. 6"
-                    {...register('max_position')}
-                    error={errors.max_position?.message}
-                  />
-                </FormField>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Max Positions</p>
+                  <p className="text-sm text-gray-900 font-medium px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                    {unitTypes.find((t) => t.unit_type === watch('unit_type'))?.max_position ?? '—'}
+                    <span className="text-xs text-gray-400 ml-1">
+                      (from {watch('unit_type') || 'type'})
+                    </span>
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Auto-set based on unit type template</p>
+                </div>
 
                 <FormField label="Status" error={errors.status?.message}>
                   <Select

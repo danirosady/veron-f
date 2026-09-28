@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth();
@@ -13,19 +14,101 @@ export default function Header({ onMenuClick }) {
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { getBreadcrumb } = useBreadcrumb();
 
   const pathSegments = location.pathname
     .split('/')
     .filter(Boolean)
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
 
-  const breadcrumbs = [
-    { label: t('menu.dashboard'), path: '/' },
-    ...pathSegments.map((seg, idx) => ({
-      label: seg.replace(/-/g, ' '),
-      path: '/' + pathSegments.slice(0, idx + 1).join('/'),
-    })),
-  ];
+  // Operations flow - only for replacement sub-routes (NOT /replacements which is Management)
+  const isReplacementPath = location.pathname === '/replacement' || 
+    (location.pathname.startsWith('/replacement/') && !location.pathname.startsWith('/replacements'));
+
+  // Check if path matches a base management route or its sub-routes
+  const matchesBase = (base) =>
+    location.pathname === base || location.pathname.startsWith(base + '/');
+
+  // Management routes (Dashboard + core business entities)
+  const isManagementPath = matchesBase('/dashboard') || matchesBase('/companies') ||
+    matchesBase('/projects') || matchesBase('/units') || matchesBase('/drivers') ||
+    matchesBase('/tyres') || matchesBase('/replacements');
+
+  // Configuration routes (Master data, Users, Settings)
+  const isConfigurationPath = matchesBase('/master') || matchesBase('/users') || matchesBase('/settings');
+
+  const isReportsPath = location.pathname.startsWith('/reports');
+
+  // Get management label for a path
+  const getManagementLabel = (path) => {
+    if (path === '/dashboard' || path === '/dashboard/') return 'Dashboard';
+    if (path === '/replacements' || path.startsWith('/replacements/')) return 'Replacements History';
+    if (path === '/companies' || path.startsWith('/companies/')) return 'Companies';
+    if (path === '/projects' || path.startsWith('/projects/')) return 'Projects';
+    if (path === '/units' || path.startsWith('/units/')) return 'Units';
+    if (path === '/drivers' || path.startsWith('/drivers/')) return 'Drivers';
+    if (path === '/tyres' || path.startsWith('/tyres/')) return 'Tyres';
+    return null;
+  };
+
+  // Get Configuration label for a path
+  const getConfigurationLabel = (path) => {
+    if (path === '/master' || path.startsWith('/master')) return 'Master Data';
+    if (path === '/users' || path.startsWith('/users')) return 'Users';
+    if (path === '/settings') return 'Settings';
+    return null;
+  };
+
+  // Build sub-path for each segment - use raw lowercase paths for matching
+  const rawPathSegments = location.pathname.split('/').filter(Boolean);
+  const subPaths = rawPathSegments.map((_, idx) =>
+    '/' + rawPathSegments.slice(0, idx + 1).join('/')
+  );
+
+  // Build display segments (capitalized for labels)
+  const displaySegments = pathSegments.map((seg) => seg.replace(/-/g, ' '));
+
+  // Helper to get label from context or fallback to default
+  const getLabel = (subPath, fallbackLabel) => {
+    const override = getBreadcrumb(subPath);
+    return override || fallbackLabel;
+  };
+
+  const breadcrumbs = isReplacementPath
+    ? [
+        { label: 'Operations', path: '/replacement' },
+        ...pathSegments.map((seg, idx) => ({
+          label: getLabel(subPaths[idx], seg.replace(/-/g, ' ')),
+          path: subPaths[idx],
+        })),
+      ]
+    : isManagementPath
+    ? [
+        { label: 'Management', path: '/management' },
+        ...rawPathSegments.map((seg, idx) => ({
+          label: getLabel(subPaths[idx], getManagementLabel(subPaths[idx]) || seg.replace(/-/g, ' ')),
+          path: subPaths[idx],
+        })),
+      ]
+    : isConfigurationPath
+    ? [
+        { label: 'Configuration', path: '/master' },
+        ...rawPathSegments.map((seg, idx) => ({
+          label: getLabel(subPaths[idx], getConfigurationLabel(subPaths[idx]) || seg.replace(/-/g, ' ')),
+          path: subPaths[idx],
+        })),
+      ]
+    : isReportsPath
+    ? [
+        { label: 'Reports', path: '/reports' },
+        ...rawPathSegments.slice(1).map((seg, idx) => ({
+          label: getLabel(subPaths[idx + 1], seg.replace(/-/g, ' ')),
+          path: subPaths[idx + 1],
+        })),
+      ]
+    : [
+        // { label: 'Dashboard', path: '/dashboard' },
+      ];
 
   const handleLogout = async () => {
     setDropdownOpen(false);
@@ -55,7 +138,7 @@ export default function Header({ onMenuClick }) {
             <Menu className="w-5 h-5" />
           </button>
 
-          <nav className="hidden sm:flex items-center gap-2 text-sm">
+          <nav key={location.pathname} className="hidden sm:flex items-center gap-2 text-sm">
             {breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={crumb.path}>
                 {idx > 0 && (

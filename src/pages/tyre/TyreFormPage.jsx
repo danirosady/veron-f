@@ -17,6 +17,7 @@ import { companiesAPI } from '@/api/companies';
 import { masterAPI } from '@/api/master';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 const tyreSchema = z.object({
   serial_number: z.string().min(1, 'Serial number is required').max(100),
@@ -40,6 +41,7 @@ export default function TyreFormPage() {
   const { user } = useAuth();
   const { isSuperadmin } = usePermission();
   const isEdit = Boolean(id);
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: tyreData, isLoading: loadingTyre } = useQuery({
     queryKey: ['tyre', id],
@@ -114,8 +116,10 @@ export default function TyreFormPage() {
         purchase_date: t_data.purchase_date ? t_data.purchase_date.substring(0, 10) : '',
         status: t_data.status || 'spare',
       });
+      // Set breadcrumb
+      setBreadcrumb(t_data.serial_number || `Tyre #${id}`);
     }
-  }, [tyreData, isEdit, reset, types]);
+  }, [tyreData, isEdit, id, reset, types, setBreadcrumb]);
 
   const saveMutation = useMutation({
     mutationFn: (data) =>

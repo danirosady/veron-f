@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import {
   Truck,
   ChevronRight,
   ArrowLeft,
+  AlertTriangle,
 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -13,7 +14,10 @@ import Skeleton from '@/components/ui/Skeleton';
 import EmptyState from '@/components/ui/EmptyState';
 import SearchFilterBar from '@/components/list/SearchFilterBar';
 import { unitsAPI } from '@/api/units';
+import { companiesAPI } from '@/api/companies';
+import { projectsAPI } from '@/api/projects';
 import { TyreIcon } from '@/components/icons';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 function UnitCard({ unit, onClick, t }) {
   const { data: statsData } = useQuery({
@@ -30,7 +34,7 @@ function UnitCard({ unit, onClick, t }) {
 
   return (
     <Card
-      className="hover:shadow-md cursor-pointer transition-shadow"
+      className="hover:shadow-md cursor-pointer transition-shadow relative"
       padding={false}
       onClick={onClick}
     >
@@ -43,9 +47,14 @@ function UnitCard({ unit, onClick, t }) {
             )}
           </div>
           <Badge variant={unit.status === 'active' ? 'active' : unit.status === 'maintenance' ? 'maintenance' : 'inactive'}>
+              
             {unit.status === 'active' ? t('common.status.active') : unit.status === 'maintenance' ? t('common.status.maintenance') : t('common.status.inactive')}
           </Badge>
+          <div className="absolute bottom-6 right-6 opacity-75">
+          <img src="/ADT_10POS.png" alt="ADT" className="w-36 h-36 object-contain" />
         </div>
+        </div>
+              
 
         <p className="text-sm text-gray-500 mb-3">{unit.unit_model}</p>
 
@@ -79,6 +88,12 @@ function UnitCard({ unit, onClick, t }) {
           {spare > 0 && (
             <span className="text-xs text-gray-400">· {spare} {t('replacement.label.spare')}</span>
           )}
+          {health < unit.max_position && (
+            <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {t('replacement.label.unmounted', { count: unit.max_position - health })}
+            </span>
+          )}
         </div>
       </div>
     </Card>
@@ -111,8 +126,36 @@ export default function ReplacementUnitPage() {
   const { t } = useTranslation();
   const { projectId, companyId } = useParams();
   const navigate = useNavigate();
+  const { setBreadcrumb } = useBreadcrumb();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const { data: companyData } = useQuery({
+    queryKey: ['company', companyId],
+    queryFn: () => companiesAPI.get(companyId),
+    enabled: Boolean(companyId),
+  });
+
+  const { data: projectData } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => projectsAPI.get(projectId),
+    enabled: Boolean(projectId),
+  });
+
+  useEffect(() => {
+    if (companyData) {
+      const company = companyData.data?.data || companyData.data;
+      if (company?.name) {
+        setBreadcrumb(company.name, `/replacement/companies/${companyId}`);
+      }
+    }
+    if (projectData) {
+      const project = projectData.data?.data || projectData.data;
+      if (project?.name) {
+        setBreadcrumb(project.name, `/replacement/companies/${companyId}/projects/${projectId}`);
+      }
+    }
+  }, [companyData, projectData, companyId, projectId, setBreadcrumb]);
 
   const { data: unitsData, isLoading } = useQuery({
     queryKey: ['replacement-units', projectId],
@@ -187,7 +230,7 @@ export default function ReplacementUnitPage() {
             <UnitCard
               key={unit.id}
               unit={unit}
-              onClick={() => navigate(`/units/${unit.id}/tyres`, { state: { from: 'replacement' } })}
+              onClick={() => navigate(`/replacement/companies/${companyId}/projects/${projectId}/units/${unit.id}/tyres`)}
               t={t}
             />
           ))}

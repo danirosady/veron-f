@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import AppShell from '@/components/layout/AppShell';
 import LoginPage from '@/pages/auth/LoginPage';
 import { ToastProvider } from '@/components/ui/Toast';
+import { BreadcrumbProvider } from '@/contexts/BreadcrumbContext';
 import CompanyListPage from '@/pages/company/CompanyListPage';
 import CompanyFormPage from '@/pages/company/CompanyFormPage';
 import ProjectListPage from '@/pages/project/ProjectListPage';
@@ -32,6 +33,7 @@ import SettingsPage from '@/pages/settings/SettingsPage';
 import ReplacementHomePage from '@/pages/replacement/ReplacementHomePage';
 import ReplacementCompanyProjectsPage from '@/pages/replacement/ReplacementCompanyProjectsPage';
 import ReplacementUnitPage from '@/pages/replacement/ReplacementUnitPage';
+import ReplacementUnitTyresPage from '@/pages/replacement/ReplacementUnitTyresPage';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -64,7 +66,8 @@ function PublicRoute({ children }) {
 export default function App() {
   return (
     <ToastProvider>
-      <Routes>
+      <BreadcrumbProvider>
+        <Routes>
         <Route
           path="/login"
           element={
@@ -114,6 +117,10 @@ export default function App() {
             path="replacement/companies/:companyId/projects/:projectId/units"
             element={<ReplacementUnitPage />}
           />
+          <Route
+            path="replacement/companies/:companyId/projects/:projectId/units/:unitId/tyres"
+            element={<ReplacementUnitTyresPage />}
+          />
           <Route path="reports/replacements" element={<ReplacementReportPage />} />
           <Route path="reports/inventory" element={<InventoryReportPage />} />
           <Route path="reports/schedule" element={<ScheduleReportPage />} />
@@ -125,7 +132,8 @@ export default function App() {
           <Route path="users/:id/edit" element={<UserFormPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </BreadcrumbProvider>
     </ToastProvider>
   );
 }

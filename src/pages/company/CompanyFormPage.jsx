@@ -14,6 +14,7 @@ import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import FormField from '@/components/form/FormField';
 import { companiesAPI } from '@/api/companies';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 const companySchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -31,6 +32,7 @@ export default function CompanyFormPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isEdit = Boolean(id);
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: companyData, isLoading: loadingCompany } = useQuery({
     queryKey: ['company', id],
@@ -68,8 +70,10 @@ export default function CompanyFormPage() {
         address: c.address || '',
         status: c.status || 'active',
       });
+      // Set breadcrumb
+      setBreadcrumb(c.name || `Company #${id}`);
     }
-  }, [companyData, isEdit, reset]);
+  }, [companyData, isEdit, id, reset, setBreadcrumb]);
 
   const saveMutation = useMutation({
     mutationFn: (data) =>

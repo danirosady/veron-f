@@ -26,7 +26,7 @@ const TYRE_IMAGE = '/tyre-pattern.png';
  * onBoundsChange : (bounds) => void — called with {width, height} when image bounds change
  * showGrid       : bool   — show background grid (default true)
  * showMirror    : bool   — show vertical dashed mirror centre line (default true)
- * className      : string
+ * className     : string
  * children       : node   — tyre slot components rendered inside overlay
  */
 const GRID_SIZE = 40;
@@ -215,7 +215,7 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
       {/* ── Tyre overlay: pinned to image bounds ─────────────────────────── */}
       <div
         ref={overlayRef}
-        className="absolute"
+        className="absolute overflow-visible"
         style={{
           left: imageBounds.left || 16,
           top: imageBounds.top || 16,
@@ -224,7 +224,9 @@ const TyreCanvasBase = forwardRef(function TyreCanvasBase({
           zIndex: 2,
         }}
       >
-        {children}
+        <div className="relative w-full h-full">
+          {children}
+        </div>
       </div>
     </div>
   );

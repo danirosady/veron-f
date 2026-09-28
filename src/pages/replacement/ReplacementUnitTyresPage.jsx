@@ -1,14 +1,13 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  ChevronRight,
   X,
   Gauge,
   RefreshCw,
-  Edit3,
-  Eye,
-  Plus
+  Plus,
 } from 'lucide-react';
 import { TyreIcon } from '@/components/icons';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
@@ -24,12 +23,12 @@ import EmptyState from '@/components/ui/EmptyState';
 import TyrePositionCanvas from '@/components/tyre/TyrePositionCanvas';
 import { unitsAPI } from '@/api/units';
 import { replacementsAPI } from '@/api/replacements';
-import { masterAPI } from '@/api/master';
 import { driversAPI } from '@/api/drivers';
+import { companiesAPI } from '@/api/companies';
+import { projectsAPI } from '@/api/projects';
 import { formatNumber, titleCase, getRtdColor } from '@/utils/format';
-import { VEHICLE_CHASSIS_IMAGES } from '@/utils/vehicleLayouts';
-
-// ─── RTD Chip ────────────────────────────────────────────────────────────────
+import { useTranslation } from 'react-i18next';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 function RtdChip({ rtd }) {
   if (rtd === null || rtd === undefined) return null;
@@ -40,8 +39,6 @@ function RtdChip({ rtd }) {
     </span>
   );
 }
-
-// ─── Tyre Image ───────────────────────────────────────────────────────────────
 
 function TyreImg({ size = 48, opacity = 1 }) {
   return (
@@ -54,9 +51,6 @@ function TyreImg({ size = 48, opacity = 1 }) {
     />
   );
 }
-
-
-// ─── Drag Overlay Cards ────────────────────────────────────────────────────────
 
 function SpareTyreOverlay({ tyre }) {
   const rtd = tyre?.rtd || tyre?.rtd_1;
@@ -96,9 +90,6 @@ function MountedTyreOverlay({ tyre }) {
   );
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-/** Find the nearest position slot to (nx, ny) where nx/ny are [0,1] canvas coords */
 function findPositionAtCoords(positions, nx, ny) {
   let best = null;
   let bestDist = Infinity;
@@ -107,32 +98,24 @@ function findPositionAtCoords(positions, nx, ny) {
     const d = Math.hypot(pos.x - nx, pos.y - ny);
     if (d < bestDist) { bestDist = d; best = pos; }
   }
-  // Only match if within a reasonable radius (e.g. 8% of canvas diagonal)
   const threshold = 0.08;
   return bestDist < threshold ? best : null;
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────
-
-export default function UnitTyresPage() {
-  const { id } = useParams();
+export default function ReplacementUnitTyresPage() {
+  const { t } = useTranslation();
+  const { companyId, projectId, unitId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
-
-  const fromReplacement = location.state?.from === 'replacement';
-  const goBack = () => navigate(-1);
-
+  const canvasOverlayRef = useRef({});
+  const { setBreadcrumb } = useBreadcrumb();
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [selectedTyre, setSelectedTyre] = useState(null);
   const [actionQueue, setActionQueue] = useState([]);
   const [searchSpare, setSearchSpare] = useState('');
-  const [editMode, setEditMode] = useState(false);
   const [activeDragItem, setActiveDragItem] = useState(null);
   const [isDraggingSpare, setIsDraggingSpare] = useState(false);
-  const canvasOverlayRef = useRef({});
 
-  // Action form state
   const [action, setAction] = useState('');
   const [spareTyreId, setSpareTyreId] = useState('');
   const [rtdInput, setRtdInput] = useState('');
@@ -144,11 +127,10 @@ export default function UnitTyresPage() {
   const [hmPlan, setHmPlan] = useState('');
   const [dismountCondition, setDismountCondition] = useState('spare');
 
-  // Fetch unit tyres data
   const { data, isLoading, isError, refetch: doRefetch } = useQuery({
-    queryKey: ['unit-tyres', id],
-    queryFn: () => unitsAPI.getTyres(id),
-    enabled: Boolean(id),
+    queryKey: ['unit-tyres', unitId],
+    queryFn: () => unitsAPI.getTyres(unitId),
+    enabled: Boolean(unitId),
   });
 
   const { data: driversData } = useQuery({
@@ -156,11 +138,19 @@ export default function UnitTyresPage() {
     queryFn: () => driversAPI.list({ per_page: 200 }),
   });
 
-    // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
+  const { data: companyData } = useQuery({
+    queryKey: ['company', companyId],
+    queryFn: () => companiesAPI.get(companyId),
+    enabled: Boolean(companyId),
+  });
 
+  const { data: projectData } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => projectsAPI.get(projectId),
+    enabled: Boolean(projectId),
+  });
+
+  
   const unitData = data?.data?.data;
   const unit = unitData?.unit;
   const positions = unitData?.positions || [];
@@ -169,13 +159,32 @@ export default function UnitTyresPage() {
   const totalMounted = unitData?.total_mounted || 0;
   const totalSpare = unitData?.total_spare || 0;
   const drivers = driversData?.data?.data || driversData?.data || [];
+  
+  useEffect(() => {
+    if (companyData) {
+      const company = companyData.data?.data || companyData.data;
+      if (company?.name) {
+        setBreadcrumb(company.name, `/replacement/companies/${companyId}`);
+      }
+    }
+    if (projectData) {
+      const project = projectData.data?.data || projectData.data;
+      if (project?.name) {
+        setBreadcrumb(project.name, `/replacement/companies/${companyId}/projects/${projectId}`);
+      }
+    }
+    if (unit) {
+      setBreadcrumb(unit.unit_id || unit.plate_number || `Unit #${unitId}`, `/replacement/companies/${companyId}/projects/${projectId}/units/${unitId}`);
+    }
+  }, [companyData, projectData, unit, companyId, projectId, unitId, setBreadcrumb]);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
-
-
-  // Direct submit mutation
   const submitMutation = useMutation({
     mutationFn: (payload) => replacementsAPI.create({
-      unit_id: Number(id),
+      unit_id: Number(unitId),
       driver_id: driverId ? Number(driverId) : null,
       date: replacementDate,
       hm_update: hmInput ? Number(hmInput) : 0,
@@ -194,16 +203,15 @@ export default function UnitTyresPage() {
       }],
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['unit-tyres', id] });
+      queryClient.invalidateQueries({ queryKey: ['unit-tyres', unitId] });
       doRefetch();
       closeActionModal();
     },
   });
 
-  // Batch submit mutation
   const batchSubmitMutation = useMutation({
     mutationFn: ({ details, driver_id, hm_plan, current_life_hm }) => replacementsAPI.create({
-      unit_id: Number(id),
+      unit_id: Number(unitId),
       driver_id,
       date: replacementDate,
       hm_update: hmInput ? Number(hmInput) : 0,
@@ -213,37 +221,12 @@ export default function UnitTyresPage() {
       details,
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['unit-tyres', id] });
+      queryClient.invalidateQueries({ queryKey: ['unit-tyres', unitId] });
       doRefetch();
       setActionQueue([]);
       closeActionModal();
     },
   });
-
-  // Save template mutation (edit mode)
-  const saveTemplateMutation = useMutation({
-    mutationFn: ({ id: tid, positions: pos }) => masterAPI.updateUnitType(tid, {
-      unit_type: unitTypeConfig.unit_type,
-      display_name: unitTypeConfig.display_name,
-      max_position: unitTypeConfig.max_position,
-      position_config: pos,
-      status: unitTypeConfig.status || 'active',
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['unit-tyres', id] });
-      doRefetch();
-      queryClient.invalidateQueries({ queryKey: ['master', 'unit-types'] });
-      setEditMode(false);
-    },
-  });
-
-  const handlePositionChange = (position, newCoords) => {
-    if (!unitTypeConfig?.id) return;
-    const updatedPositions = positions.map((p) =>
-      p.position === position ? { ...p, x: newCoords.x, y: newCoords.y } : p
-    );
-    saveTemplateMutation.mutate({ id: unitTypeConfig.id, positions: updatedPositions });
-  };
 
   const closeActionModal = () => {
     setSelectedPosition(null);
@@ -334,14 +317,12 @@ export default function UnitTyresPage() {
   const handleDirectSubmit = () => {
     if (!action || !selectedPosition) return;
     if (action === 'mount' && !spareTyreId) return;
-    if (action === 'mount' && selectedTyre) return; // mount on occupied slot must use swap
+    if (action === 'mount' && selectedTyre) return;
     if (action === 'swap' && !spareTyreId) return;
     submitMutation.mutate();
   };
 
   const selectedSpareTyre = spareTyres.find((t) => String(t.id) === spareTyreId);
-
-  // ─── DnD Handlers ─────────────────────────────────────────────────────────
 
   const handleDragStart = useCallback((event) => {
     setActiveDragItem(event.active.data.current || null);
@@ -350,9 +331,7 @@ export default function UnitTyresPage() {
     }
   }, []);
 
-  const handleDragOver = useCallback((event) => {
-    // SparePanelFloating tracks isOver internally via useDroppable
-  }, []);
+  const handleDragOver = useCallback(() => {}, []);
 
   const handleDragEnd = useCallback((event) => {
     setActiveDragItem(null);
@@ -361,7 +340,6 @@ export default function UnitTyresPage() {
     const sourceData = active.data.current;
     if (!sourceData) return;
 
-    // Dropped on spare panel → dismount
     if (sourceData.type === 'MOUNTED_TYRE' && over?.id === 'spare-panel') {
       setSelectedPosition(sourceData.position);
       setSelectedTyre(sourceData.tyre);
@@ -375,10 +353,8 @@ export default function UnitTyresPage() {
       return;
     }
 
-    // Spare tyre dropped on canvas or slot
     if (sourceData.type === 'SPARE_TYRE' && (over?.id === 'canvas-droppable' || over?.id?.startsWith?.('position-'))) {
       const tyre = sourceData.tyre;
-      // Prefer the slot's own data (set when dropping directly on a slot's droppable)
       const targetPosition = over?.data?.current?.position;
       const targetTyre = over?.data?.current?.tyre;
       const targetPos = targetPosition
@@ -411,7 +387,6 @@ export default function UnitTyresPage() {
       return;
     }
 
-    // Mounted tyre dropped on canvas or slot
     if (sourceData.type === 'MOUNTED_TYRE' && (over?.id === 'canvas-droppable' || over?.id?.startsWith?.('position-'))) {
       const targetPosition = over?.data?.current?.position;
       const tgtTyre = over?.data?.current?.tyre;
@@ -453,13 +428,8 @@ export default function UnitTyresPage() {
           <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
           <div className="w-48 h-6 bg-gray-200 rounded animate-pulse" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-gray-200 p-8">
-              <div className="w-full h-80 bg-gray-100 rounded-lg animate-pulse" />
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse h-80" />
+        <div className="bg-white rounded-xl border border-gray-200 p-8">
+          <div className="w-full h-80 bg-gray-100 rounded-lg animate-pulse" />
         </div>
       </div>
     );
@@ -469,18 +439,18 @@ export default function UnitTyresPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={goBack}>
+          <Button variant="ghost" onClick={() => navigate(`/replacement/companies/${companyId}/projects/${projectId}/units`)}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Unit Tyres</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Manajemen Ban</h1>
         </div>
         <EmptyState
           icon={TyreIcon}
           title="Gagal memuat ban unit"
           message="Silakan coba lagi atau kembali ke halaman unit."
           action={
-            <Button variant="outline" onClick={goBack}>
-              Kembali ke Unit
+            <Button variant="outline" onClick={() => navigate(`/replacement/companies/${companyId}/projects/${projectId}/units`)}>
+              Kembali
             </Button>
           }
         />
@@ -496,20 +466,29 @@ export default function UnitTyresPage() {
       onDragEnd={handleDragEnd}
     >
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header with replacement breadcrumbs */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={goBack}>
+            <Button variant="ghost" onClick={() => navigate(`/replacement/companies/${companyId}/projects/${projectId}/units`)}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Manajemen Ban</h1>
+              <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                <Link
+                  to="/replacement"
+                  className="flex items-center gap-1 hover:text-gray-700"
+                >
+                  {t('replacement.nav.home')}
+                </Link>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-gray-900 font-medium">{t('replacement.nav.units')}</span>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-gray-900 font-medium">{unit.unit_id || `Unit #${unitId}`}</span>
+              </div>
               <div className="flex items-center gap-3 mt-0.5">
-                <span className="text-sm text-gray-500 flex items-center gap-1">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                  {unit.unit_id || `Unit #${id}`}
+                <span className="text-sm text-gray-700 flex items-center gap-1">
+                  <TyreIcon className="w-4 h-4 text-gray-500" />
+                  {unit.unit_id || `Unit #${unitId}`}
                 </span>
                 {unitTypeConfig && (
                   <span className="text-xs text-gray-400">{unitTypeConfig.display_name}</span>
@@ -527,21 +506,13 @@ export default function UnitTyresPage() {
             <Button variant="ghost" size="sm" onClick={() => doRefetch()}>
               <RefreshCw className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={goBack}>
+            <Button variant="outline" size="sm" onClick={() => navigate(`/replacement/companies/${companyId}/projects/${projectId}/units`)}>
               Kembali
             </Button>
-            {/* <Button
-              variant={editMode ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setEditMode(!editMode)}
-            >
-              {editMode ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-              {editMode ? 'Mode View' : 'Edit Layout'}
-            </Button> */}
           </div>
         </div>
 
-        {/* Canvas with Balloon Overlays */}
+        {/* Canvas */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -558,9 +529,8 @@ export default function UnitTyresPage() {
               unitTypeConfig={unitTypeConfig}
               tyresData={positions}
               onPositionClick={handlePositionClick}
-              onPositionChange={handlePositionChange}
-              mode={editMode ? 'edit' : 'view'}
-              height={720}
+              mode="view"
+              height={820}
               isDraggingSpare={isDraggingSpare}
               unit={unit}
               totalMounted={totalMounted}
@@ -613,7 +583,6 @@ export default function UnitTyresPage() {
               </div>
             )}
 
-            {/* Action buttons */}
             <div className="space-y-2">
               <label className="block text-xs font-medium text-gray-700">Action</label>
               <div className="grid grid-cols-3 gap-2">
@@ -645,7 +614,6 @@ export default function UnitTyresPage() {
               </div>
             </div>
 
-            {/* Dynamic fields */}
             {action === 'mount' && (
               <div className="space-y-3">
                 <FormField label="Select Spare Tyre" required>
@@ -670,28 +638,14 @@ export default function UnitTyresPage() {
                 )}
                 <div className="grid grid-cols-2 gap-2">
                   <Input label="RTD (mm)" type="number" step="0.1" min="0" value={rtdInput} onChange={(e) => setRtdInput(e.target.value)} placeholder={selectedSpareTyre?.rtd || selectedSpareTyre?.rtd_1 ? String(selectedSpareTyre.rtd || selectedSpareTyre.rtd_1) : ''} />
-                  <Input label="HM Reading" type="number" step="0.1" min="0" value={hmInput} onChange={(e) => setHmInput(e.target.value)} placeholder={unit?.current_hm ? String(unit.current_hm) : ''} />
+                  <Input label="HM Reading" type="number" step="0.1" min="0" value={hmInput} onChange={(e) => setHmInput(e.target.value)} placeholder={unit?.current_hm ? String(unit?.current_hm) : ''} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <FormField label="Current Life HM">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={currentLifeHm}
-                      onChange={(e) => setCurrentLifeHm(e.target.value)}
-                      placeholder={unit?.current_hm ? String(unit.current_hm) : '0'}
-                    />
+                    <Input type="number" step="0.1" min="0" value={currentLifeHm} onChange={(e) => setCurrentLifeHm(e.target.value)} placeholder={unit?.current_hm ? String(unit?.current_hm) : '0'} />
                   </FormField>
                   <FormField label="HM Plan">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmPlan}
-                      onChange={(e) => setHmPlan(e.target.value)}
-                      placeholder="Target HM"
-                    />
+                    <Input type="number" step="0.1" min="0" value={hmPlan} onChange={(e) => setHmPlan(e.target.value)} placeholder="Target HM" />
                   </FormField>
                 </div>
                 <FormField label="Driver">
@@ -722,28 +676,14 @@ export default function UnitTyresPage() {
                 </FormField>
                 <div className="grid grid-cols-2 gap-2">
                   <Input label="RTD Terukur (mm)" type="number" step="0.1" min="0" value={rtdInput} onChange={(e) => setRtdInput(e.target.value)} placeholder={selectedTyre?.rtd || selectedTyre?.rtd_1 ? String(selectedTyre.rtd || selectedTyre.rtd_1) : ''} />
-                  <Input label="HM Reading" type="number" step="0.1" min="0" value={hmInput} onChange={(e) => setHmInput(e.target.value)} placeholder={unit?.current_hm ? String(unit.current_hm) : ''} />
+                  <Input label="HM Reading" type="number" step="0.1" min="0" value={hmInput} onChange={(e) => setHmInput(e.target.value)} placeholder={unit?.current_hm ? String(unit?.current_hm) : ''} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <FormField label="Current Life HM">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={currentLifeHm}
-                      onChange={(e) => setCurrentLifeHm(e.target.value)}
-                      placeholder={unit?.current_hm ? String(unit.current_hm) : '0'}
-                    />
+                    <Input type="number" step="0.1" min="0" value={currentLifeHm} onChange={(e) => setCurrentLifeHm(e.target.value)} placeholder={unit?.current_hm ? String(unit?.current_hm) : '0'} />
                   </FormField>
                   <FormField label="HM Plan">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmPlan}
-                      onChange={(e) => setHmPlan(e.target.value)}
-                      placeholder="Target HM"
-                    />
+                    <Input type="number" step="0.1" min="0" value={hmPlan} onChange={(e) => setHmPlan(e.target.value)} placeholder="Target HM" />
                   </FormField>
                 </div>
                 <FormField label="Driver">
@@ -784,28 +724,14 @@ export default function UnitTyresPage() {
                 )}
                 <div className="grid grid-cols-2 gap-2">
                   <Input label="RTD (mm)" type="number" step="0.1" min="0" value={rtdInput} onChange={(e) => setRtdInput(e.target.value)} />
-                  <Input label="HM Reading" type="number" step="0.1" min="0" value={hmInput} onChange={(e) => setHmInput(e.target.value)} placeholder={unit?.current_hm ? String(unit.current_hm) : ''} />
+                  <Input label="HM Reading" type="number" step="0.1" min="0" value={hmInput} onChange={(e) => setHmInput(e.target.value)} placeholder={unit?.current_hm ? String(unit?.current_hm) : ''} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <FormField label="Current Life HM">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={currentLifeHm}
-                      onChange={(e) => setCurrentLifeHm(e.target.value)}
-                      placeholder={unit?.current_hm ? String(unit.current_hm) : '0'}
-                    />
+                    <Input type="number" step="0.1" min="0" value={currentLifeHm} onChange={(e) => setCurrentLifeHm(e.target.value)} placeholder={unit?.current_hm ? String(unit?.current_hm) : '0'} />
                   </FormField>
                   <FormField label="HM Plan">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmPlan}
-                      onChange={(e) => setHmPlan(e.target.value)}
-                      placeholder="Target HM"
-                    />
+                    <Input type="number" step="0.1" min="0" value={hmPlan} onChange={(e) => setHmPlan(e.target.value)} placeholder="Target HM" />
                   </FormField>
                 </div>
                 <FormField label="Driver">
@@ -853,7 +779,6 @@ export default function UnitTyresPage() {
         </Modal>
       </div>
 
-      {/* Drag Overlay */}
       <DragOverlay>
         {activeDragItem ? (
           activeDragItem.type === 'SPARE_TYRE' ? (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Pencil, Truck, Clock, TrendingDown } from 'lucide-react';
@@ -10,12 +10,14 @@ import Badge from '@/components/ui/Badge';
 import DataTable from '@/components/list/DataTable';
 import { tyresAPI } from '@/api/tyres';
 import { replacementsAPI } from '@/api/replacements';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 import { formatDate, formatDateTime, formatNumber, formatDuration, calculatePercentWorn, getRtdColor, titleCase } from '@/utils/format';
 import { TYRE_STATUS_LABELS } from '@/utils/constants';
 
 export default function TyreDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: tyreData, isLoading: tyreLoading } = useQuery({
     queryKey: ['tyre', id],
@@ -31,6 +33,13 @@ export default function TyreDetailPage() {
 
   const tyre = tyreData?.data?.data || tyreData?.data;
   const historyItems = historyData?.data?.data || historyData?.data || [];
+
+  // Set breadcrumb when tyre data loads
+  useEffect(() => {
+    if (tyre) {
+      setBreadcrumb(tyre.serial_number || `Tyre #${id}`);
+    }
+  }, [tyre, id, setBreadcrumb]);
 
   const rtd = tyre?.rtd;
   const otd = tyre?.otd;

@@ -116,6 +116,7 @@
     "driver": "Driver",
     "tyre": "Tyre",
     "replacement": "Replacement",
+    "replacementHistory": "Replacement History",
     "report": "Report",
     "user": "User",
     "master": "Master Data",
@@ -608,6 +609,7 @@
       "critical": "Crit",
       "noTyres": "No tyres",
       "spare": "spare",
+      "unmounted": "{{count}} unmounted",
       "ongoing": "Ongoing"
     },
     "nav": {

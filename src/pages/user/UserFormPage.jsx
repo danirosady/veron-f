@@ -14,6 +14,7 @@ import FormField from '@/components/form/FormField';
 import { usersAPI } from '@/api/users';
 import { companiesAPI } from '@/api/companies';
 import { usePermission } from '@/hooks/usePermission';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 const userSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -38,6 +39,7 @@ export default function UserFormPage() {
   const queryClient = useQueryClient();
   const { isSuperadmin } = usePermission();
   const isEdit = Boolean(id);
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: userData, isLoading: loadingUser } = useQuery({
     queryKey: ['user', id],
@@ -85,8 +87,10 @@ export default function UserFormPage() {
         company_id: u.company_id ? String(u.company_id) : '',
         status: u.status || 'active',
       });
+      // Set breadcrumb
+      setBreadcrumb(u.name || `User #${id}`);
     }
-  }, [userData, isEdit, reset]);
+  }, [userData, isEdit, id, reset, setBreadcrumb]);
 
   const saveMutation = useMutation({
     mutationFn: (data) => {

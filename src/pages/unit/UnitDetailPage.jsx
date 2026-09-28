@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Pencil, Truck, Plus, History } from 'lucide-react';
@@ -11,6 +11,7 @@ import DataTable from '@/components/list/DataTable';
 import { unitsAPI } from '@/api/units';
 import { replacementsAPI } from '@/api/replacements';
 import { usePermission } from '@/hooks/usePermission';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 import { formatDate, formatNumber, titleCase } from '@/utils/format';
 import { TYRE_STATUS_LABELS } from '@/utils/constants';
 
@@ -27,6 +28,7 @@ export default function UnitDetailPage() {
   const navigate = useNavigate();
   const { isSuperadmin } = usePermission();
   const [canvasAvailable] = useState(Boolean(TyrePositionCanvasComponent));
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: unitData, isLoading: unitLoading } = useQuery({
     queryKey: ['unit', id],
@@ -53,6 +55,14 @@ export default function UnitDetailPage() {
   });
 
   const unit = unitData?.data?.data || unitData?.data;
+
+  // Set breadcrumb when unit data loads
+  useEffect(() => {
+    if (unit) {
+      // Set breadcrumb for this page (the unit)
+      setBreadcrumb(unit.unit_id || unit.plate_number || `Unit #${id}`);
+    }
+  }, [unit, id, setBreadcrumb]);
 
   // Extract mounted tyres from the unit tyres response
   const mountedTyres = useMemo(() => {
@@ -281,6 +291,10 @@ export default function UnitDetailPage() {
                       <p className="text-sm text-gray-900">{formatNumber(unit.hm_current, 0)}</p>
                     </div>
                   )}
+
+                  <div className="flex justify-center">
+                    <img src="/ADT_10POS.png" alt="ADT" className="w-48 h-36 object-contain opacity-80" />
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">Unit not found.</p>

@@ -117,6 +117,7 @@
     "driver": "Driver",
     "tyre": "Ban",
     "replacement": "Penggantian",
+    "replacementHistory": "Riwayat Penggantian",
     "report": "Laporan",
     "user": "Pengguna",
     "master": "Master Data",
@@ -609,6 +610,7 @@
       "critical": "Kritis",
       "noTyres": "Tanpa ban",
       "spare": "cadangan",
+      "unmounted": "{{count}} belum terpasang",
       "ongoing": "Berlangsung"
     },
     "nav": {

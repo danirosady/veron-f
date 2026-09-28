@@ -17,6 +17,7 @@ import { projectsAPI } from '@/api/projects';
 import { companiesAPI } from '@/api/companies';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
+import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -36,6 +37,7 @@ export default function ProjectFormPage() {
   const { user } = useAuth();
   const { isSuperadmin } = usePermission();
   const isEdit = Boolean(id);
+  const { setBreadcrumb } = useBreadcrumb();
 
   const { data: projectData, isLoading: loadingProject } = useQuery({
     queryKey: ['project', id],
@@ -78,8 +80,10 @@ export default function ProjectFormPage() {
         end_date: p.end_date ? p.end_date.substring(0, 10) : '',
         status: p.status || 'active',
       });
+      // Set breadcrumb
+      setBreadcrumb(p.name || `Project #${id}`);
     }
-  }, [projectData, isEdit, reset]);
+  }, [projectData, isEdit, id, reset, setBreadcrumb]);
 
   const saveMutation = useMutation({
     mutationFn: (data) =>

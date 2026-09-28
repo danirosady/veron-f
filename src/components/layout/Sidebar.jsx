@@ -24,7 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   {
-    section: 'Company',
+    section: 'Operations',
     items: [
       {
         label: 'Tyre Replacement',
@@ -74,9 +74,9 @@ const navItems = [
         roles: ['superadmin', 'admin_company'],
       },
       {
-        label: 'Replacements',
+        label: 'Replacement History',
         path: '/replacements',
-        icon: RefreshCw,
+        icon: History,
         roles: ['superadmin', 'admin_company'],
       },
     ],
@@ -127,7 +127,8 @@ export default function Sidebar({ isOpen, onClose }) {
     'Units': t('menu.unit'),
     'Drivers': t('menu.driver'),
     'Tyres': t('menu.tyre'),
-    'Replacements': t('menu.replacement'),
+    'Replacements': t('menu.replacementHistory'),
+    'Replacement History': t('menu.replacementHistory'),
     'Master Data': t('menu.master'),
     'Tyre Position Templates': 'Tyre Position Templates',
     'Users': t('menu.user'),
