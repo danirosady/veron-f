@@ -31,7 +31,7 @@ export default function SeedPage() {
   };
 
   const handleGoToTemplates = () => {
-    navigate('/master/unit-types');
+    navigate('/unit-types');
   };
 
   const handleRetry = () => {

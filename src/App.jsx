@@ -125,7 +125,7 @@ export default function App() {
           <Route path="reports/inventory" element={<InventoryReportPage />} />
           <Route path="reports/schedule" element={<ScheduleReportPage />} />
           <Route path="master" element={<MasterDataPage />} />
-          <Route path="master/unit-types" element={<UnitTypeTemplatePage />} />
+          <Route path="unit-types" element={<UnitTypeTemplatePage />} />
           <Route path="seed" element={<SeedPage />} />
           <Route path="users" element={<UserListPage />} />
           <Route path="users/new" element={<UserFormPage />} />

@@ -92,7 +92,7 @@ const navItems = [
       },
       {
         label: 'Tyre Position Templates',
-        path: '/master/unit-types',
+        path: '/unit-types',
         icon: LayoutGrid,
         roles: ['superadmin'],
       },
@@ -130,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }) {
     'Replacements': t('menu.replacementHistory'),
     'Replacement History': t('menu.replacementHistory'),
     'Master Data': t('menu.master'),
-    'Tyre Position Templates': 'Tyre Position Templates',
+    'Tyre Position Templates': t('menu.unitTypes'),
     'Users': t('menu.user'),
     'Settings': t('menu.settings'),
     'Company': 'Company',

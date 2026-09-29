@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Menu, ChevronDown, User, LogOut, Settings, Globe } from 'lucide-react';
+import { Menu, ChevronDown, User, LogOut, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { LanguageToggle } from '@/components/ui/LanguageSwitcher';
 import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 
 export default function Header({ onMenuClick }) {
@@ -35,7 +35,7 @@ export default function Header({ onMenuClick }) {
     matchesBase('/tyres') || matchesBase('/replacements');
 
   // Configuration routes (Master data, Users, Settings)
-  const isConfigurationPath = matchesBase('/master') || matchesBase('/users') || matchesBase('/settings');
+  const isConfigurationPath = matchesBase('/master') || matchesBase('/unit-types') || matchesBase('/users') || matchesBase('/settings');
 
   const isReportsPath = location.pathname.startsWith('/reports');
 
@@ -51,52 +51,54 @@ export default function Header({ onMenuClick }) {
     return null;
   };
 
-  // Get Configuration label for a path
-  const getConfigurationLabel = (path) => {
-    if (path === '/master' || path.startsWith('/master')) return 'Master Data';
-    if (path === '/users' || path.startsWith('/users')) return 'Users';
-    if (path === '/settings') return 'Settings';
-    return null;
-  };
-
   // Build sub-path for each segment - use raw lowercase paths for matching
   const rawPathSegments = location.pathname.split('/').filter(Boolean);
   const subPaths = rawPathSegments.map((_, idx) =>
     '/' + rawPathSegments.slice(0, idx + 1).join('/')
   );
 
-  // Build display segments (capitalized for labels)
-  const displaySegments = pathSegments.map((seg) => seg.replace(/-/g, ' '));
-
   // Helper to get label from context or fallback to default
   const getLabel = (subPath, fallbackLabel) => {
-    const override = getBreadcrumb(subPath);
-    return override || fallbackLabel;
+    return getBreadcrumb(subPath) || fallbackLabel;
   };
 
   const breadcrumbs = isReplacementPath
     ? [
-        { label: 'Operations', path: '/replacement' },
-        ...pathSegments.map((seg, idx) => ({
-          label: getLabel(subPaths[idx], seg.replace(/-/g, ' ')),
-          path: subPaths[idx],
+        { label: 'Operations', path: '/ops' },
+        { label: 'Replacement', path: '/replacement' },
+        ...pathSegments.slice(1).map((seg, idx) => ({
+          label: getLabel(subPaths[idx + 1], seg.replace(/-/g, ' ')),
+          path: subPaths[idx + 1],
         })),
       ]
     : isManagementPath
     ? [
         { label: 'Management', path: '/management' },
-        ...rawPathSegments.map((seg, idx) => ({
-          label: getLabel(subPaths[idx], getManagementLabel(subPaths[idx]) || seg.replace(/-/g, ' ')),
-          path: subPaths[idx],
-        })),
+        ...rawPathSegments
+          .map((seg, idx) => {
+            const fallback = seg.replace(/-/g, ' ');
+            const isIdSegment = /^\d+$/.test(seg) || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(seg);
+            if (isIdSegment) return null;
+            const label = getManagementLabel(subPaths[idx]) || fallback;
+            return {
+              label: getLabel(subPaths[idx], label),
+              path: subPaths[idx],
+            };
+          })
+          .filter(Boolean),
       ]
     : isConfigurationPath
     ? [
-        { label: 'Configuration', path: '/master' },
-        ...rawPathSegments.map((seg, idx) => ({
-          label: getLabel(subPaths[idx], getConfigurationLabel(subPaths[idx]) || seg.replace(/-/g, ' ')),
-          path: subPaths[idx],
-        })),
+        { label: 'Configuration', path: '/config' },
+        { label: rawPathSegments[0] === 'master' ? 'Master Data' : rawPathSegments[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), path: '/' + rawPathSegments[0] },
+        ...rawPathSegments.slice(1).map((seg, idx) => {
+          const isIdSegment = /^\d+$/.test(seg) || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(seg);
+          if (isIdSegment) return null;
+          return {
+            label: getLabel(subPaths[idx + 1], seg.replace(/-/g, ' ')),
+            path: subPaths[idx + 1],
+          };
+        }).filter(Boolean),
       ]
     : isReportsPath
     ? [
@@ -158,20 +160,9 @@ export default function Header({ onMenuClick }) {
             ))}
           </nav>
         </div>
-
-        {/* Language Switcher */}
-        <div className="flex items-center gap-3 mr-4">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
-            <Globe className="w-4 h-4 text-gray-500" />
-            <LanguageSwitcher />
-          </div>
-          {/* Mobile language switcher */}
-          <div className="sm:hidden">
-            <LanguageSwitcher variant="buttons" className="text-xs" />
-          </div>
-        </div>
-
-        <div className="relative" ref={dropdownRef}>
+        <div className="flex items-center gap-1">
+          <div className="w-px h-8 bg-gray-200 mx-0.5" />
+          <LanguageToggle className="text-lg" />
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -187,7 +178,10 @@ export default function Header({ onMenuClick }) {
             </div>
             <ChevronDown className="w-4 h-4 text-gray-400 hidden sm:block" />
           </button>
+        </div>
+      </div>
 
+        <div className="relative" ref={dropdownRef}>
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
               <div className="px-4 py-2 border-b border-gray-100">
@@ -223,7 +217,6 @@ export default function Header({ onMenuClick }) {
             </div>
           )}
         </div>
-      </div>
     </header>
   );
 }

@@ -120,7 +120,8 @@
     "replacementHistory": "Riwayat Penggantian",
     "report": "Laporan",
     "user": "Pengguna",
-    "master": "Master Data",
+    "unitTypes": "Templat Posisi Ban",
+    "master": "Data Master",
     "settings": "Pengaturan",
     "profile": "Profil",
     "logout": "Keluar"
@@ -168,13 +169,14 @@
       "changePassword": "Ubah Password"
     },
     "label": {
-      "email": "Email",
-      "password": "Password",
-      "confirmPassword": "Konfirmasi Password",
-      "newPassword": "Password Baru",
-      "oldPassword": "Password Lama",
+      "email": "Alamat Email",
+      "password": "Kata Sandi",
+      "confirmPassword": "Konfirmasi Kata Sandi",
+      "newPassword": "Kata Sandi Baru",
+      "oldPassword": "Kata Sandi Lama",
       "rememberMe": "Ingat saya",
-      "forgotPassword": "Lupa password?"
+      "forgotPassword": "Lupa kata sandi?",
+      "secured": "Diamankan dengan enkripsi SSL"
     },
     "button": {
       "login": "Masuk",
@@ -191,8 +193,8 @@
       "passwordChangeSuccess": "Password berhasil diubah"
     },
     "placeholder": {
-      "email": "Masukkan email",
-      "password": "Masukkan password"
+      "email": "admin@company.com",
+      "password": "Masukkan kata sandi"
     }
   },
   "dashboard": {

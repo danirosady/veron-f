@@ -119,6 +119,7 @@
     "replacementHistory": "Replacement History",
     "report": "Report",
     "user": "User",
+    "unitTypes": "Tyre Position Templates",
     "master": "Master Data",
     "settings": "Settings",
     "profile": "Profile",
@@ -167,13 +168,14 @@
       "changePassword": "Change Password"
     },
     "label": {
-      "email": "Email",
+      "email": "Email Address",
       "password": "Password",
       "confirmPassword": "Confirm Password",
       "newPassword": "New Password",
       "oldPassword": "Old Password",
       "rememberMe": "Remember me",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot password?",
+      "secured": "Secured with SSL encryption"
     },
     "button": {
       "login": "Login",
@@ -190,8 +192,8 @@
       "passwordChangeSuccess": "Password has been changed successfully"
     },
     "placeholder": {
-      "email": "Enter email",
-      "password": "Enter password"
+      "email": "admin@company.com",
+      "password": "Enter your password"
     }
   },
   "dashboard": {

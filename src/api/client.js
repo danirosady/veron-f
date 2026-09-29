@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useAuth } from '@/hooks/useAuth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -17,7 +16,6 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('[API REQUEST]', config.method?.toUpperCase(), config.url, config.data);
     return config;
   },
   (error) => Promise.reject(error)
@@ -39,21 +37,17 @@ const processQueue = (error, token = null) => {
 
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('[API RESPONSE]', response.config.method?.toUpperCase(), response.config.url, response.status, response.data);
     return response;
   },
   async (error) => {
-    console.log('[API ERROR]', error.config?.method?.toUpperCase(), error.config?.url, error.response?.status, error.response?.data);
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url.includes('/auth/refresh')) {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
+    // Skip token refresh for auth endpoints (login/refresh)
+    if (originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/refresh')) {
+      return Promise.reject(error);
+    }
 
+    if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

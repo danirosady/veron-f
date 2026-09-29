@@ -45,7 +45,7 @@ export default function SparePanelBalloon({
           'flex flex-col overflow-hidden max-h-[380px] w-50 rounded-xl border border-white/10 shadow-xl text-white transition-all duration-300',
           isHovered
             ? 'bg-black/80 backdrop-blur-0'
-            : 'bg-black/60 backdrop-blur-xl'
+            : 'bg-black/70 backdrop-blur-xl'
         )}
       >
         {/* Header */}

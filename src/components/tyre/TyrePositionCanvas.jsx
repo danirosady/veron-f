@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useCallback, forwardRef } from 'react';
+import React, { useState, useMemo, useCallback, forwardRef, useRef } from 'react';
 import VehicleCanvasCore from './VehicleCanvasCore';
 import UnitStatsBalloon from './UnitStatsBalloon';
 import SparePanelBalloon from './SparePanelBalloon';
 import ActionQueueBalloon from './ActionQueueBalloon';
+import PositionActionBalloon from './PositionActionBalloon';
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -31,8 +32,14 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
   onClearQueue,
   onSubmitQueue,
   isSubmitting = false,
+  // Position action balloon
+  positionActionForm = {},
+  onPositionActionChange,
+  unitCurrentHm = 0,
+  drivers = [],
 }, ref) {
   const [selectedPosition, setSelectedPosition] = useState(null);
+  const canvasContainerRef = useRef(null);
 
   const unitType = unitTypeConfig?.unit_type || 'ADT_10POS';
 
@@ -58,6 +65,7 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
   return (
     <div className={`w-full ${className}`} style={{ height }}>
       <div
+        ref={canvasContainerRef}
         className="relative rounded-xl border border-gray-200 overflow-hidden"
         style={{ height }}
       >
@@ -94,6 +102,37 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
           onClearAll={onClearQueue}
           onSubmitAll={onSubmitQueue}
           isSubmitting={isSubmitting}
+          drivers={drivers}
+        />
+        <PositionActionBalloon
+          isOpen={positionActionForm.isOpen}
+          position={positionActionForm.position}
+          tyre={positionActionForm.tyre}
+          step={positionActionForm.step}
+          spareTyreId={positionActionForm.spareTyreId}
+          rtdInput={positionActionForm.rtdInput}
+          hmInput={positionActionForm.hmInput}
+          currentLifeHm={positionActionForm.currentLifeHm}
+          hmPlan={positionActionForm.hmPlan}
+          remarksInput={positionActionForm.remarksInput}
+          dismountCondition={positionActionForm.dismountCondition}
+          spareTyres={spareTyres}
+          unitCurrentHm={unitCurrentHm}
+          onStepChange={(step) => onPositionActionChange?.({ step })}
+          onSpareTyreIdChange={(v) => onPositionActionChange?.({ spareTyreId: v })}
+          onRtdInputChange={(v) => onPositionActionChange?.({ rtdInput: v })}
+          onHmInputChange={(v) => onPositionActionChange?.({ hmInput: v })}
+          onCurrentLifeHmChange={(v) => onPositionActionChange?.({ currentLifeHm: v })}
+          onHmPlanChange={(v) => onPositionActionChange?.({ hmPlan: v })}
+          onRemarksInputChange={(v) => onPositionActionChange?.({ remarksInput: v })}
+          onDismountConditionChange={(v) => onPositionActionChange?.({ dismountCondition: v })}
+          onClose={() => onPositionActionChange?.({ isOpen: false })}
+          onAddToQueue={() => onPositionActionChange?.({ _triggerAddToQueue: true })}
+          queueAddDisabled={
+            positionActionForm.step === 'choose' ||
+            (positionActionForm.step === 'mount-form' && !positionActionForm.spareTyreId) ||
+            (positionActionForm.step === 'swap-form' && !positionActionForm.spareTyreId)
+          }
         />
 
         {/* Edit mode indicator */}
