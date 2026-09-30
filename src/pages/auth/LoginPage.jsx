@@ -123,9 +123,10 @@ export default function LoginPage() {
 
       {/* Main Content */}
       <div className="relative min-h-screen flex items-center justify-center p-4">
+        {/* Card wrapper - entrance animation via transform + scale, opacity fixed */}
         <div className={cn(
           "w-full max-w-md transition-all duration-700 ease-out",
-          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          mounted ? "opacity-100 translate-y-0" : "opacity-100 -translate-y-8"
         )}>
           {/* Logo & Header */}
           <div className={cn(
@@ -139,30 +140,23 @@ export default function LoginPage() {
                 className="w-full h-full object-contain drop-shadow-[0_0_100px_rgba(255,255,255,0.8)]"
               />
             </div>
-            {/* <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
-              Tyre Management
-            </h1> */}
             <p className="text-gray-300 text-lg">Tyre Management Systems</p>
           </div>
 
           {/* Login Card - Glassmorphism */}
           <div className={cn(
-            "relative bg-white/10 rounded-2xl shadow-2xl overflow-hidden",
-            mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-95"
+            "relative rounded-2xl shadow-2xl overflow-hidden transition-all duration-700 delay-200 ease-out",
+            mounted ? "scale-100" : "scale-95"
           )}>
-            {/* Blur overlay - animates blur 0 → xl smoothly */}
-            <div className={cn(
-              "absolute inset-0 rounded-2xl",
-              mounted ? "animate-blur-fade-in" : "backdrop-blur-none"
-            )} />
-            {/* Border overlay */}
-            <div className={cn(
-              "absolute inset-0 border border-white/20 rounded-2xl",
-              mounted ? "animate-fade-in" : "opacity-0"
-            )} />
+            {/* Blur layer - backdrop-filter applied at card level, always visible */}
+            <div className="absolute inset-0 backdrop-blur-xl" />
+            {/* Semi-transparent background */}
+            <div className="absolute inset-0 bg-white/10" />
+            {/* Border */}
+            <div className="absolute inset-0 border border-white/20 rounded-2xl pointer-events-none" />
             {/* Top accent line */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600" />
-
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 pointer-events-none" />
+            {/* Card content */}
             <div className="relative p-8">
               <form
                 onSubmit={handleSubmit(onSubmit)}

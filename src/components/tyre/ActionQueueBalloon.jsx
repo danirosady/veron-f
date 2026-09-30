@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,79 @@ function RtdChip({ rtd }) {
     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-white/10 text-white/80">
       {formatNumber(rtd, 1)}mm
     </span>
+  );
+}
+
+const INPUT_CLASS = 'w-full px-3 py-2 pr-8 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-primary-400 focus:border-primary-400 appearance-none';
+
+function Select({ value, onChange, options = [], placeholder = 'Pilih...' }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState({});
+  const ref = useRef(null);
+  const isInside = useRef(false);
+
+  const selectedOption = options.find(o => String(o.value) === String(value));
+  const selectedLabel = selectedOption?.label ?? placeholder;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = () => {
+      if (!isInside.current) setIsOpen(false);
+      isInside.current = false;
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      requestAnimationFrame(() => {
+        const btn = ref.current?.querySelector('button');
+        if (btn) {
+          const rect = btn.getBoundingClientRect();
+          setDropdownStyle({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+        }
+      });
+    }
+    setIsOpen(o => !o);
+  };
+
+  const handleOptionMouseDown = () => {
+    isInside.current = true;
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        className={INPUT_CLASS + ' text-left flex items-center justify-between'}
+        onClick={handleToggle}
+      >
+        <span className={value ? 'text-white' : 'text-white/40'}>{selectedLabel}</span>
+        <svg className={`w-3.5 h-3.5 text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && createPortal(
+        <div
+          className="fixed z-[95] rounded-lg border border-white/20 bg-gray-900 shadow-xl overflow-y-auto"
+          style={{ ...dropdownStyle, maxHeight: '192px' }}
+        >
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className="w-full px-3 py-2 text-xs text-left hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+              onClick={() => { onChange(opt.value); setIsOpen(false); }}
+              onMouseDown={handleOptionMouseDown}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+    </div>
   );
 }
 
@@ -80,16 +153,11 @@ export default function ActionQueueBalloon({
                 <p className="text-xs text-white/60">
                   Akan men-submit <strong className="text-white">{queue.length}</strong> aksi. Pilih driver:
                 </p>
-                <select
+                <Select
                   value={confirmDriverId}
-                  onChange={e => setConfirmDriverId(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 text-xs rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-1 focus:ring-primary-400 appearance-none"
-                >
-                  <option value="">Pilih driver...</option>
-                  {drivers.map(d => (
-                    <option key={d.id} value={String(d.id)}>{d.name}</option>
-                  ))}
-                </select>
+                  onChange={v => setConfirmDriverId(v)}
+                  options={[{ value: '', label: 'Pilih driver...' }, ...drivers.map(d => ({ value: String(d.id), label: d.name }))]}
+                />
               </div>
 
               {/* Footer */}

@@ -18,7 +18,7 @@ import { getRtdColor } from '@/utils/format';
  */
 export default function VehicleCanvasCore({
   positions = [],
-  unitType = 'ADT_10POS',
+  unitType = 'WDT_10POS',
   onPositionClick,
   selectedPosition,
   enableSwap = false,

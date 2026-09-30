@@ -10,9 +10,9 @@
 // Rear axle = back of vehicle = BOTTOM of canvas (large y)
 export const AXLE_DEFAULTS = {
   poros_1: { y: 0.10, label: 'Poros 1' },
-  poros_2: { y: 0.60, label: 'Poros 2' },
-  poros_3: { y: 0.84, label: 'Poros 3' },
-  poros_4: { y: 0.100, label: 'Poros 4' },
+  poros_2: { y: 0.50, label: 'Poros 2' },
+  poros_3: { y: 0.70, label: 'Poros 3' },
+  poros_4: { y: 0.90, label: 'Poros 4' },
   poros_5: { y: 0.110, label: 'Poros 5' },
 };
 

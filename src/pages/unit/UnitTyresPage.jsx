@@ -152,7 +152,8 @@ export default function UnitTyresPage() {
   const unitTypeConfig = unitData?.unit_type_config;
   const totalMounted = unitData?.total_mounted || 0;
   const totalSpare = unitData?.total_spare || 0;
-  const drivers = driversData?.data?.data || driversData?.data || [];
+  const drivers = (driversData?.data?.data || driversData?.data || [])
+    .filter(d => d.company_id === unit?.company_id);
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const submitMutation = useMutation({
@@ -560,6 +561,10 @@ export default function UnitTyresPage() {
               onPositionActionChange={(partial) => {
                 if (partial._triggerAddToQueue) {
                   handleQueueAdd();
+                  return;
+                }
+                if (partial.step === 'unmount-form') {
+                  updatePositionActionForm({ ...partial, action: 'dismount', spareTyreId: '' });
                   return;
                 }
                 updatePositionActionForm(partial);
