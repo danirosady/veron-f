@@ -106,32 +106,54 @@ export default function ActionQueueBalloon({
   onSubmitAll,
   isSubmitting = false,
   drivers = [],
+  unitCurrentHm = 0,
 }) {
   const [isHovered, setIsHovered] = useState(false);
-  const [showDriverConfirm, setShowDriverConfirm] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [confirmDriverId, setConfirmDriverId] = useState('');
+  const [confirmHmReading, setConfirmHmReading] = useState('');
+  const [confirmLocation, setConfirmLocation] = useState('');
+  const [hmError, setHmError] = useState('');
+
+  const driverOptions = [
+    { value: '', label: 'Pilih driver...' },
+    ...drivers.map(d => ({ value: String(d.id), label: d.name }))
+  ];
 
   const handleSubmitClick = () => {
     setConfirmDriverId('');
-    setShowDriverConfirm(true);
+    setConfirmHmReading('');
+    setConfirmLocation('');
+    setHmError('');
+    setShowConfirm(true);
   };
 
   const handleConfirmSubmit = () => {
-    onSubmitAll(confirmDriverId ? Number(confirmDriverId) : null);
-    setShowDriverConfirm(false);
+    const hmVal = confirmHmReading ? parseFloat(confirmHmReading) : null;
+    if (hmVal !== null && unitCurrentHm > 0 && hmVal < unitCurrentHm) {
+      setHmError(`HM harus >= ${formatNumber(unitCurrentHm, 0)} (HM unit saat ini)`);
+      return;
+    }
+    setHmError('');
+    onSubmitAll({
+      driver_id: confirmDriverId ? Number(confirmDriverId) : null,
+      hm_reading: confirmHmReading ? Number(confirmHmReading) : null,
+      location: confirmLocation || '',
+    });
+    setShowConfirm(false);
   };
 
   return (
     <>
-      {/* Driver Confirm Balloon — portal to body */}
-      {showDriverConfirm && createPortal(
+      {/* Confirm Balloon — portal to body */}
+      {showConfirm && createPortal(
         <>
           <div
             className="fixed inset-0 bg-black/70 z-[80]"
-            onClick={() => setShowDriverConfirm(false)}
+            onClick={() => setShowConfirm(false)}
           />
           <div className="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none">
-            <div className="w-[360px] rounded-xl border border-white/20 shadow-2xl bg-black/80 backdrop-blur-xl text-white pointer-events-auto overflow-hidden">
+            <div className="w-[380px] rounded-xl border border-white/20 shadow-2xl bg-black/80 backdrop-blur-xl text-white pointer-events-auto overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                 <div className="flex items-center gap-2">
@@ -141,7 +163,7 @@ export default function ActionQueueBalloon({
                   <span className="text-sm font-semibold">Konfirmasi Submit</span>
                 </div>
                 <button
-                  onClick={() => setShowDriverConfirm(false)}
+                  onClick={() => setShowConfirm(false)}
                   className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
                 >
                   <X className="w-4 h-4" />
@@ -151,19 +173,48 @@ export default function ActionQueueBalloon({
               {/* Body */}
               <div className="p-4 space-y-3">
                 <p className="text-xs text-white/60">
-                  Akan men-submit <strong className="text-white">{queue.length}</strong> aksi. Pilih driver:
+                  Akan men-submit <strong className="text-white">{queue.length}</strong> aksi.
                 </p>
-                <Select
-                  value={confirmDriverId}
-                  onChange={v => setConfirmDriverId(v)}
-                  options={[{ value: '', label: 'Pilih driver...' }, ...drivers.map(d => ({ value: String(d.id), label: d.name }))]}
-                />
+                {/* Driver */}
+                <div>
+                  <label className="block text-[11px] font-medium text-white/70 mb-1">Driver</label>
+                  <Select
+                    value={confirmDriverId}
+                    onChange={v => setConfirmDriverId(v)}
+                    options={driverOptions}
+                  />
+                </div>
+                {/* HM Reading */}
+                <div>
+                  <label className="block text-[11px] font-medium text-white/70 mb-1">HM Reading</label>
+                  <input
+                    type="number"
+                    className={INPUT_CLASS}
+                    value={confirmHmReading}
+                    onChange={(e) => { setConfirmHmReading(e.target.value); setHmError(''); }}
+                    placeholder="Contoh: 15000"
+                  />
+                  {hmError && (
+                    <p className="mt-1 text-[10px] text-red-400">{hmError}</p>
+                  )}
+                </div>
+                {/* Location */}
+                <div>
+                  <label className="block text-[11px] font-medium text-white/70 mb-1">Lokasi</label>
+                  <input
+                    type="text"
+                    className={INPUT_CLASS}
+                    value={confirmLocation}
+                    onChange={(e) => setConfirmLocation(e.target.value)}
+                    placeholder="Contoh: Area Stockpile, Pit A..."
+                  />
+                </div>
               </div>
 
               {/* Footer */}
               <div className="flex gap-2 px-4 py-3 border-t border-white/10">
                 <button
-                  onClick={() => setShowDriverConfirm(false)}
+                  onClick={() => setShowConfirm(false)}
                   className="flex-1 px-3 py-2 text-xs rounded-lg border border-white/20 text-white/70 hover:bg-white/10 transition-colors"
                 >
                   Batal
@@ -191,7 +242,7 @@ export default function ActionQueueBalloon({
       >
         <div
           className={cn(
-            'w-[400px] h-[250px] flex flex-col overflow-hidden rounded-xl border border-white/10 shadow-xl text-white transition-all duration-300',
+            'w-[380px] h-[250px] flex flex-col overflow-hidden rounded-xl border border-white/10 shadow-xl text-white transition-all duration-300',
             isHovered
             ? 'bg-black/80 backdrop-blur-xl'
             : 'bg-black/70 backdrop-blur-xl'
@@ -233,6 +284,7 @@ export default function ActionQueueBalloon({
                   <th className="text-left px-1 py-1.5 font-medium">Old</th>
                   <th className="text-left px-1 py-1.5 font-medium">New</th>
                   <th className="text-left px-1 py-1.5 font-medium">RTD</th>
+                  <th className="text-left px-1 py-1.5 font-medium">Reason</th>
                   <th className="text-right px-1 py-1.5 font-medium w-5"></th>
                 </tr>
               </thead>
@@ -256,6 +308,9 @@ export default function ActionQueueBalloon({
                     </td>
                     <td className="px-1 py-1.5">
                       {item.rtd !== null ? <RtdChip rtd={item.rtd} /> : <span className="text-white/40">—</span>}
+                    </td>
+                    <td className="px-1 py-1.5 text-white/70 truncate max-w-[60px]" title={item.reason_id ? `Reason ID: ${item.reason_id}` : ''}>
+                      {item.reason_id ? <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-medium bg-white/10">ID:{item.reason_id}</span> : <span className="text-white/40">—</span>}
                     </td>
                     <td className="px-1 py-1.5 text-right">
                       <button

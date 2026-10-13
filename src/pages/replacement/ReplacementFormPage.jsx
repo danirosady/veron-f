@@ -257,6 +257,7 @@ export default function ReplacementFormPage() {
       old_tyre_tread_2: q.rtd ? q.rtd : null,
       new_tyre_status: q.condition || '',
       remark: q.remarks || '',
+      hm_reading: q.hm_reading ?? null,
     }));
 
     saveMutation.mutate({

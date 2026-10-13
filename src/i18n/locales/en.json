@@ -474,7 +474,10 @@
       "selectCompany": "Select company",
       "search": "Search by barcode or serial number...",
       "otd": "Original tread depth (mm)",
-      "rtd": "Current tread depth (mm)"
+      "rtd": "Current tread depth (mm)",
+      "dot": "DOT (e.g. 3522)",
+      "dotCode": "Full DOT code (e.g. E4PN 3502)",
+      "cost": "Tyre price/cost"
     },
     "empty": {
       "title": "No Tyres Yet",
@@ -496,6 +499,8 @@
       "type": "Type",
       "pattern": "Pattern",
       "dot": "DOT",
+      "dotCode": "DOT Code",
+      "cost": "Cost",
       "purchaseDate": "Purchase Date",
       "purchasePrice": "Purchase Price",
       "warranty": "Warranty",

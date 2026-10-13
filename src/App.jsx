@@ -23,6 +23,8 @@ import ReplacementFormPage from '@/pages/replacement/ReplacementFormPage';
 import ReplacementReportPage from '@/pages/report/ReplacementReportPage';
 import InventoryReportPage from '@/pages/report/InventoryReportPage';
 import ScheduleReportPage from '@/pages/report/ScheduleReportPage';
+import TyreSummaryReportPage from '@/pages/report/TyreSummaryReportPage';
+import PotentialHMReportPage from '@/pages/report/PotentialHMReportPage';
 import MasterDataPage from '@/pages/master/MasterDataPage';
 import UnitTypeTemplatePage from '@/pages/master-data/UnitTypeTemplatePage';
 import SeedPage from '@/pages/SeedPage';
@@ -124,6 +126,8 @@ export default function App() {
           <Route path="reports/replacements" element={<ReplacementReportPage />} />
           <Route path="reports/inventory" element={<InventoryReportPage />} />
           <Route path="reports/schedule" element={<ScheduleReportPage />} />
+          <Route path="reports/tyre-summary" element={<TyreSummaryReportPage />} />
+          <Route path="reports/potential-hm" element={<PotentialHMReportPage />} />
           <Route path="master" element={<MasterDataPage />} />
           <Route path="unit-types" element={<UnitTypeTemplatePage />} />
           <Route path="seed" element={<SeedPage />} />

@@ -6,6 +6,7 @@ import DataTable from '@/components/list/DataTable';
 import FilterBar from '@/components/list/FilterBar';
 import Pagination from '@/components/ui/Pagination';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { reportsAPI } from '@/api/reports';
 import { companiesAPI } from '@/api/companies';
@@ -50,37 +51,37 @@ export default function ReplacementReportPage() {
     return p;
   }, [page, perPage, sortBy, sortOrder, filters, effectiveCompanyId]);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ['reports', 'replacement', params],
-    queryFn: () => reportsAPI.replacement(params),
-    keepPreviousData: true,
-  });
-
   const { data: companiesData } = useQuery({
     queryKey: ['companies', { all: true }],
     queryFn: () => companiesAPI.list({ per_page: 200 }),
     enabled: isSuperadmin(),
   });
 
-  const rows = data?.data?.data || data?.data || [];
-  const meta = data?.data?.meta || data?.meta || {};
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['reports', 'replacement', params],
+    queryFn: () => reportsAPI.replacement(params),
+    keepPreviousData: true,
+    select: (res) => res.data || [],
+  });
+
+  const rows = Array.isArray(data) ? data : [];
+  const meta = data?.pagination || {};
   const totalItems = meta.total ?? rows.length;
-  const totalPages = meta.last_page ?? Math.max(1, Math.ceil(totalItems / perPage));
-  const companies = companiesData?.data?.data || companiesData?.data || [];
+  const totalPages = meta.total_pages ?? 1;
+  const companies = Array.isArray(companiesData) ? companiesData : (companiesData?.data || []);
 
   // Summary stats
   const stats = useMemo(() => {
-    const allRows = data?.data?.data || data?.data || [];
-    const mounts = allRows.filter((r) => r.action === 'mount').length;
-    const dismounts = allRows.filter((r) => r.action === 'dismount').length;
-    const swaps = allRows.filter((r) => r.action === 'swap').length;
+    const mounts = rows.filter((r) => r.action === 'mount').length;
+    const dismounts = rows.filter((r) => r.action === 'dismount').length;
+    const swaps = rows.filter((r) => r.action === 'swap').length;
     return {
-      total: allRows.length,
+      total: rows.length,
       mounts,
       dismounts,
       swaps,
     };
-  }, [data]);
+  }, [rows]);
 
   const handleSort = (key, order) => {
     setSortBy(key);
@@ -217,7 +218,7 @@ export default function ReplacementReportPage() {
       key: 'company_id',
       label: 'Company',
       type: 'select',
-      options: [{ value: '', label: 'All Companies' }, ...companies.map((c) => ({ value: c.id, label: c.name }))],
+      options: [{ value: '', label: 'All Companies' }, ...(Array.isArray(companies) ? companies.map((c) => ({ value: c.id, label: c.name })) : [])],
     });
   }
 

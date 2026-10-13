@@ -74,8 +74,8 @@ export default function ScheduleReportPage() {
     fn: () => masterAPI.listSizes({ per_page: 200 }),
   });
 
-  const rows = data?.data?.data || data?.data || [];
-  const meta = data?.data?.meta || data?.meta || {};
+  const rows = data?.data?.data || [];
+  const meta = data?.data?.meta || {};
   const totalItems = meta.total ?? rows.length;
   const totalPages = meta.last_page ?? Math.max(1, Math.ceil(totalItems / perPage));
   const companies = companiesData?.data?.data || companiesData?.data || [];

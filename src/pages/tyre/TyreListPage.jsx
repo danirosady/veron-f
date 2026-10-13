@@ -17,7 +17,6 @@ import { companiesAPI } from '@/api/companies';
 import { masterAPI } from '@/api/master';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
-import { TYRE_STATUS_OPTIONS } from '@/utils/constants';
 import { formatNumber, getRtdColor } from '@/utils/format';
 
 const TYRE_STATUS_PILLS_ID = [
@@ -179,6 +178,23 @@ export default function TyreListPage() {
           </Badge>
         );
       },
+    },
+    {
+      key: 'dot',
+      header: t('tyre.label.dot'),
+      align: 'center',
+      render: (v) => v || '-',
+    },
+    {
+      key: 'dot_code',
+      header: t('tyre.label.dotCode'),
+      render: (v) => v || '-',
+    },
+    {
+      key: 'cost',
+      header: t('tyre.label.cost') || 'Cost',
+      align: 'right',
+      render: (v) => v ? formatNumber(v, 2) : '-',
     },
     {
       key: 'status',

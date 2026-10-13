@@ -475,7 +475,10 @@
       "selectCompany": "Pilih perusahaan",
       "search": "Cari berdasarkan barcode atau nomor seri...",
       "otd": "Kedalaman tapak awal (mm)",
-      "rtd": "Kedalaman tapak saat ini (mm)"
+      "rtd": "Kedalaman tapak saat ini (mm)",
+      "dot": "DOT (contoh 3522)",
+      "dotCode": "Kode DOT lengkap (contoh E4PN 3502)",
+      "cost": "Harga ban"
     },
     "empty": {
       "title": "Belum Ada Ban",
@@ -497,6 +500,8 @@
       "type": "Tipe",
       "pattern": "Pola",
       "dot": "DOT",
+      "dotCode": "Kode DOT",
+      "cost": "Harga",
       "purchaseDate": "Tanggal Pembelian",
       "purchasePrice": "Harga Pembelian",
       "warranty": "Garansi",

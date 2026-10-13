@@ -75,6 +75,7 @@ export default function PositionActionModal({
       old_tyre_id: tyre ? tyre.id : null,
       new_tyre_id: isDismountAction ? null : Number(spareTyreId),
       rtd: rtdInput ? Number(rtdInput) : null,
+      hm_reading: hmInput ? Number(hmInput) : null,
       condition: isDismountAction ? dismountCondition : null,
       remarks: remarksInput,
       tyre,

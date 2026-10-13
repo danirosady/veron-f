@@ -37,6 +37,7 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
   onPositionActionChange,
   unitCurrentHm = 0,
   drivers = [],
+  reasons = [],
 }, ref) {
   const [selectedPosition, setSelectedPosition] = useState(null);
   const canvasContainerRef = useRef(null);
@@ -103,6 +104,7 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
           onSubmitAll={onSubmitQueue}
           isSubmitting={isSubmitting}
           drivers={drivers}
+          unitCurrentHm={unitCurrentHm}
         />
         <PositionActionBalloon
           isOpen={positionActionForm.isOpen}
@@ -111,27 +113,35 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
           step={positionActionForm.step}
           spareTyreId={positionActionForm.spareTyreId}
           rtdInput={positionActionForm.rtdInput}
-          hmInput={positionActionForm.hmInput}
           currentLifeHm={positionActionForm.currentLifeHm}
-          hmPlan={positionActionForm.hmPlan}
           remarksInput={positionActionForm.remarksInput}
           dismountCondition={positionActionForm.dismountCondition}
           spareTyres={spareTyres}
           unitCurrentHm={unitCurrentHm}
+          reasons={reasons || []}
+          reasonId={positionActionForm.reasonId}
+          rtdError={positionActionForm.rtdError}
           onStepChange={(step) => onPositionActionChange?.({ step })}
           onSpareTyreIdChange={(v) => onPositionActionChange?.({ spareTyreId: v })}
           onRtdInputChange={(v) => onPositionActionChange?.({ rtdInput: v })}
-          onHmInputChange={(v) => onPositionActionChange?.({ hmInput: v })}
           onCurrentLifeHmChange={(v) => onPositionActionChange?.({ currentLifeHm: v })}
-          onHmPlanChange={(v) => onPositionActionChange?.({ hmPlan: v })}
           onRemarksInputChange={(v) => onPositionActionChange?.({ remarksInput: v })}
           onDismountConditionChange={(v) => onPositionActionChange?.({ dismountCondition: v })}
+          onReasonChange={(v) => onPositionActionChange?.({ reasonId: v })}
           onClose={() => onPositionActionChange?.({ isOpen: false })}
           onAddToQueue={() => onPositionActionChange?.({ _triggerAddToQueue: true })}
           queueAddDisabled={
             positionActionForm.step === 'choose' ||
+            // Spare tyre required for mount and swap
             (positionActionForm.step === 'mount-form' && !positionActionForm.spareTyreId) ||
-            (positionActionForm.step === 'swap-form' && !positionActionForm.spareTyreId)
+            (positionActionForm.step === 'swap-form' && !positionActionForm.spareTyreId) ||
+            // Reason required for unmount and swap
+            (positionActionForm.step === 'unmount-form' && !positionActionForm.reasonId) ||
+            (positionActionForm.step === 'swap-form' && !positionActionForm.reasonId) ||
+            // For unmount/swap: RTD must be filled
+            (positionActionForm.step !== 'mount-form' && !positionActionForm.rtdInput) ||
+            // RTD validation error (for unmount/swap - must be lower than previous)
+            !!positionActionForm.rtdError
           }
         />
 

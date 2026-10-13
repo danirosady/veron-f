@@ -57,45 +57,48 @@ export default function InventoryReportPage() {
     queryKey: ['reports', 'inventory', params],
     queryFn: () => reportsAPI.inventory(params),
     keepPreviousData: true,
+    select: (res) => res.data || [],
   });
 
   const { data: companiesData } = useQuery({
     queryKey: ['companies', { all: true }],
     queryFn: () => companiesAPI.list({ per_page: 200 }),
     enabled: isSuperadmin(),
+    select: (res) => res.data?.data || res.data || [],
   });
 
   const { data: brandsData } = useQuery({
     queryKey: ['master', 'brands', { all: true }],
     queryFn: () => masterAPI.listBrands({ per_page: 200 }),
+    select: (res) => res.data?.data || res.data || [],
   });
 
   const { data: sizesData } = useQuery({
     queryKey: ['master', 'sizes', { all: true }],
     queryFn: () => masterAPI.listSizes({ per_page: 200 }),
+    select: (res) => res.data?.data || res.data || [],
   });
 
-  const rows = data?.data?.data || data?.data || [];
-  const meta = data?.data?.meta || data?.meta || {};
+  const rows = Array.isArray(data) ? data : [];
+  const meta = data?.pagination || {};
   const totalItems = meta.total ?? rows.length;
-  const totalPages = meta.last_page ?? Math.max(1, Math.ceil(totalItems / perPage));
-  const companies = companiesData?.data?.data || companiesData?.data || [];
-  const brands = brandsData?.data?.data || brandsData?.data || [];
-  const sizes = sizesData?.data?.data || sizesData?.data || [];
+  const totalPages = meta.total_pages ?? 1;
+  const companies = Array.isArray(companiesData) ? companiesData : [];
+  const brands = Array.isArray(brandsData) ? brandsData : [];
+  const sizes = Array.isArray(sizesData) ? sizesData : [];
 
   // Summary stats
   const stats = useMemo(() => {
-    const allRows = data?.data?.data || data?.data || [];
-    const total = allRows.length;
-    const mounted = allRows.filter((r) => r.status === 'mounted').length;
-    const spare = allRows.filter((r) => r.status === 'spare' || r.status === 'new_tyre').length;
-    const scrap = allRows.filter((r) => r.status === 'scrap').length;
-    const critical = allRows.filter((r) => {
+    const total = rows.length;
+    const mounted = rows.filter((r) => r.status === 'mounted').length;
+    const spare = rows.filter((r) => r.status === 'spare' || r.status === 'new_tyre').length;
+    const scrap = rows.filter((r) => r.status === 'scrap').length;
+    const critical = rows.filter((r) => {
       const rtd = r.rtd;
       return rtd !== null && rtd !== undefined && rtd < 8;
     }).length;
     return { total, mounted, spare, scrap, critical };
-  }, [data]);
+  }, [rows]);
 
   const handleSort = (key, order) => {
     setSortBy(key);
@@ -250,15 +253,15 @@ export default function InventoryReportPage() {
 
   const filterDefs = [
     { key: 'status', label: 'Status', type: 'select', options: TYRE_STATUS_OPTIONS },
-    { key: 'brand_id', label: 'Brand', type: 'select', options: [{ value: '', label: 'All Brands' }, ...brands.map((b) => ({ value: b.id, label: b.name }))] },
-    { key: 'size_id', label: 'Size', type: 'select', options: [{ value: '', label: 'All Sizes' }, ...sizes.map((s) => ({ value: s.id, label: s.name }))] },
+    { key: 'brand_id', label: 'Brand', type: 'select', options: [{ value: '', label: 'All Brands' }, ...(Array.isArray(brands) ? brands.map((b) => ({ value: b.id, label: b.name })) : [])] },
+    { key: 'size_id', label: 'Size', type: 'select', options: [{ value: '', label: 'All Sizes' }, ...(Array.isArray(sizes) ? sizes.map((s) => ({ value: s.id, label: s.name })) : [])] },
   ];
   if (isSuperadmin()) {
     filterDefs.push({
       key: 'company_id',
       label: 'Company',
       type: 'select',
-      options: [{ value: '', label: 'All Companies' }, ...companies.map((c) => ({ value: c.id, label: c.name }))],
+      options: [{ value: '', label: 'All Companies' }, ...(Array.isArray(companies) ? companies.map((c) => ({ value: c.id, label: c.name })) : [])],
     });
   }
 

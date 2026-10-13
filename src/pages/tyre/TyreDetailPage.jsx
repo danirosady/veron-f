@@ -86,23 +86,34 @@ export default function TyreDetailPage() {
       ),
     },
     {
-      key: 'hm',
-      header: 'HM',
-      align: 'right',
-      render: (v) => formatNumber(v, 0),
-    },
-    {
-      key: 'rtd',
-      header: 'RTD at Event',
+      key: 'rtd_at_mount',
+      header: 'RTD at Mount',
       align: 'right',
       render: (v) => {
-        if (v === null || v === undefined) return '-';
-        return (
-          <Badge variant={getRtdBadgeVariant(v)} size="sm">
-            {formatNumber(v, 1)}
-          </Badge>
-        );
+        if (v == null || v === 0) return '-';
+        return <Badge variant="mounted" size="sm">{formatNumber(v, 1)}</Badge>;
       },
+    },
+    {
+      key: 'rtd_at_dismount',
+      header: 'RTD at Dismount',
+      align: 'right',
+      render: (v) => {
+        if (v == null || v === 0) return '-';
+        return <Badge variant="dismounted" size="sm">{formatNumber(v, 1)}</Badge>;
+      },
+    },
+    {
+      key: 'life_hm',
+      header: 'Life HM',
+      align: 'right',
+      render: (v) => v != null && v > 0 ? formatNumber(v, 0) : '-',
+    },
+    {
+      key: 'current_life_hm',
+      header: 'Accum. HM',
+      align: 'right',
+      render: (v) => formatNumber(v ?? 0, 0),
     },
     {
       key: 'remarks',

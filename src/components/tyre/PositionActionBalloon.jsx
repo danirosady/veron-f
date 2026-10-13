@@ -82,21 +82,21 @@ export default function PositionActionBalloon({
   step,
   spareTyreId,
   rtdInput,
-  hmInput,
   currentLifeHm,
-  hmPlan,
   remarksInput,
   dismountCondition,
   spareTyres,
   unitCurrentHm,
+  reasons = [],
+  reasonId,
+  rtdError,
   onStepChange,
   onSpareTyreIdChange,
   onRtdInputChange,
-  onHmInputChange,
   onCurrentLifeHmChange,
-  onHmPlanChange,
   onRemarksInputChange,
   onDismountConditionChange,
+  onReasonChange,
   onClose,
   onAddToQueue,
   queueAddDisabled,
@@ -105,7 +105,24 @@ export default function PositionActionBalloon({
 
   const mountedTyre = tyre;
   const selectedSpareTyre = spareTyres.find(t => String(t.id) === spareTyreId);
+
+  // Auto-populate RTD based on step:
+  // - Mount: from spare tyre's current RTD
+  // - Swap: from mounted tyre's current RTD
+  // - Unmount: user inputs measured RTD (null = manual input)
+  const getAutoRtd = () => {
+    if (step === 'mount-form' && selectedSpareTyre) {
+      return selectedSpareTyre.rtd || selectedSpareTyre.rtd_1 || '';
+    }
+    if (step === 'swap-form' && mountedTyre) {
+      return mountedTyre.rtd || mountedTyre.rtd_1 || '';
+    }
+    return '';
+  };
+
+  const autoRtd = getAutoRtd();
   const rtdPlaceholder = mountedTyre?.rtd || mountedTyre?.rtd_1 || selectedSpareTyre?.rtd || selectedSpareTyre?.rtd_1 || '';
+  const previousRTD = mountedTyre?.rtd || mountedTyre?.rtd_1 || 0;
   const canAddToQueue = !queueAddDisabled;
 
   return createPortal(
@@ -189,14 +206,26 @@ export default function PositionActionBalloon({
               </div>
             )}
 
-            {/* Mount form */}
+            {/* Mount form — Ban Baru */}
             {step === 'mount-form' && (
               <div className="space-y-3">
                 <div>
                   <label className={LABEL_CLASS}>Ban Spare <span className="text-red-400">*</span></label>
                   <Select
                     value={spareTyreId}
-                    onChange={e => onSpareTyreIdChange(e.target.value)}
+                    onChange={e => {
+                      onSpareTyreIdChange(e.target.value);
+                      // Auto-populate RTD and Current Life HM when spare tyre selected
+                      const selected = spareTyres.find(t => String(t.id) === e.target.value);
+                      if (selected) {
+                        // RTD: from history (rtd) or OTD (original_tyre_depth)
+                        const tyreRtd = selected.rtd || selected.rtd_1 || selected.original_tyre_depth || '';
+                        onRtdInputChange(String(tyreRtd));
+                        // Current Life HM: from history
+                        const tyreHm = selected.current_hm || selected.current_life_hm || selected.lifetime || '';
+                        onCurrentLifeHmChange(String(tyreHm));
+                      }
+                    }}
                     required
                   >
                     <option value="">Pilih ban spare...</option>
@@ -218,65 +247,38 @@ export default function PositionActionBalloon({
                 )}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className={LABEL_CLASS}>RTD (mm)</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={rtdInput}
-                      onChange={e => onRtdInputChange(e.target.value)}
-                      placeholder={rtdPlaceholder ? String(rtdPlaceholder) : ''}
-                    />
+                    <label className={LABEL_CLASS}>RTD (mm) <span className="text-green-400">(auto)</span></label>
+                    <div className={INPUT_CLASS + ' bg-green-500/10 border-green-500/30 cursor-not-allowed'}>
+                      {rtdInput || selectedSpareTyre?.rtd || selectedSpareTyre?.rtd_1 || selectedSpareTyre?.original_tyre_depth || '-'}
+                    </div>
+                    <p className="text-[9px] text-green-400/70 mt-0.5">
+                      Dari RTD ban: {rtdInput || selectedSpareTyre?.rtd || selectedSpareTyre?.rtd_1 || selectedSpareTyre?.original_tyre_depth || 'OTD'}mm
+                    </p>
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>HM Reading</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmInput}
-                      onChange={e => onHmInputChange(e.target.value)}
-                      placeholder={unitCurrentHm ? String(unitCurrentHm) : ''}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className={LABEL_CLASS}>Current Life HM</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={currentLifeHm}
-                      onChange={e => onCurrentLifeHmChange(e.target.value)}
-                      placeholder={unitCurrentHm ? String(unitCurrentHm) : '0'}
-                    />
-                  </div>
-                  <div>
-                    <label className={LABEL_CLASS}>HM Plan</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmPlan}
-                      onChange={e => onHmPlanChange(e.target.value)}
-                      placeholder="Target HM"
-                    />
+                    <label className={LABEL_CLASS}>Current Life HM <span className="text-green-400">(auto)</span></label>
+                    <div className={INPUT_CLASS + ' bg-green-500/10 border-green-500/30 cursor-not-allowed'}>
+                      {currentLifeHm || '-'}
+                    </div>
+                    <p className="text-[9px] text-green-400/70 mt-0.5">Dari history ban</p>
                   </div>
                 </div>
                 <div>
-                  <label className={LABEL_CLASS}>Remarks</label>
+                  <label className={LABEL_CLASS}>Remarks <span className="text-white/40">(opsional)</span></label>
                   <Textarea
                     rows={2}
                     value={remarksInput}
                     onChange={e => onRemarksInputChange(e.target.value)}
-                    placeholder="Catatan opsional..."
+                    placeholder="Catatan..."
                   />
                 </div>
+                <p className="text-[10px] text-white/50 italic">
+                  * HM Reading & Lokasi akan diinput saat proses queue
+                </p>
               </div>
             )}
 
-            {/* Unmount form */}
+            {/* Unmount form — Lepas Ban */}
             {step === 'unmount-form' && (
               <div className="space-y-3">
                 <div>
@@ -289,63 +291,73 @@ export default function PositionActionBalloon({
                     <option value="scrap">Scrap (dibuang)</option>
                   </Select>
                 </div>
+                <div className="bg-red-500/10 rounded-lg p-2 border border-red-500/20">
+                  <p className="text-[10px] text-red-300 font-medium mb-2">Ban yang akan dilepas:</p>
+                  <div className="flex items-center gap-2">
+                    <TyreIcon className="w-5 h-5 text-red-400/70" />
+                    <div>
+                      <div className="text-xs font-semibold text-red-200">{mountedTyre?.serial_number || '-'}</div>
+                      <div className="text-[10px] text-red-400/70">{mountedTyre?.brand?.name} {mountedTyre?.size?.name}</div>
+                    </div>
+                    <span className="ml-auto text-[10px] text-red-300">
+                      RTD lama: {mountedTyre?.rtd || mountedTyre?.rtd_1 || '-'}mm
+                    </span>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className={LABEL_CLASS}>RTD Terukur (mm)</label>
+                    <label className={LABEL_CLASS}>RTD Terukur (mm) <span className="text-yellow-400">(input)</span></label>
                     <Input
                       type="number"
                       step="0.1"
                       min="0"
                       value={rtdInput}
                       onChange={e => onRtdInputChange(e.target.value)}
-                      placeholder={rtdPlaceholder ? String(rtdPlaceholder) : ''}
+                      placeholder="Ukur RTD ban"
                     />
+                    <p className="text-[9px] text-yellow-400/70 mt-0.5">Input manual: ukur RTD ban</p>
+                    {rtdError && (
+                      <p className="text-[10px] text-red-400 mt-0.5">{rtdError}</p>
+                    )}
+                    {!rtdInput && (
+                      <p className="text-[9px] text-red-400 mt-0.5">RTD wajib diisi</p>
+                    )}
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>HM Reading</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmInput}
-                      onChange={e => onHmInputChange(e.target.value)}
-                      placeholder={unitCurrentHm ? String(unitCurrentHm) : ''}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className={LABEL_CLASS}>Current Life HM</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={currentLifeHm}
-                      onChange={e => onCurrentLifeHmChange(e.target.value)}
-                      placeholder={unitCurrentHm ? String(unitCurrentHm) : '0'}
-                    />
-                  </div>
-                  <div>
-                    <label className={LABEL_CLASS}>HM Plan</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmPlan}
-                      onChange={e => onHmPlanChange(e.target.value)}
-                      placeholder="Target HM"
-                    />
+                    <label className={LABEL_CLASS}>Current Life HM <span className="text-green-400">(auto)</span></label>
+                    <div className={INPUT_CLASS + ' bg-green-500/10 border-green-500/30 cursor-not-allowed'}>
+                      {mountedTyre?.current_hm || mountedTyre?.current_life_hm || mountedTyre?.lifetime || '-'}
+                    </div>
+                    <p className="text-[9px] text-green-400/70 mt-0.5">Dari history ban</p>
                   </div>
                 </div>
                 <div>
-                  <label className={LABEL_CLASS}>Remarks</label>
+                  <label className={LABEL_CLASS}>Alasan Replacement <span className="text-red-400">*</span></label>
+                  <Select
+                    value={reasonId || ''}
+                    onChange={e => onReasonChange(e.target.value)}
+                    required
+                  >
+                    <option value="">Pilih alasan...</option>
+                    {reasons.map(r => (
+                      <option key={r.id} value={String(r.id)}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>Remarks <span className="text-white/40">(opsional)</span></label>
                   <Textarea
                     rows={2}
                     value={remarksInput}
                     onChange={e => onRemarksInputChange(e.target.value)}
-                    placeholder="Catatan opsional..."
+                    placeholder="Catatan..."
                   />
                 </div>
+                <p className="text-[10px] text-white/50 italic">
+                  * Lokasi akan diinput saat proses queue
+                </p>
               </div>
             )}
 
@@ -376,63 +388,70 @@ export default function PositionActionBalloon({
                     </div>
                   </div>
                 )}
+                <div className="bg-yellow-500/10 rounded-lg p-2 border border-yellow-500/20">
+                  <p className="text-[10px] text-yellow-300 font-medium mb-2">Ban Lama (akan dilepas):</p>
+                  <div className="flex items-center gap-2">
+                    <TyreIcon className="w-5 h-5 text-yellow-400/70" />
+                    <div>
+                      <div className="text-xs font-semibold text-yellow-200">{mountedTyre?.serial_number || '-'}</div>
+                      <div className="text-[10px] text-yellow-400/70">{mountedTyre?.brand?.name} {mountedTyre?.size?.name}</div>
+                    </div>
+                    <span className="ml-auto text-[10px] text-yellow-300">
+                      RTD: {mountedTyre?.rtd || mountedTyre?.rtd_1 || '-'}mm
+                    </span>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className={LABEL_CLASS}>RTD (mm)</label>
+                    <label className={LABEL_CLASS}>RTD Ban Lama (mm) <span className="text-yellow-400">(input)</span></label>
                     <Input
                       type="number"
                       step="0.1"
                       min="0"
                       value={rtdInput}
                       onChange={e => onRtdInputChange(e.target.value)}
-                      placeholder={rtdPlaceholder ? String(rtdPlaceholder) : ''}
+                      placeholder="Ukur RTD ban lama"
                     />
+                    <p className="text-[9px] text-yellow-400/70 mt-0.5">Input manual: ukur RTD ban lama</p>
+                    {rtdError && (
+                      <p className="text-[10px] text-red-400 mt-0.5">{rtdError}</p>
+                    )}
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>HM Reading</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmInput}
-                      onChange={e => onHmInputChange(e.target.value)}
-                      placeholder={unitCurrentHm ? String(unitCurrentHm) : ''}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className={LABEL_CLASS}>Current Life HM</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={currentLifeHm}
-                      onChange={e => onCurrentLifeHmChange(e.target.value)}
-                      placeholder={unitCurrentHm ? String(unitCurrentHm) : '0'}
-                    />
-                  </div>
-                  <div>
-                    <label className={LABEL_CLASS}>HM Plan</label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={hmPlan}
-                      onChange={e => onHmPlanChange(e.target.value)}
-                      placeholder="Target HM"
-                    />
+                    <label className={LABEL_CLASS}>Current Life HM <span className="text-green-400">(auto)</span></label>
+                    <div className={INPUT_CLASS + ' bg-green-500/10 border-green-500/30 cursor-not-allowed'}>
+                      {mountedTyre?.current_hm || mountedTyre?.current_life_hm || mountedTyre?.lifetime || '-'}
+                    </div>
+                    <p className="text-[9px] text-green-400/70 mt-0.5">Dari history ban lama</p>
                   </div>
                 </div>
                 <div>
-                  <label className={LABEL_CLASS}>Remarks</label>
+                  <label className={LABEL_CLASS}>Alasan Replacement <span className="text-red-400">*</span></label>
+                  <Select
+                    value={reasonId || ''}
+                    onChange={e => onReasonChange(e.target.value)}
+                    required
+                  >
+                    <option value="">Pilih alasan...</option>
+                    {reasons.map(r => (
+                      <option key={r.id} value={String(r.id)}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>Remarks <span className="text-white/40">(opsional)</span></label>
                   <Textarea
                     rows={2}
                     value={remarksInput}
                     onChange={e => onRemarksInputChange(e.target.value)}
-                    placeholder="Catatan opsional..."
+                    placeholder="Catatan..."
                   />
                 </div>
+                <p className="text-[10px] text-white/50 italic">
+                  * Lokasi akan diinput saat proses queue
+                </p>
               </div>
             )}
           </div>

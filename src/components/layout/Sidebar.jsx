@@ -16,6 +16,9 @@ import {
   Boxes,
   CalendarClock,
   Settings as SettingsIcon,
+  Package,
+  DollarSign,
+  Clock,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { TyreIcon } from '@/components/icons';
@@ -77,6 +80,35 @@ const navItems = [
         label: 'Replacement History',
         path: '/replacements',
         icon: History,
+        roles: ['superadmin', 'admin_company'],
+      },
+    ],
+  },
+  {
+    section: 'Reports',
+    items: [
+      {
+        label: 'Replacement History',
+        path: '/reports/replacements',
+        icon: History,
+        roles: ['superadmin', 'admin_company'],
+      },
+      {
+        label: 'Inventory',
+        path: '/reports/inventory',
+        icon: Package,
+        roles: ['superadmin', 'admin_company'],
+      },
+      {
+        label: 'Tyre Summary',
+        path: '/reports/tyre-summary',
+        icon: DollarSign,
+        roles: ['superadmin', 'admin_company'],
+      },
+      {
+        label: 'Potential HM',
+        path: '/reports/potential-hm',
+        icon: Clock,
         roles: ['superadmin', 'admin_company'],
       },
     ],

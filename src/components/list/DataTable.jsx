@@ -53,6 +53,9 @@ export default function DataTable({
 
   const totalCols = columns.length + (actions ? 1 : 0);
 
+  // Ensure data is always an array
+  const tableData = Array.isArray(data) ? data : [];
+
   return (
     <div className={cn('overflow-x-auto', className)}>
       <table className="w-full">
@@ -95,7 +98,7 @@ export default function DataTable({
         <tbody>
           {loading ? (
             renderSkeletonRows()
-          ) : data.length === 0 ? (
+          ) : tableData.length === 0 ? (
             <tr>
               <td colSpan={totalCols} className="p-0">
                 <EmptyState
@@ -108,7 +111,7 @@ export default function DataTable({
               </td>
             </tr>
           ) : (
-            data.map((row, idx) => {
+            tableData.map((row, idx) => {
               const key = row[rowKey] ?? idx;
               return (
                 <tr

@@ -28,6 +28,8 @@ const tyreSchema = z.object({
   type_id: z.string().optional().or(z.literal('')),
   pattern_id: z.string().optional().or(z.literal('')),
   depth_new: z.string().min(1, 'OTD is required'),
+  dot_code: z.string().optional().or(z.literal('')),
+  dot: z.string().optional().or(z.literal('')),
   cost: z.string().optional().or(z.literal('')),
   purchase_date: z.string().optional().or(z.literal('')),
   status: z.enum(['spare', 'mounted', 'dismounted', 'scrap']).default('spare'),
@@ -90,6 +92,8 @@ export default function TyreFormPage() {
       type_id: '',
       pattern_id: '',
       depth_new: '',
+      dot_code: '',
+      dot: '',
       cost: '',
       purchase_date: '',
       status: 'spare',
@@ -112,6 +116,8 @@ export default function TyreFormPage() {
         type_id: matchedType ? String(matchedType.id) : '',
         pattern_id: t_data.pattern_id ? String(t_data.pattern_id) : '',
         depth_new: t_data.rtd ? String(t_data.rtd) : '',
+        dot_code: t_data.dot_code || '',
+        dot: t_data.dot || '',
         cost: t_data.cost ? String(t_data.cost) : '',
         purchase_date: t_data.purchase_date ? t_data.purchase_date.substring(0, 10) : '',
         status: t_data.status || 'spare',
@@ -125,9 +131,7 @@ export default function TyreFormPage() {
     mutationFn: (data) =>
       isEdit ? tyresAPI.update(id, data) : tyresAPI.create(data),
     onSuccess: async () => {
-      if (isEdit) {
-        await queryClient.invalidateQueries({ queryKey: ['tyre', id] });
-      }
+      // Only invalidate tyres list (no need to refetch individual tyre on edit)
       await queryClient.invalidateQueries({ queryKey: ['tyres'] });
       navigate('/tyres');
     },
@@ -148,6 +152,9 @@ export default function TyreFormPage() {
       if (data.size_id) payload.size_id = Number(data.size_id);
       if (data.pattern_id) payload.pattern_id = Number(data.pattern_id);
       if (selectedType) payload.type = selectedType.name;
+      if (data.dot_code && data.dot_code.trim()) payload.dot_code = data.dot_code.trim();
+      if (data.dot && data.dot.trim()) payload.dot = data.dot.trim();
+      if (data.cost && data.cost.trim()) payload.cost = parseFloat(data.cost);
       saveMutation.mutate(payload);
     } else {
       // Create: full payload
@@ -162,6 +169,9 @@ export default function TyreFormPage() {
         rtd: otd,
         remarks: data.remarks || '',
       };
+      if (data.dot_code && data.dot_code.trim()) payload.dot_code = data.dot_code.trim();
+      if (data.dot && data.dot.trim()) payload.dot = data.dot.trim();
+      if (data.cost && data.cost.trim()) payload.cost = parseFloat(data.cost);
       saveMutation.mutate(payload);
     }
   };
@@ -282,6 +292,36 @@ export default function TyreFormPage() {
                     placeholder={isEdit ? t('tyre.placeholder.rtd') : t('tyre.placeholder.otd')}
                     {...register('depth_new')}
                     error={errors.depth_new?.message}
+                  />
+                </FormField>
+
+                <FormField label={t('tyre.label.dot')} error={errors.dot?.message}>
+                  <Input
+                    type="text"
+                    maxLength={10}
+                    placeholder={t('tyre.placeholder.dot')}
+                    {...register('dot')}
+                    error={errors.dot?.message}
+                  />
+                </FormField>
+
+                <FormField label={t('tyre.label.dotCode')} error={errors.dot_code?.message}>
+                  <Input
+                    type="text"
+                    maxLength={100}
+                    placeholder={t('tyre.placeholder.dotCode')}
+                    {...register('dot_code')}
+                    error={errors.dot_code?.message}
+                  />
+                </FormField>
+
+                <FormField label={t('tyre.label.cost')} error={errors.cost?.message}>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder={t('tyre.placeholder.cost')}
+                    {...register('cost')}
+                    error={errors.cost?.message}
                   />
                 </FormField>
               </div>

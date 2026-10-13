@@ -100,11 +100,12 @@ export default function UnitTyresPage() {
     action: '',       // 'mount' | 'dismount' | 'swap'
     spareTyreId: '',
     rtdInput: '',
-    hmInput: '',
     currentLifeHm: '',
-    hmPlan: '',
     remarksInput: '',
     dismountCondition: 'spare',
+    reasonId: '',
+    rtdError: '',
+    currentLifeHmError: '',
   });
 
   const updatePositionActionForm = useCallback((partial) =>
@@ -119,11 +120,12 @@ export default function UnitTyresPage() {
       action: '',
       spareTyreId: '',
       rtdInput: '',
-      hmInput: '',
       currentLifeHm: '',
-      hmPlan: '',
       remarksInput: '',
       dismountCondition: 'spare',
+      reasonId: '',
+      rtdError: '',
+      currentLifeHmError: '',
     }), []);
 
   // Action queue
@@ -141,6 +143,11 @@ export default function UnitTyresPage() {
     queryFn: () => driversAPI.list({ per_page: 200 }),
   });
 
+  const { data: reasonsData } = useQuery({
+    queryKey: ['master-reasons'],
+    queryFn: () => masterAPI.listReasons({ per_page: 100 }),
+  });
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
@@ -155,17 +162,19 @@ export default function UnitTyresPage() {
   const drivers = (driversData?.data?.data || driversData?.data || [])
     .filter(d => d.company_id === unit?.company_id);
 
+  const reasons = (reasonsData?.data?.data || reasonsData?.data || [])
+    .filter(r => r.status === 'active' || !r.status);
+
   // ── Mutations ────────────────────────────────────────────────────────────────
   const submitMutation = useMutation({
     mutationFn: ({ action, position, tyre, spareTyreId, rtdInput,
-                   currentLifeHm, hmPlan, remarksInput, dismountCondition }) =>
+                   currentLifeHm, remarksInput, dismountCondition, reasonId }) =>
       replacementsAPI.create({
         unit_id: Number(id),
         driver_id: null,
         date: replacementDate,
         hm_update: 0,
         current_life_hm: currentLifeHm ? Number(currentLifeHm) : (unit?.current_hm || 0),
-        hm_plan: hmPlan ? Number(hmPlan) : 0,
         remarks: remarksInput || null,
         details: [{
           position,
@@ -176,30 +185,32 @@ export default function UnitTyresPage() {
           old_tyre_tread_2: rtdInput ? Number(rtdInput) : null,
           new_tyre_status: action === 'dismount' ? dismountCondition : '',
           remark: remarksInput || '',
+          failure_reason_id: reasonId ? Number(reasonId) : null,
+          location: '',
         }],
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unit-tyres', id] });
-      doRefetch();
       resetPositionActionForm();
     },
   });
 
   const batchSubmitMutation = useMutation({
-    mutationFn: ({ details, driver_id, hm_plan, current_life_hm }) =>
+    mutationFn: ({ details, driver_id, hm_update, current_life_hm }) =>
       replacementsAPI.create({
         unit_id: Number(id),
         driver_id,
         date: replacementDate,
-        hm_update: 0,
+        hm_update,
         current_life_hm,
-        hm_plan,
         remarks: null,
         details,
       }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      if (variables.hm_update && variables.hm_update > 0) {
+        unitsAPI.updateHM(id, { current_hm: variables.hm_update });
+      }
       queryClient.invalidateQueries({ queryKey: ['unit-tyres', id] });
-      doRefetch();
       setActionQueue([]);
       resetPositionActionForm();
     },
@@ -215,7 +226,6 @@ export default function UnitTyresPage() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unit-tyres', id] });
-      doRefetch();
       queryClient.invalidateQueries({ queryKey: ['master', 'unit-types'] });
       setEditMode(false);
     },
@@ -232,6 +242,8 @@ export default function UnitTyresPage() {
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handlePositionClick = useCallback((position, tyre) => {
+    // Auto-populate Current Life HM from tyre's history (not unit's HM)
+    const tyreCurrentLifeHm = tyre?.current_hm || tyre?.current_life_hm || tyre?.lifetime || '';
     updatePositionActionForm({
       isOpen: true,
       position,
@@ -240,21 +252,28 @@ export default function UnitTyresPage() {
       action: tyre ? 'swap' : 'mount',
       spareTyreId: '',
       rtdInput: '',
-      hmInput: '',
-      currentLifeHm: '',
-      hmPlan: '',
+      currentLifeHm: String(tyreCurrentLifeHm),
       remarksInput: '',
       dismountCondition: 'spare',
+      reasonId: '',
+      rtdError: '',
     });
   }, [updatePositionActionForm]);
 
   const handleQueueAdd = useCallback(() => {
     const { position, tyre, action, spareTyreId, rtdInput,
-            currentLifeHm, hmPlan, remarksInput, dismountCondition } = positionActionForm;
+            currentLifeHm, remarksInput, dismountCondition,
+            reasonId, rtdError, currentLifeHmError } = positionActionForm;
 
     if (!action || !position) return;
     if (action === 'mount' && !spareTyreId) return;
     if (action === 'swap' && (!spareTyreId || !tyre)) return;
+    // For dismount/swap: RTD must be filled
+    if ((action === 'dismount' || action === 'swap') && !rtdInput) return;
+    // Block if RTD validation failed
+    if (rtdError) return;
+    // Require reason for dismount and swap (not for mount - new tyre)
+    if ((action === 'dismount' || action === 'swap') && !reasonId) return;
 
     const spareTyre = spareTyres.find((t) => String(t.id) === spareTyreId);
     setActionQueue((prev) => {
@@ -269,8 +288,11 @@ export default function UnitTyresPage() {
         tyre,
         new_tyre: spareTyre,
         remarks: remarksInput || null,
-        hm_plan: hmPlan ? Number(hmPlan) : null,
         current_life_hm: currentLifeHm ? Number(currentLifeHm) : null,
+        reason_id: reasonId || null,
+        // HM Reading & Location to be filled in queue process
+        hm_reading: null,
+        location: '',
       };
       if (existing >= 0) {
         const updated = [...prev];
@@ -286,7 +308,8 @@ export default function UnitTyresPage() {
     setActionQueue((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
-  const handleBatchSubmit = useCallback((selectedDriverId) => {
+  const handleBatchSubmit = useCallback((confirmData) => {
+    const { driver_id, hm_reading, location } = confirmData || {};
     const details = actionQueue.map((q) => ({
       position: q.position,
       action: q.action,
@@ -296,12 +319,15 @@ export default function UnitTyresPage() {
       old_tyre_tread_2: q.rtd || null,
       new_tyre_status: q.condition || '',
       remark: q.remarks || '',
+      failure_reason_id: q.reason_id ? Number(q.reason_id) : null,
+      location: location || '',
+      hm_reading: hm_reading || null,
     }));
     batchSubmitMutation.mutate({
       details,
-      driver_id: selectedDriverId || null,
-      hm_plan: actionQueue[0]?.hm_plan || null,
-      current_life_hm: actionQueue[0]?.current_life_hm || (unit?.current_hm || 0),
+      driver_id: driver_id || null,
+      hm_update: hm_reading || 0,
+      current_life_hm: hm_reading || unit?.current_hm || 0,
     });
   }, [actionQueue, unit, batchSubmitMutation]);
 
@@ -323,6 +349,7 @@ export default function UnitTyresPage() {
 
     // MOUNTED_TYRE → spare-panel → dismount
     if (sourceData.type === 'MOUNTED_TYRE' && over?.id === 'spare-panel') {
+      const tyreHistoryHm = sourceData.tyre?.current_hm || sourceData.tyre?.current_life_hm || sourceData.tyre?.lifetime || '';
       updatePositionActionForm({
         isOpen: true,
         position: sourceData.position,
@@ -331,11 +358,12 @@ export default function UnitTyresPage() {
         action: 'dismount',
         spareTyreId: '',
         rtdInput: '',
-        hmInput: '',
-        currentLifeHm: '',
-        hmPlan: '',
+        currentLifeHm: String(tyreHistoryHm),
         remarksInput: '',
         dismountCondition: 'spare',
+        reasonId: '',
+        rtdError: '',
+        currentLifeHmError: '',
       });
       return;
     }
@@ -357,22 +385,30 @@ export default function UnitTyresPage() {
           })();
       if (!targetPos) return;
 
+      // Get Current Life HM from spare tyre's history
+      const spareTyreHistoryHm = tyre?.current_hm || tyre?.current_life_hm || tyre?.lifetime || '';
+
       if (targetTyre || targetPos.tyre) {
+        // Swap: use mounted tyre's history
+        const mountedTyreForSwap = targetTyre || targetPos.tyre;
+        const mountedTyreRtd = mountedTyreForSwap?.rtd || mountedTyreForSwap?.rtd_1 || '';
         updatePositionActionForm({
           isOpen: true,
           position: targetPos.position,
-          tyre: targetTyre || targetPos.tyre,
+          tyre: mountedTyreForSwap,
           step: 'swap-form',
           action: 'swap',
           spareTyreId: String(tyre.id),
-          rtdInput: '',
-          hmInput: '',
-          currentLifeHm: '',
-          hmPlan: '',
+          rtdInput: String(mountedTyreRtd),
+          currentLifeHm: String(unit?.current_hm || mountedTyreHistoryHm),
           remarksInput: '',
           dismountCondition: 'spare',
+          reasonId: '',
+          rtdError: '',
+          currentLifeHmError: '',
         });
       } else {
+        // Mount: use spare tyre's history for Current Life HM
         updatePositionActionForm({
           isOpen: true,
           position: targetPos.position,
@@ -381,11 +417,12 @@ export default function UnitTyresPage() {
           action: 'mount',
           spareTyreId: String(tyre.id),
           rtdInput: '',
-          hmInput: '',
-          currentLifeHm: '',
-          hmPlan: '',
+          currentLifeHm: String(spareTyreHistoryHm),
           remarksInput: '',
           dismountCondition: 'spare',
+          reasonId: '',
+          rtdError: '',
+          currentLifeHmError: '',
         });
       }
       return;
@@ -408,22 +445,30 @@ export default function UnitTyresPage() {
       if (!targetPos) return;
       if (targetPos.position === sourceData.position) return;
 
+      // Get Current Life HM from mounted tyre's history
+      const mountedTyreHistoryHm = sourceData.tyre?.current_hm || sourceData.tyre?.current_life_hm || sourceData.tyre?.lifetime || '';
+
       if (tgtTyre || targetPos.tyre) {
+        // Swap: use mounted tyre's history
+        const mountedTyreForSwap = tgtTyre || targetPos.tyre;
+        const mountedTyreRtd = mountedTyreForSwap?.rtd || mountedTyreForSwap?.rtd_1 || '';
         updatePositionActionForm({
           isOpen: true,
           position: sourceData.position,
           tyre: sourceData.tyre,
           step: 'swap-form',
           action: 'swap',
-          spareTyreId: String((tgtTyre || targetPos.tyre).id),
-          rtdInput: '',
-          hmInput: '',
-          currentLifeHm: '',
-          hmPlan: '',
+          spareTyreId: String(mountedTyreForSwap.id),
+          rtdInput: String(mountedTyreRtd),
+          currentLifeHm: String(unit?.current_hm || mountedTyreHistoryHm),
           remarksInput: '',
           dismountCondition: 'spare',
+          reasonId: '',
+          rtdError: '',
+          currentLifeHmError: '',
         });
       } else {
+        // Dismount: use mounted tyre's history
         updatePositionActionForm({
           isOpen: true,
           position: sourceData.position,
@@ -432,15 +477,16 @@ export default function UnitTyresPage() {
           action: 'dismount',
           spareTyreId: '',
           rtdInput: '',
-          hmInput: '',
-          currentLifeHm: '',
-          hmPlan: '',
+          currentLifeHm: String(unit?.current_hm || mountedTyreHistoryHm),
           remarksInput: '',
           dismountCondition: 'spare',
+          reasonId: '',
+          rtdError: '',
+          currentLifeHmError: '',
         });
       }
     }
-  }, [positions, updatePositionActionForm]);
+  }, [positions, updatePositionActionForm, unit]);
 
   if (isLoading) {
     return (
@@ -567,10 +613,31 @@ export default function UnitTyresPage() {
                   updatePositionActionForm({ ...partial, action: 'dismount', spareTyreId: '' });
                   return;
                 }
-                updatePositionActionForm(partial);
+                // Auto-populate rtdInput when switching to swap-form
+                if (partial.step === 'swap-form') {
+                  const tyre = partial.tyre || positionActionForm.tyre;
+                  const autoRtd = tyre?.rtd || tyre?.rtd_1 || '';
+                  updatePositionActionForm({ ...partial, rtdInput: String(autoRtd), action: 'swap' });
+                  return;
+                }
+
+                // Validation: RTD must be lower than previous (for unmount only — swap pre-fills old tyre RTD)
+                let rtdError = '';
+                const rtdVal = partial.rtdInput !== undefined ? partial.rtdInput : positionActionForm.rtdInput;
+                const currentTyre = partial.tyre || positionActionForm.tyre;
+                if (rtdVal && currentTyre && positionActionForm.step === 'unmount-form') {
+                  const newRtd = parseFloat(rtdVal);
+                  const previousRtd = currentTyre.rtd || currentTyre.rtd_1 || 0;
+                  if (!isNaN(newRtd) && previousRtd > 0 && newRtd >= previousRtd) {
+                    rtdError = `RTD harus lebih rendah dari sebelumnya (${previousRtd.toFixed(1)}mm)`;
+                  }
+                }
+
+                updatePositionActionForm({ ...partial, rtdError });
               }}
               unitCurrentHm={unit?.current_hm || 0}
               drivers={drivers}
+              reasons={reasons}
             />
           </CardBody>
         </Card>
