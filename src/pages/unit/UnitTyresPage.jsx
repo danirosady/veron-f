@@ -369,7 +369,7 @@ export default function UnitTyresPage() {
     }
 
     // SPARE_TYRE → canvas/slot
-    if (sourceData.type === 'SPARE_TYRE' && (over?.id === 'canvas-droppable' || over?.id?.startsWith?.('position-'))) {
+    if (sourceData.type === 'SPARE_TYRE' && (over?.id === 'canvas-droppable' || over?.data?.current?.position)) {
       const tyre = sourceData.tyre;
       const targetPosition = over?.data?.current?.position;
       const targetTyre = over?.data?.current?.tyre;
@@ -429,7 +429,7 @@ export default function UnitTyresPage() {
     }
 
     // MOUNTED_TYRE → canvas/slot (swap or dismount)
-    if (sourceData.type === 'MOUNTED_TYRE' && (over?.id === 'canvas-droppable' || over?.id?.startsWith?.('position-'))) {
+    if (sourceData.type === 'MOUNTED_TYRE' && (over?.id === 'canvas-droppable' || over?.data?.current?.position)) {
       const targetPosition = over?.data?.current?.position;
       const tgtTyre = over?.data?.current?.tyre;
       const targetPos = targetPosition

@@ -141,20 +141,20 @@ function EmptySlot({ id, label, isDragging, isDraggingSpare, tyreWidth, tyreHeig
 
 // ─── Filled Slot ─────────────────────────────────────────────────────────────
 
-function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging, enableSwap, isDraggingSpare, tyreWidth, tyreHeight }) {
+function FilledSlot({ id, label, tyre, rtd, otd, status, isSelected, isDragging, enableSwap, isDraggingSpare, tyreWidth, tyreHeight, position }) {
   const isEmpty = status === 'empty' || !tyre;
   const imageOpacity = isEmpty ? 0.15 : 1;
 
   const { attributes, listeners, setNodeRef: dragRef, transform, isDragging: isActiveDrag } = useDraggable({
     id: `mounted-${id}`,
-    data: { type: 'MOUNTED_TYRE', position: id, tyre, label },
+    data: { type: 'MOUNTED_TYRE', position, tyre, label },
     disabled: !enableSwap,
   });
 
   // Combine droppable + draggable refs for filled slots; use isOver for hover hint
   const { setNodeRef: dropRef, isOver } = useDroppable({
     id,
-    data: { type: 'CANVAS_POSITION', position: id, tyre, label },
+    data: { type: 'CANVAS_POSITION', position, tyre, label },
   });
 
   const setRefs = (el) => {
@@ -298,6 +298,7 @@ export default function TyreSlot({
         isDraggingSpare={isDraggingSpare}
         tyreWidth={tyreWidth}
         tyreHeight={tyreHeight}
+        position={position}
       />
       <TyreTooltip
         tyre={tyre}
