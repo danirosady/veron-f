@@ -37,7 +37,7 @@ export default function TyreSummaryReportPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['reports', 'tyre-summary', params],
     queryFn: () => reportsAPI.tyreSummary(params),
-    select: (res) => res.data?.data || res.data || [],
+    select: (res) => res.data?.data || [],
   });
 
   const { data: companies } = useQuery({

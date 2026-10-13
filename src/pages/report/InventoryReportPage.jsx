@@ -57,7 +57,7 @@ export default function InventoryReportPage() {
     queryKey: ['reports', 'inventory', params],
     queryFn: () => reportsAPI.inventory(params),
     keepPreviousData: true,
-    select: (res) => res.data || [],
+    select: (res) => res.data?.data || [],
   });
 
   const { data: companiesData } = useQuery({
@@ -201,28 +201,28 @@ export default function InventoryReportPage() {
         );
       },
     },
-    {
-      key: 'pct_worn',
-      header: '% Worn',
-      align: 'right',
-      render: (_, row) => {
-        const otd = row.depth_new;
-        const rtd = row.rtd;
-        if (otd == null || rtd == null) return '-';
-        const pct = calculatePercentWorn(otd, rtd);
-        return (
-          <div className="flex items-center gap-2 justify-end">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full ${getProgressColor(pct)}`}
-                style={{ width: `${Math.min(pct, 100)}%` }}
-              />
-            </div>
-            <span className="text-xs text-gray-600 w-10 text-right">{formatNumber(pct, 0)}%</span>
-          </div>
-        );
-      },
-    },
+    // {
+    //   key: 'pct_worn',
+    //   header: '% Worn',
+    //   align: 'right',
+    //   render: (_, row) => {
+    //     const otd = row.depth_new;
+    //     const rtd = row.rtd;
+    //     if (otd == null || rtd == null) return '-';
+    //     const pct = calculatePercentWorn(otd, rtd);
+    //     return (
+    //       <div className="flex items-center gap-2 justify-end">
+    //         <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+    //           <div
+    //             className={`h-full rounded-full ${getProgressColor(pct)}`}
+    //             style={{ width: `${Math.min(pct, 100)}%` }}
+    //           />
+    //         </div>
+    //         <span className="text-xs text-gray-600 w-10 text-right">{formatNumber(pct, 0)}%</span>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       key: 'unit',
       header: 'Mounted Unit',

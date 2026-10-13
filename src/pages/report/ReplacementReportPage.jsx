@@ -61,7 +61,7 @@ export default function ReplacementReportPage() {
     queryKey: ['reports', 'replacement', params],
     queryFn: () => reportsAPI.replacement(params),
     keepPreviousData: true,
-    select: (res) => res.data || [],
+    select: (res) => res.data?.data || [],
   });
 
   const rows = Array.isArray(data) ? data : [];

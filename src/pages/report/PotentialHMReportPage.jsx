@@ -34,7 +34,7 @@ export default function PotentialHMReportPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['reports', 'potential-hm', params],
     queryFn: () => reportsAPI.potentialHM(params),
-    select: (res) => res.data?.data || res.data || [],
+    select: (res) => res.data?.data || [],
   });
 
   const { data: companies } = useQuery({
