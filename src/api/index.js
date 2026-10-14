@@ -3,7 +3,7 @@ export { authAPI } from './auth';
 export { companiesAPI } from './companies';
 export { projectsAPI } from './projects';
 export { unitsAPI } from './units';
-export { driversAPI } from './drivers';
+export { employeesAPI } from './employees';
 export { tyresAPI } from './tyres';
 export { replacementsAPI } from './replacements';
 export { masterAPI } from './master';

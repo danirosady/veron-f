@@ -30,9 +30,11 @@ export default function Header({ onMenuClick }) {
     location.pathname === base || location.pathname.startsWith(base + '/');
 
   // Management routes (Dashboard + core business entities)
-  const isManagementPath = matchesBase('/dashboard') || matchesBase('/companies') ||
-    matchesBase('/projects') || matchesBase('/units') || matchesBase('/drivers') ||
-    matchesBase('/tyres') || matchesBase('/replacements');
+  const isManagementPath = matchesBase('/dashboard') ||
+    matchesBase('/projects') || matchesBase('/units') ||
+    matchesBase('/employees') ||
+    matchesBase('/tyres') || matchesBase('/replacements') ||
+    (matchesBase('/companies') && matchesBase('/companies'));
 
   // Configuration routes (Master data, Users, Settings)
   const isConfigurationPath = matchesBase('/master') || matchesBase('/unit-types') || matchesBase('/users') || matchesBase('/settings');
@@ -46,7 +48,7 @@ export default function Header({ onMenuClick }) {
     if (path === '/companies' || path.startsWith('/companies/')) return 'Companies';
     if (path === '/projects' || path.startsWith('/projects/')) return 'Projects';
     if (path === '/units' || path.startsWith('/units/')) return 'Units';
-    if (path === '/drivers' || path.startsWith('/drivers/')) return 'Drivers';
+    if (path === '/employees' || path.startsWith('/employees')) return 'Karyawan';
     if (path === '/tyres' || path.startsWith('/tyres/')) return 'Tyres';
     return null;
   };

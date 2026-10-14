@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Plus, Pencil, Trash2, Users, Eye } from 'lucide-react';
@@ -11,14 +11,21 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ConfirmDialog from '@/components/form/ConfirmDialog';
-import { driversAPI } from '@/api/drivers';
+import { employeesAPI } from '@/api/employees';
 import { companiesAPI } from '@/api/companies';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 
-export default function DriverListPage() {
+const ROLE_TABS = [
+  { value: 'driver', labelKey: 'driver.tab.all' },
+  { value: 'supervisor', labelKey: 'employee.tabs.supervisor' },
+  { value: 'tyreman', labelKey: 'employee.tabs.tyreman' },
+];
+
+export default function EmployeeListPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { isSuperadmin } = usePermission();
@@ -33,6 +40,14 @@ export default function DriverListPage() {
   const [perPage] = useState(15);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
+  // Always derive role from URL query param — stays in sync when URL changes
+  const role = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const qRole = params.get('role');
+    if (qRole === 'supervisor' || qRole === 'tyreman') return qRole;
+    return 'driver';
+  }, [location.search]);
+
   const effectiveCompanyId = useMemo(() => {
     if (!isSuperadmin()) return user?.company_id || '';
     return companyId;
@@ -44,15 +59,16 @@ export default function DriverListPage() {
       per_page: perPage,
       sort_by: sortBy,
       sort_order: sortOrder,
+      role,
     };
     if (status && status !== 'all') p.status = status;
     if (effectiveCompanyId) p.company_id = effectiveCompanyId;
     return p;
-  }, [page, perPage, sortBy, sortOrder, status, effectiveCompanyId]);
+  }, [page, perPage, sortBy, sortOrder, status, effectiveCompanyId, role]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['drivers', params],
-    queryFn: () => driversAPI.list(params),
+    queryKey: ['employees', params],
+    queryFn: () => employeesAPI.list(params),
     keepPreviousData: true,
   });
 
@@ -63,32 +79,31 @@ export default function DriverListPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => driversAPI.delete(id),
+    mutationFn: (id) => employeesAPI.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       setDeleteTarget(null);
     },
   });
 
-  const drivers = data?.data?.data || data?.data || [];
+  const employees = data?.data?.data || data?.data || [];
   const meta = data?.data?.meta || data?.meta || {};
-  const totalItems = meta.total ?? drivers.length;
+  const totalItems = meta.total ?? employees.length;
   const totalPages = meta.last_page ?? Math.max(1, Math.ceil(totalItems / perPage));
 
   const companies = companiesData?.data?.data || companiesData?.data || [];
   const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
 
-  // Client-side search filter
   const filtered = useMemo(() => {
-    if (!search.trim()) return drivers;
+    if (!search.trim()) return employees;
     const q = search.toLowerCase();
-    return drivers.filter(
-      (d) =>
-        (d.name || '').toLowerCase().includes(q) ||
-        (d.employee_id || '').toLowerCase().includes(q) ||
-        (d.phone || '').toLowerCase().includes(q)
+    return employees.filter(
+      (e) =>
+        (e.name || '').toLowerCase().includes(q) ||
+        (e.employee_id || '').toLowerCase().includes(q) ||
+        (e.phone || '').toLowerCase().includes(q)
     );
-  }, [drivers, search]);
+  }, [employees, search]);
 
   const handleSort = (key, order) => {
     setSortBy(key);
@@ -96,34 +111,53 @@ export default function DriverListPage() {
     setPage(1);
   };
 
-  const getStatusBadge = (status) => {
-    const variant = status === 'active' ? 'active' : 'inactive';
-    const label = status === 'active'
+  const getStatusBadge = (s) => {
+    const variant = s === 'active' ? 'active' : 'inactive';
+    const label = s === 'active'
       ? t('common.status.active')
       : t('common.status.inactive');
     return <Badge variant={variant} size="sm">{label}</Badge>;
   };
 
+  const getRoleBadge = (r) => {
+    const variants = {
+      driver: 'info',
+      supervisor: 'warning',
+      tyreman: 'success',
+    };
+    const labels = {
+      driver: t('employee.role.driver'),
+      supervisor: t('employee.role.supervisor'),
+      tyreman: t('employee.role.tyreman'),
+    };
+    return <Badge variant={variants[r] || 'default'} size="sm">{labels[r] || r}</Badge>;
+  };
+
   const columns = [
     {
       key: 'name',
-      header: t('driver.label.name'),
+      header: t('employee.label.name'),
       sortable: true,
       render: (v) => <span className="font-medium text-gray-900">{v}</span>,
     },
     {
       key: 'employee_id',
-      header: t('driver.label.employeeId'),
+      header: t('employee.label.employeeId'),
       render: (v) => v || '-',
     },
     {
+      key: 'role',
+      header: t('employee.label.role'),
+      render: (v) => getRoleBadge(v),
+    },
+    {
       key: 'company',
-      header: t('driver.label.company'),
+      header: t('employee.label.company'),
       render: (_, row) => row.company?.name || '-',
     },
     {
       key: 'phone',
-      header: t('driver.label.phone'),
+      header: t('employee.label.phone'),
       render: (v) => v || '-',
     },
     {
@@ -134,17 +168,19 @@ export default function DriverListPage() {
     },
   ];
 
+  const roleBasePath = '/employees';
+
   const actions = (row) => (
     <div className="flex items-center justify-end gap-1">
       <button
-        onClick={() => navigate(`/drivers/${row.id}`)}
+        onClick={() => navigate(`${roleBasePath}/${row.id}`)}
         className="p-1.5 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
         title={t('common.button.view')}
       >
         <Eye className="w-4 h-4" />
       </button>
       <button
-        onClick={() => navigate(`/drivers/${row.id}/edit`)}
+        onClick={() => navigate(`${roleBasePath}/${row.id}/edit`)}
         className="p-1.5 rounded text-blue-600 hover:bg-blue-50"
         title={t('common.button.edit')}
       >
@@ -169,29 +205,49 @@ export default function DriverListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t('driver.title.list')}
-        subtitle={t('driver.subtitle.list')}
+        title={t('employee.title.list')}
+        subtitle={t('employee.subtitle.list')}
         actions={
-          <Button onClick={() => navigate('/drivers/new')}>
+          <Button onClick={() => navigate('/employees/new')}>
             <Plus className="w-4 h-4" />
-            {t('driver.button.add')}
+            {t('employee.button.add')}
           </Button>
         }
       />
+
+      {/* Role Tabs */}
+      <div className="flex gap-1 border-b border-gray-200">
+        {ROLE_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => {
+              setPage(1);
+              navigate(`/employees?role=${tab.value}`);
+            }}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              role === tab.value
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            {tab.labelKey === 'driver.tab.all' ? t('employee.tabs.all') : tab.labelKey === 'employee.tabs.supervisor' ? t('employee.tabs.supervisor') : t('employee.tabs.tyreman')}
+          </button>
+        ))}
+      </div>
 
       <Card padding={false}>
         <div className="p-4 space-y-3">
           <SearchFilterBar
             search={search}
             onSearchChange={(v) => { setSearch(v); setPage(1); }}
-            searchPlaceholder={t('driver.placeholder.search')}
+            searchPlaceholder={t('employee.placeholder.search')}
             statusValue={status}
             onStatusChange={(v) => { setStatus(v); setPage(1); }}
             statusOptions={statusPillOptions}
           >
             {isSuperadmin() && (
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-600 whitespace-nowrap">{t('driver.label.company')}:</label>
+                <label className="text-sm font-medium text-gray-600 whitespace-nowrap">{t('employee.label.company')}:</label>
                 <select
                   value={companyId}
                   onChange={(e) => { setCompanyId(e.target.value); setPage(1); }}
@@ -216,10 +272,10 @@ export default function DriverListPage() {
           onSort={handleSort}
           actions={actions}
           emptyIcon={Users}
-          emptyTitle={t('driver.empty.title')}
-          emptyMessage={search ? t('driver.empty.searchMatch') : t('driver.empty.message')}
-          emptyAction={search ? undefined : () => navigate('/drivers/new')}
-          emptyActionLabel={search ? undefined : t('driver.button.add')}
+          emptyTitle={t('employee.empty.title')}
+          emptyMessage={search ? t('employee.empty.searchMatch') : t('employee.empty.message')}
+          emptyAction={search ? undefined : () => navigate('/employees/new')}
+          emptyActionLabel={search ? undefined : t('employee.button.add')}
         />
         {totalItems > 0 && (
           <div className="px-4 py-3 border-t border-gray-200">
@@ -240,8 +296,8 @@ export default function DriverListPage() {
         onConfirm={async () => {
           if (deleteTarget) await deleteMutation.mutateAsync(deleteTarget.id);
         }}
-        title={t('driver.confirm.deleteTitle')}
-        message={t('driver.confirm.deleteMessage', { name: deleteTarget?.name })}
+        title={t('employee.confirm.deleteTitle')}
+        message={t('employee.confirm.deleteMessage', { name: deleteTarget?.name })}
         confirmText={t('common.button.delete')}
         loading={deleteMutation.isLoading}
       />

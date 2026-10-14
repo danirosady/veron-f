@@ -13,8 +13,8 @@ import UnitListPage from '@/pages/unit/UnitListPage';
 import UnitDetailPage from '@/pages/unit/UnitDetailPage';
 import UnitFormPage from '@/pages/unit/UnitFormPage';
 import UnitTyresPage from '@/pages/unit/UnitTyresPage';
-import DriverListPage from '@/pages/driver/DriverListPage';
-import DriverFormPage from '@/pages/driver/DriverFormPage';
+import EmployeeListPage from '@/pages/employee/EmployeeListPage';
+import EmployeeFormPage from '@/pages/employee/EmployeeFormPage';
 import TyreListPage from '@/pages/tyre/TyreListPage';
 import TyreDetailPage from '@/pages/tyre/TyreDetailPage';
 import TyreFormPage from '@/pages/tyre/TyreFormPage';
@@ -100,9 +100,10 @@ export default function App() {
           <Route path="units/:id" element={<UnitDetailPage />} />
           <Route path="units/:id/edit" element={<UnitFormPage />} />
           <Route path="units/:id/tyres" element={<UnitTyresPage />} />
-          <Route path="drivers" element={<DriverListPage />} />
-          <Route path="drivers/new" element={<DriverFormPage />} />
-          <Route path="drivers/:id/edit" element={<DriverFormPage />} />
+          <Route path="employees" element={<EmployeeListPage />} />
+          <Route path="employees/new" element={<EmployeeFormPage />} />
+          <Route path="employees/:id/edit" element={<EmployeeFormPage />} />
+          <Route path="employees/:id" element={<EmployeeFormPage />} />
           <Route path="tyres" element={<TyreListPage />} />
           <Route path="tyres/new" element={<TyreFormPage />} />
           <Route path="tyres/:id" element={<TyreDetailPage />} />

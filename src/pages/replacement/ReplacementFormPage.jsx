@@ -16,7 +16,7 @@ import TyrePositionCanvas from '@/components/tyre/TyrePositionCanvas';
 import PositionActionModal from '@/components/replacement/PositionActionModal';
 import { replacementsAPI } from '@/api/replacements';
 import { unitsAPI } from '@/api/units';
-import { driversAPI } from '@/api/drivers';
+import { employeesAPI } from '@/api/employees';
 import { formatNumber, titleCase } from '@/utils/format';
 
 function RtdChip({ rtd }) {
@@ -134,8 +134,8 @@ export default function ReplacementFormPage() {
   }, [unit, isEdit, hmUpdate, currentLifeHm]);
 
   const { data: driversData } = useQuery({
-    queryKey: ['drivers', { all: true }],
-    queryFn: () => driversAPI.list({ per_page: 200 }),
+    queryKey: ['employees', { role: 'driver', per_page: 200 }],
+    queryFn: () => employeesAPI.list({ role: 'driver', per_page: 200 }),
   });
 
   const { data: unitsData } = useQuery({

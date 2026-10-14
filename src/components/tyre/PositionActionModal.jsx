@@ -17,7 +17,7 @@ import Textarea from '@/components/ui/Textarea';
 import FormField from '@/components/form/FormField';
 import Badge from '@/components/ui/Badge';
 import { replacementsAPI } from '@/api/replacements';
-import { driversAPI } from '@/api/drivers';
+import { employeesAPI } from '@/api/employees';
 import { formatNumber, getRtdColor } from '@/utils/format';
 
 const ACTION_RTD_THRESHOLDS = {
@@ -92,7 +92,7 @@ export default function PositionActionModal({
 
   const { data: driversData } = useQuery({
     queryKey: ['drivers', 'select'],
-    queryFn: () => driversAPI.list({ page: 1, per_page: 500, status: 'active' }),
+    queryFn: () => employeesAPI.list({ role: 'driver', page: 1, per_page: 500, status: 'active' }),
     enabled: isOpen,
   });
 

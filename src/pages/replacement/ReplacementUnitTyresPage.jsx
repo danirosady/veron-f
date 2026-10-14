@@ -16,7 +16,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import TyrePositionCanvas from '@/components/tyre/TyrePositionCanvas';
 import { unitsAPI } from '@/api/units';
 import { replacementsAPI } from '@/api/replacements';
-import { driversAPI } from '@/api/drivers';
+import { employeesAPI } from '@/api/employees';
 import { companiesAPI } from '@/api/companies';
 import { projectsAPI } from '@/api/projects';
 import { masterAPI } from '@/api/master';
@@ -129,6 +129,7 @@ export default function ReplacementUnitTyresPage() {
     reasonId: '',
     rtdError: '',
     currentLifeHmError: '',
+    tyresmanIds: [],
   });
 
   const updatePositionActionForm = useCallback((partial) =>
@@ -149,6 +150,7 @@ export default function ReplacementUnitTyresPage() {
       reasonId: '',
       rtdError: '',
       currentLifeHmError: '',
+      tyresmanIds: [],
     }), []);
 
   // ── Queries ────────────────────────────────────────────────────────────────
@@ -159,8 +161,18 @@ export default function ReplacementUnitTyresPage() {
   });
 
   const { data: driversData } = useQuery({
-    queryKey: ['drivers', { all: true }],
-    queryFn: () => driversAPI.list({ per_page: 200 }),
+    queryKey: ['employees', { role: 'driver', per_page: 200 }],
+    queryFn: () => employeesAPI.list({ role: 'driver', per_page: 200 }),
+  });
+
+  const { data: supervisorsData } = useQuery({
+    queryKey: ['employees', { role: 'supervisor', per_page: 200 }],
+    queryFn: () => employeesAPI.list({ role: 'supervisor', per_page: 200 }),
+  });
+
+  const { data: tyremenData } = useQuery({
+    queryKey: ['employees', { role: 'tyreman', per_page: 200 }],
+    queryFn: () => employeesAPI.list({ role: 'tyreman', per_page: 200 }),
   });
 
   const { data: reasonsData } = useQuery({
@@ -189,6 +201,12 @@ export default function ReplacementUnitTyresPage() {
   const totalSpare = unitData?.total_spare || 0;
   const drivers = (driversData?.data?.data || driversData?.data || [])
     .filter(d => d.company_id === unit?.company_id);
+
+  const supervisors = (supervisorsData?.data?.data || supervisorsData?.data || [])
+    .filter(s => s.company_id === unit?.company_id);
+
+  const tyremen = (tyremenData?.data?.data || tyremenData?.data || [])
+    .filter(t => t.company_id === unit?.company_id);
 
   const reasons = (reasonsData?.data?.data || reasonsData?.data || [])
     .filter(r => r.status === 'active' || !r.status);
@@ -282,13 +300,14 @@ export default function ReplacementUnitTyresPage() {
       reasonId: '',
       rtdError: '',
       currentLifeHmError: '',
+      tyresmanIds: [],
     });
   }, [updatePositionActionForm]);
 
   const handleQueueAdd = useCallback(() => {
     const { position, tyre, action, spareTyreId, rtdInput,
             currentLifeHm, remarksInput, dismountCondition,
-            reasonId, rtdError, currentLifeHmError } = positionActionForm;
+            reasonId, rtdError, currentLifeHmError, tyresmanIds } = positionActionForm;
 
     if (!action || !position) return;
     if (action === 'mount' && !spareTyreId) return;
@@ -314,6 +333,7 @@ export default function ReplacementUnitTyresPage() {
         new_tyre: spareTyre,
         remarks: remarksInput || null,
         driver_id: driverId ? Number(driverId) : null,
+        tyresman_ids: tyresmanIds || [],
         current_life_hm: currentLifeHm ? Number(currentLifeHm) : null,
         reason_id: reasonId || null,
         // HM Reading & Location to be filled in queue process
@@ -335,7 +355,7 @@ export default function ReplacementUnitTyresPage() {
   }, []);
 
   const handleBatchSubmit = useCallback((confirmData) => {
-    const { driver_id, hm_reading, location } = confirmData || {};
+    const { driver_id, supervisor_id, hm_reading, location } = confirmData || {};
     const details = actionQueue.map((q) => ({
       position: q.position,
       action: q.action,
@@ -348,6 +368,8 @@ export default function ReplacementUnitTyresPage() {
       failure_reason_id: q.reason_id ? Number(q.reason_id) : null,
       location: location || '',
       hm_reading: hm_reading || null,
+      supervisor_id: supervisor_id || null,
+      tyresman_ids: q.tyresman_ids || [],
     }));
     batchSubmitMutation.mutate({
       details,
@@ -402,6 +424,7 @@ export default function ReplacementUnitTyresPage() {
         reasonId: '',
         rtdError: '',
         currentLifeHmError: '',
+        tyresmanIds: [],
       });
       return;
     }
@@ -444,6 +467,7 @@ export default function ReplacementUnitTyresPage() {
           reasonId: '',
           rtdError: '',
           currentLifeHmError: '',
+          tyresmanIds: [],
         });
       } else {
         // Mount: use spare tyre's history for Current Life HM
@@ -461,6 +485,7 @@ export default function ReplacementUnitTyresPage() {
           reasonId: '',
           rtdError: '',
           currentLifeHmError: '',
+          tyresmanIds: [],
         });
       }
       return;
@@ -504,6 +529,7 @@ export default function ReplacementUnitTyresPage() {
           reasonId: '',
           rtdError: '',
           currentLifeHmError: '',
+          tyresmanIds: [],
         });
       } else {
         // Dismount: use mounted tyre's history
@@ -521,6 +547,7 @@ export default function ReplacementUnitTyresPage() {
           reasonId: '',
           rtdError: '',
           currentLifeHmError: '',
+          tyresmanIds: [],
         });
       }
     }
@@ -683,6 +710,8 @@ export default function ReplacementUnitTyresPage() {
               }}
               unitCurrentHm={unit?.current_hm || 0}
               drivers={drivers}
+              supervisors={supervisors}
+              tyremen={tyremen}
               reasons={reasons}
             />
           </CardBody>

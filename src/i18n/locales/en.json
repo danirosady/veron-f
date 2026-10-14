@@ -108,12 +108,62 @@
       "maintenance": "Maintenance"
     }
   },
+  "employee": {
+    "title": {
+      "list": "Employee List",
+      "create": "Add Employee",
+      "edit": "Edit Employee"
+    },
+    "subtitle": {
+      "list": "Manage all employees in the system",
+      "create": "Add a new employee to the system",
+      "edit": "Update employee information"
+    },
+    "button": {
+      "add": "Add Employee",
+      "create": "Create",
+      "update": "Update"
+    },
+    "label": {
+      "name": "Name",
+      "employeeId": "Employee ID",
+      "phone": "Phone Number",
+      "company": "Company",
+      "role": "Role"
+    },
+    "placeholder": {
+      "name": "Employee name",
+      "employeeId": "Employee ID",
+      "selectCompany": "Select company",
+      "search": "Search employees..."
+    },
+    "tabs": {
+      "all": "All Drivers",
+      "supervisor": "Supervisors",
+      "tyreman": "Tyremen"
+    },
+    "role": {
+      "driver": "Driver",
+      "supervisor": "Supervisor",
+      "tyreman": "Tyreman"
+    },
+    "empty": {
+      "title": "No Employees Yet",
+      "message": "There are no employees yet.",
+      "searchMatch": "No employees match your search."
+    },
+    "confirm": {
+      "deleteTitle": "Confirm Delete",
+      "deleteMessage": "Are you sure you want to delete employee \"{{name}}\"? This action cannot be undone."
+    }
+  },
   "menu": {
     "dashboard": "Dashboard",
     "company": "Company",
     "project": "Project",
     "unit": "Unit",
     "driver": "Driver",
+    "employee": "Employee",
     "tyre": "Tyre",
     "replacement": "Replacement",
     "replacementHistory": "Replacement History",

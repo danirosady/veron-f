@@ -106,11 +106,13 @@ export default function ActionQueueBalloon({
   onSubmitAll,
   isSubmitting = false,
   drivers = [],
+  supervisors = [],
   unitCurrentHm = 0,
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmDriverId, setConfirmDriverId] = useState('');
+  const [confirmSupervisorId, setConfirmSupervisorId] = useState('');
   const [confirmHmReading, setConfirmHmReading] = useState('');
   const [confirmLocation, setConfirmLocation] = useState('');
   const [hmError, setHmError] = useState('');
@@ -120,8 +122,14 @@ export default function ActionQueueBalloon({
     ...drivers.map(d => ({ value: String(d.id), label: d.name }))
   ];
 
+  const supervisorOptions = [
+    { value: '', label: 'Pilih supervisor...' },
+    ...supervisors.map(s => ({ value: String(s.id), label: s.name }))
+  ];
+
   const handleSubmitClick = () => {
     setConfirmDriverId('');
+    setConfirmSupervisorId('');
     setConfirmHmReading('');
     setConfirmLocation('');
     setHmError('');
@@ -137,6 +145,7 @@ export default function ActionQueueBalloon({
     setHmError('');
     onSubmitAll({
       driver_id: confirmDriverId ? Number(confirmDriverId) : null,
+      supervisor_id: confirmSupervisorId ? Number(confirmSupervisorId) : null,
       hm_reading: confirmHmReading ? Number(confirmHmReading) : null,
       location: confirmLocation || '',
     });
@@ -182,6 +191,15 @@ export default function ActionQueueBalloon({
                     value={confirmDriverId}
                     onChange={v => setConfirmDriverId(v)}
                     options={driverOptions}
+                  />
+                </div>
+                {/* Supervisor */}
+                <div>
+                  <label className="block text-[11px] font-medium text-white/70 mb-1">Supervisor</label>
+                  <Select
+                    value={confirmSupervisorId}
+                    onChange={v => setConfirmSupervisorId(v)}
+                    options={supervisorOptions}
                   />
                 </div>
                 {/* HM Reading */}

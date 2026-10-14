@@ -15,7 +15,7 @@ import TyrePositionCanvas from '@/components/tyre/TyrePositionCanvas';
 import { unitsAPI } from '@/api/units';
 import { replacementsAPI } from '@/api/replacements';
 import { masterAPI } from '@/api/master';
-import { driversAPI } from '@/api/drivers';
+import { employeesAPI } from '@/api/employees';
 import { formatNumber, getRtdColor } from '@/utils/format';
 
 // ─── Drag Overlay Cards ────────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ export default function UnitTyresPage() {
 
   const { data: driversData } = useQuery({
     queryKey: ['drivers', { all: true }],
-    queryFn: () => driversAPI.list({ per_page: 200 }),
+    queryFn: () => employeesAPI.list({ role: 'driver', per_page: 200 }),
   });
 
   const { data: reasonsData } = useQuery({

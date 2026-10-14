@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, RefreshCw } from 'lucide-react';
+import { X, Plus, RefreshCw, UserCheck } from 'lucide-react';
 import { TyreIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/utils/format';
@@ -19,16 +19,26 @@ function Input({ value, onChange, ...rest }) {
   );
 }
 
-function Select({ value, onChange, children, ...rest }) {
+function Select({ value, onChange, options = [], placeholder = 'Pilih...', children, ...rest }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const ref = useRef(null);
-  const raw = React.Children.toArray(children);
-  const childrenArray = raw.filter(React.isValidElement);
-  const selectedChild = childrenArray.find(c => String(c?.props?.value ?? '') === String(value));
-  const selectedLabel = selectedChild?.props?.children ?? 'Pilih...';
+
+  const sourceOptions = options.length > 0
+    ? options
+    : React.Children.toArray(children)
+        .filter(React.isValidElement)
+        .map(child => ({ value: String(child.props.value ?? ''), label: child.props.children }));
+
+  const filtered = search
+    ? sourceOptions.filter(opt => String(opt.label ?? '').toLowerCase().includes(search.toLowerCase()))
+    : sourceOptions;
+
+  const selected = sourceOptions.find(opt => String(opt.value) === String(value));
+  const selectedLabel = selected?.label ?? placeholder;
 
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); };
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) { setIsOpen(false); setSearch(''); } };
     if (isOpen) document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [isOpen]);
@@ -41,23 +51,152 @@ function Select({ value, onChange, children, ...rest }) {
         onClick={() => setIsOpen(o => !o)}
         {...rest}
       >
-        <span className={value ? 'text-white' : 'text-white/40'}>{selectedLabel}</span>
-        <svg className={`w-3.5 h-3.5 text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <span className={value ? 'text-white truncate' : 'text-white/40'}>{selectedLabel}</span>
+        <svg className={`w-3.5 h-3.5 text-white/50 transition-transform flex-shrink-0 ml-1 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {isOpen && childrenArray.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/20 bg-gray-900 shadow-xl overflow-hidden max-h-48 overflow-y-auto">
-          {childrenArray.map((child, i) => (
-            <button
-              key={i}
-              type="button"
-              className="w-full px-3 py-2 text-xs text-left hover:bg-white/10 text-white/80 hover:text-white transition-colors"
-              onClick={() => { onChange({ target: { value: String(child.props.value) } }); setIsOpen(false); }}
-            >
-              {child.props.children}
-            </button>
-          ))}
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/20 bg-gray-900 shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-white/10">
+            <input
+              type="text"
+              className="w-full px-2.5 py-1.5 text-xs rounded bg-white/5 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
+              placeholder="Cari..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-white/40 text-center">Tidak ada hasil</div>
+            ) : (
+              filtered.map((opt, i) => (
+                <button
+                  key={opt.value || i}
+                  type="button"
+                  className={cn(
+                    'w-full px-3 py-2 text-xs text-left flex items-center gap-2 transition-colors',
+                    String(opt.value) === String(value)
+                      ? 'bg-primary-500/20 text-primary-200'
+                      : 'hover:bg-white/10 text-white/80 hover:text-white'
+                  )}
+                  onClick={() => { onChange({ target: { value: opt.value } }); setIsOpen(false); setSearch(''); }}
+                >
+                  {String(opt.value) === String(value) && (
+                    <svg className="w-3 h-3 text-primary-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  <span className={String(opt.value) === String(value) ? '' : 'pl-5'}>{opt.label}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MultiSelectSearchable({ options = [], value = [], onChange, placeholder = 'Cari tyreman...', searchPlaceholder = 'Ketik nama...' }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef(null);
+
+  const filtered = options.filter(opt =>
+    opt.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) { setIsOpen(false); setSearch(''); } };
+    if (isOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  const toggle = (id) => {
+    if (value.includes(id)) {
+      onChange(value.filter(v => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger — shows selected chips */}
+      <button
+        type="button"
+        className={INPUT_CLASS + ' text-left min-h-[42px] flex flex-wrap items-center gap-1 cursor-pointer'}
+        onClick={() => setIsOpen(o => !o)}
+      >
+        {value.length === 0 ? (
+          <span className="text-white/40">{placeholder}</span>
+        ) : (
+          options
+            .filter(opt => value.includes(opt.id))
+            .map(opt => (
+              <span
+                key={opt.id}
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary-500/30 border border-primary-400 text-primary-200"
+              >
+                {opt.name}
+                <span
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:bg-primary-400/40 cursor-pointer leading-none ml-0.5"
+                  onClick={(e) => { e.stopPropagation(); toggle(opt.id); }}
+                >
+                  ×
+                </span>
+              </span>
+            ))
+        )}
+      </button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/20 bg-gray-900 shadow-xl overflow-hidden">
+          {/* Search input */}
+          <div className="p-2 border-b border-white/10">
+            <input
+              type="text"
+              className="w-full px-2.5 py-1.5 text-xs rounded bg-white/5 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
+              placeholder={searchPlaceholder}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+          {/* Options list */}
+          <div className="max-h-48 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-white/40 text-center">Tidak ada hasil</div>
+            ) : (
+              filtered.map(opt => {
+                const isSelected = value.includes(opt.id);
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className="w-full px-3 py-2 text-xs flex items-center gap-2 hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+                    onClick={() => toggle(opt.id)}
+                  >
+                    <span className={cn(
+                      'w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors',
+                      isSelected ? 'bg-primary-500 border-primary-500' : 'border-white/30'
+                    )}>
+                      {isSelected && (
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                    <span>{opt.name}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -90,6 +229,10 @@ export default function PositionActionBalloon({
   reasons = [],
   reasonId,
   rtdError,
+  tyremen = [],
+  tyresmanIds = [],
+  tyresmanRequired = false,
+  onTyresmanIdsChange,
   onStepChange,
   onSpareTyreIdChange,
   onRtdInputChange,
@@ -213,28 +356,23 @@ export default function PositionActionBalloon({
                   <label className={LABEL_CLASS}>Ban Spare <span className="text-red-400">*</span></label>
                   <Select
                     value={spareTyreId}
+                    placeholder="Pilih ban spare..."
+                    options={[{ value: '', label: 'Pilih ban spare...' }, ...spareTyres.map(t => ({
+                      value: String(t.id),
+                      label: `${t.serial_number} — ${t.brand?.name || ''} ${t.size?.name || ''} (RTD: ${t.rtd || t.rtd_1 || '—'}mm)`,
+                    }))]}
                     onChange={e => {
                       onSpareTyreIdChange(e.target.value);
-                      // Auto-populate RTD and Current Life HM when spare tyre selected
                       const selected = spareTyres.find(t => String(t.id) === e.target.value);
                       if (selected) {
-                        // RTD: from history (rtd) or OTD (original_tyre_depth)
                         const tyreRtd = selected.rtd || selected.rtd_1 || selected.original_tyre_depth || '';
                         onRtdInputChange(String(tyreRtd));
-                        // Current Life HM: from history
                         const tyreHm = selected.current_hm || selected.current_life_hm || selected.lifetime || '';
                         onCurrentLifeHmChange(String(tyreHm));
                       }
                     }}
                     required
-                  >
-                    <option value="">Pilih ban spare...</option>
-                    {spareTyres.map(t => (
-                      <option key={t.id} value={String(t.id)}>
-                        {t.serial_number} — {t.brand?.name || ''} {t.size?.name || ''} (RTD: {t.rtd || t.rtd_1 || '—'}mm)
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </div>
                 {selectedSpareTyre && (
                   <div className="bg-green-500/10 rounded-lg p-2 border border-green-500/20 flex items-center gap-2">
@@ -272,8 +410,29 @@ export default function PositionActionBalloon({
                     placeholder="Catatan..."
                   />
                 </div>
+                {/* Tyreman selection */}
+                {tyremen.length > 0 && (
+                  <div>
+                    <label className={LABEL_CLASS}>
+                      <span className="flex items-center gap-1">
+                        <UserCheck className="w-3 h-3" />
+                        Tyreman(s) {tyresmanRequired ? <span className="text-red-400">*</span> : <span className="text-white/40">(opsional)</span>}
+                      </span>
+                    </label>
+                    <MultiSelectSearchable
+                      options={tyremen}
+                      value={tyresmanIds}
+                      onChange={onTyresmanIdsChange}
+                      placeholder="Pilih tyreman..."
+                      searchPlaceholder="Ketik nama tyreman..."
+                    />
+                    {tyresmanRequired && tyresmanIds.length === 0 && (
+                      <p className="text-[10px] text-red-400 mt-0.5">Tyreman wajib dipilih</p>
+                    )}
+                  </div>
+                )}
                 <p className="text-[10px] text-white/50 italic">
-                  * HM Reading & Lokasi akan diinput saat proses queue
+                  * HM Reading & Lokasi akan diinput saat proses submit
                 </p>
               </div>
             )}
@@ -285,11 +444,12 @@ export default function PositionActionBalloon({
                   <label className={LABEL_CLASS}>Kondisi Setelah Lepas</label>
                   <Select
                     value={dismountCondition}
+                    options={[
+                      { value: 'spare', label: 'Spare (bisa dipakai lagi)' },
+                      { value: 'scrap', label: 'Scrap (dibuang)' },
+                    ]}
                     onChange={e => onDismountConditionChange(e.target.value)}
-                  >
-                    <option value="spare">Spare (bisa dipakai lagi)</option>
-                    <option value="scrap">Scrap (dibuang)</option>
-                  </Select>
+                  />
                 </div>
                 <div className="bg-red-500/10 rounded-lg p-2 border border-red-500/20">
                   <p className="text-[10px] text-red-300 font-medium mb-2">Ban yang akan dilepas:</p>
@@ -335,16 +495,11 @@ export default function PositionActionBalloon({
                   <label className={LABEL_CLASS}>Alasan Replacement <span className="text-red-400">*</span></label>
                   <Select
                     value={reasonId || ''}
+                    placeholder="Pilih alasan..."
+                    options={[{ value: '', label: 'Pilih alasan...' }, ...reasons.map(r => ({ value: String(r.id), label: r.name }))]}
                     onChange={e => onReasonChange(e.target.value)}
                     required
-                  >
-                    <option value="">Pilih alasan...</option>
-                    {reasons.map(r => (
-                      <option key={r.id} value={String(r.id)}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </div>
                 <div>
                   <label className={LABEL_CLASS}>Remarks <span className="text-white/40">(opsional)</span></label>
@@ -355,8 +510,29 @@ export default function PositionActionBalloon({
                     placeholder="Catatan..."
                   />
                 </div>
+                {/* Tyreman selection */}
+                {tyremen.length > 0 && (
+                  <div>
+                    <label className={LABEL_CLASS}>
+                      <span className="flex items-center gap-1">
+                        <UserCheck className="w-3 h-3" />
+                        Tyreman(s) {tyresmanRequired ? <span className="text-red-400">*</span> : <span className="text-white/40">(opsional)</span>}
+                      </span>
+                    </label>
+                    <MultiSelectSearchable
+                      options={tyremen}
+                      value={tyresmanIds}
+                      onChange={onTyresmanIdsChange}
+                      placeholder="Pilih tyreman..."
+                      searchPlaceholder="Ketik nama tyreman..."
+                    />
+                    {tyresmanRequired && tyresmanIds.length === 0 && (
+                      <p className="text-[10px] text-red-400 mt-0.5">Tyreman wajib dipilih</p>
+                    )}
+                  </div>
+                )}
                 <p className="text-[10px] text-white/50 italic">
-                  * Lokasi akan diinput saat proses queue
+                  * Lokasi dan Supervisor akan diinput saat proses queue
                 </p>
               </div>
             )}
@@ -368,16 +544,14 @@ export default function PositionActionBalloon({
                   <label className={LABEL_CLASS}>Ban Spare Baru <span className="text-red-400">*</span></label>
                   <Select
                     value={spareTyreId}
+                    placeholder="Pilih ban spare..."
+                    options={[{ value: '', label: 'Pilih ban spare...' }, ...spareTyres.map(t => ({
+                      value: String(t.id),
+                      label: `${t.serial_number} — ${t.brand?.name || ''} ${t.size?.name || ''} (RTD: ${t.rtd || t.rtd_1 || '—'}mm)`,
+                    }))]}
                     onChange={e => onSpareTyreIdChange(e.target.value)}
                     required
-                  >
-                    <option value="">Pilih ban spare...</option>
-                    {spareTyres.map(t => (
-                      <option key={t.id} value={String(t.id)}>
-                        {t.serial_number} — {t.brand?.name || ''} {t.size?.name || ''} (RTD: {t.rtd || t.rtd_1 || '—'}mm)
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </div>
                 {selectedSpareTyre && (
                   <div className="bg-green-500/10 rounded-lg p-2 border border-green-500/20 flex items-center gap-2">
@@ -429,16 +603,11 @@ export default function PositionActionBalloon({
                   <label className={LABEL_CLASS}>Alasan Replacement <span className="text-red-400">*</span></label>
                   <Select
                     value={reasonId || ''}
+                    placeholder="Pilih alasan..."
+                    options={[{ value: '', label: 'Pilih alasan...' }, ...reasons.map(r => ({ value: String(r.id), label: r.name }))]}
                     onChange={e => onReasonChange(e.target.value)}
                     required
-                  >
-                    <option value="">Pilih alasan...</option>
-                    {reasons.map(r => (
-                      <option key={r.id} value={String(r.id)}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </div>
                 <div>
                   <label className={LABEL_CLASS}>Remarks <span className="text-white/40">(opsional)</span></label>
@@ -449,8 +618,29 @@ export default function PositionActionBalloon({
                     placeholder="Catatan..."
                   />
                 </div>
+                {/* Tyreman selection */}
+                {tyremen.length > 0 && (
+                  <div>
+                    <label className={LABEL_CLASS}>
+                      <span className="flex items-center gap-1">
+                        <UserCheck className="w-3 h-3" />
+                        Tyreman(s) {tyresmanRequired ? <span className="text-red-400">*</span> : <span className="text-white/40">(opsional)</span>}
+                      </span>
+                    </label>
+                    <MultiSelectSearchable
+                      options={tyremen}
+                      value={tyresmanIds}
+                      onChange={onTyresmanIdsChange}
+                      placeholder="Pilih tyreman..."
+                      searchPlaceholder="Ketik nama tyreman..."
+                    />
+                    {tyresmanRequired && tyresmanIds.length === 0 && (
+                      <p className="text-[10px] text-red-400 mt-0.5">Tyreman wajib dipilih</p>
+                    )}
+                  </div>
+                )}
                 <p className="text-[10px] text-white/50 italic">
-                  * Lokasi akan diinput saat proses queue
+                  * Lokasi dan Supervisor akan diinput saat proses submit
                 </p>
               </div>
             )}

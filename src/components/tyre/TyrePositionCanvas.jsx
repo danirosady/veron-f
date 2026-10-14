@@ -37,6 +37,8 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
   onPositionActionChange,
   unitCurrentHm = 0,
   drivers = [],
+  supervisors = [],
+  tyremen = [],
   reasons = [],
 }, ref) {
   const [selectedPosition, setSelectedPosition] = useState(null);
@@ -104,6 +106,7 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
           onSubmitAll={onSubmitQueue}
           isSubmitting={isSubmitting}
           drivers={drivers}
+          supervisors={supervisors}
           unitCurrentHm={unitCurrentHm}
         />
         <PositionActionBalloon
@@ -119,6 +122,10 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
           spareTyres={spareTyres}
           unitCurrentHm={unitCurrentHm}
           reasons={reasons || []}
+          tyremen={tyremen}
+          tyresmanIds={positionActionForm.tyresmanIds || []}
+          tyresmanRequired={true}
+          onTyresmanIdsChange={(ids) => onPositionActionChange?.({ tyresmanIds: ids })}
           reasonId={positionActionForm.reasonId}
           rtdError={positionActionForm.rtdError}
           onStepChange={(step) => onPositionActionChange?.({ step })}
@@ -141,7 +148,9 @@ const TyrePositionCanvas = forwardRef(function TyrePositionCanvas({
             // For unmount/swap: RTD must be filled
             (positionActionForm.step !== 'mount-form' && !positionActionForm.rtdInput) ||
             // RTD validation error (for unmount/swap - must be lower than previous)
-            !!positionActionForm.rtdError
+            !!positionActionForm.rtdError ||
+            // Tyreman required
+            (positionActionForm.step !== 'choose' && (positionActionForm.tyresmanIds || []).length === 0)
           }
         />
 

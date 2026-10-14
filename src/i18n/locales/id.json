@@ -109,12 +109,62 @@
       "maintenance": "Pemeliharaan"
     }
   },
+  "employee": {
+    "title": {
+      "list": "Daftar Karyawan",
+      "create": "Tambah Karyawan",
+      "edit": "Edit Karyawan"
+    },
+    "subtitle": {
+      "list": "Kelola semua karyawan dalam sistem",
+      "create": "Tambah karyawan baru ke sistem",
+      "edit": "Perbarui informasi karyawan"
+    },
+    "button": {
+      "add": "Tambah Karyawan",
+      "create": "Buat",
+      "update": "Perbarui"
+    },
+    "label": {
+      "name": "Nama",
+      "employeeId": "ID Karyawan",
+      "phone": "Nomor Telepon",
+      "company": "Perusahaan",
+      "role": "Peran"
+    },
+    "placeholder": {
+      "name": "Nama karyawan",
+      "employeeId": "ID Karyawan",
+      "selectCompany": "Pilih perusahaan",
+      "search": "Cari karyawan..."
+    },
+    "tabs": {
+      "all": "Semua Driver",
+      "supervisor": "Supervisor",
+      "tyreman": "Tyreman"
+    },
+    "role": {
+      "driver": "Driver",
+      "supervisor": "Supervisor",
+      "tyreman": "Tyreman"
+    },
+    "empty": {
+      "title": "Belum Ada Karyawan",
+      "message": "Belum ada karyawan.",
+      "searchMatch": "Tidak ada karyawan yang cocok."
+    },
+    "confirm": {
+      "deleteTitle": "Konfirmasi Hapus",
+      "deleteMessage": "Yakin ingin menghapus karyawan \"{{name}}\"? Tindakan ini tidak dapat dibatalkan."
+    }
+  },
   "menu": {
     "dashboard": "Dashboard",
     "company": "Perusahaan",
     "project": "Proyek",
     "unit": "Unit",
     "driver": "Driver",
+    "employee": "Karyawan",
     "tyre": "Ban",
     "replacement": "Penggantian",
     "replacementHistory": "Riwayat Penggantian",
