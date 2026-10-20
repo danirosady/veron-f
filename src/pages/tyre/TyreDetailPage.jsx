@@ -225,6 +225,12 @@ export default function TyreDetailPage() {
                   {TYRE_STATUS_LABELS[tyre.status] || titleCase(tyre.status)}
                 </Badge>
               </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Remarks</p>
+                <p className="text-sm text-gray-900">
+                  {tyre.remarks?.status_name || '-'}
+                </p>
+              </div>
             </div>
           ) : (
             <p className="text-sm text-gray-500">Tyre not found.</p>

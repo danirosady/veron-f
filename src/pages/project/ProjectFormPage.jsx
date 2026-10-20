@@ -22,7 +22,6 @@ import { useBreadcrumb } from '@/hooks/useBreadcrumb';
 const projectSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   company_id: z.string().min(1, 'Company is required'),
-  description: z.string().max(255).optional().or(z.literal('')),
   location: z.string().max(100).optional().or(z.literal('')),
   start_date: z.string().optional().or(z.literal('')),
   end_date: z.string().optional().or(z.literal('')),
@@ -60,7 +59,6 @@ export default function ProjectFormPage() {
     defaultValues: {
       name: '',
       company_id: user?.company_id ? String(user.company_id) : '',
-      description: '',
       location: '',
       start_date: '',
       end_date: '',
@@ -74,7 +72,6 @@ export default function ProjectFormPage() {
       reset({
         name: p.name || '',
         company_id: p.company_id ? String(p.company_id) : '',
-        description: p.description || '',
         location: p.location || '',
         start_date: p.start_date ? p.start_date.substring(0, 10) : '',
         end_date: p.end_date ? p.end_date.substring(0, 10) : '',
@@ -134,15 +131,16 @@ export default function ProjectFormPage() {
                   />
                 </FormField>
 
+              {isSuperadmin() && (
                 <FormField label={t('project.label.company')} required error={errors.company_id?.message}>
                   <Select
                     options={companyOptions}
                     placeholder={t('company.placeholder.name')}
-                    disabled={!isSuperadmin()}
                     {...register('company_id')}
                     error={errors.company_id?.message}
                   />
                 </FormField>
+              )}
 
                 <FormField label={t('project.label.location')} error={errors.location?.message}>
                   <Input
@@ -180,15 +178,6 @@ export default function ProjectFormPage() {
                   />
                 </FormField>
               </div>
-
-              <FormField label={t('project.label.description')} error={errors.description?.message}>
-                <Textarea
-                  rows={3}
-                  placeholder={t('project.placeholder.description')}
-                  {...register('description')}
-                  error={errors.description?.message}
-                />
-              </FormField>
 
               {saveMutation.isError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">

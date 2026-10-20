@@ -22,7 +22,12 @@ const employeeSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
   employee_id: z.string().max(50).optional().or(z.literal('')),
   company_id: z.string().min(1, 'Company is required'),
-  phone: z.string().max(50).optional().or(z.literal('')),
+  phone: z
+    .string()
+    .max(50)
+    .optional()
+    .refine((val) => !val || /^\+?\d[\d\s\-()]*$/.test(val), 'Must be a valid phone number')
+    .or(z.literal('')),
   role: z.enum(['driver', 'supervisor', 'tyreman']),
   status: z.enum(['active', 'inactive']).default('active'),
 });

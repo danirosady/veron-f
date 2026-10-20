@@ -27,6 +27,19 @@ export const formatDateTime = (date) => {
   }
 };
 
+export const formatRupiah = (num) => {
+  if (num === null || num === undefined || num === '') return '-';
+  const numStr = String(num).replace(/[^\d]/g, '');
+  if (!numStr) return '-';
+  const number = parseInt(numStr, 10);
+  return `Rp ${number.toLocaleString('id-ID')}`;
+};
+
+export const parseRupiah = (formatted) => {
+  if (!formatted) return '';
+  return String(formatted).replace(/[^\d]/g, '');
+};
+
 export const formatNumber = (num, decimals = 2) => {
   if (num === null || num === undefined || num === '') return '-';
   return Number(num).toLocaleString('id-ID', {

@@ -256,6 +256,7 @@ export default function TyrePositionCanvasEditable({
   initialPositions = [],
   form,
   onFormChange,
+  unitTypeCodes = [],
 }) {
   const derivedFormation = positions.length > 0
     ? extractFormationFromPositions(positions)
@@ -639,15 +640,29 @@ export default function TyrePositionCanvasEditable({
               <div className="px-3 py-2 space-y-2">
                 <div>
                   <label className="block text-[10px] font-medium text-gray-400 mb-0.5">Unit Type Code</label>
-                  <input
-                    type="text"
-                    value={form?.unit_type ?? ''}
-                    onChange={(e) => onFormChange?.({ ...form, unit_type: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') })}
-                    placeholder="e.g. CUSTOM_8POS"
-                    disabled={!!form?.id}
-                    className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400"
-                  />
-                  <p className="text-[9px] text-gray-400 mt-0.5">Cant change after create</p>
+                  {unitTypeCodes.length > 0 ? (
+                    <select
+                      value={form?.unit_type ?? ''}
+                      onChange={(e) => onFormChange?.({ ...form, unit_type: e.target.value })}
+                      disabled={!!form?.id}
+                      className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400"
+                    >
+                      <option value="">-- Select Unit Type --</option>
+                      {unitTypeCodes.map((code) => (
+                        <option key={code} value={code}>{code}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={form?.unit_type ?? ''}
+                      onChange={(e) => onFormChange?.({ ...form, unit_type: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') })}
+                      placeholder="e.g. CUSTOM_8POS"
+                      disabled={!!form?.id}
+                      className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-gray-50 disabled:text-gray-400"
+                    />
+                  )}
+                  <p className="text-[9px] text-gray-400 mt-0.5">Can't change after create</p>
                 </div>
                 <div>
                   <label className="block text-[10px] font-medium text-gray-400 mb-0.5">Display Name</label>

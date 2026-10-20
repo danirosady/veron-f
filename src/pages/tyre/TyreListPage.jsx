@@ -17,9 +17,10 @@ import { companiesAPI } from '@/api/companies';
 import { masterAPI } from '@/api/master';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
-import { formatNumber, getRtdColor } from '@/utils/format';
+import { formatNumber, formatRupiah, getRtdColor } from '@/utils/format';
 
 const TYRE_STATUS_PILLS_ID = [
+  { value: 'new_tyre', label: 'Ban Baru' },
   { value: 'spare', label: 'Cadangan' },
   { value: 'mounted', label: 'Terpasang' },
   { value: 'dismounted', label: 'Lepas' },
@@ -27,6 +28,7 @@ const TYRE_STATUS_PILLS_ID = [
 ];
 
 const TYRE_STATUS_PILLS_EN = [
+  { value: 'new_tyre', label: 'New Tyre' },
   { value: 'spare', label: 'Spare' },
   { value: 'mounted', label: 'Mounted' },
   { value: 'dismounted', label: 'Dismounted' },
@@ -180,12 +182,6 @@ export default function TyreListPage() {
       },
     },
     {
-      key: 'dot',
-      header: t('tyre.label.dot'),
-      align: 'center',
-      render: (v) => v || '-',
-    },
-    {
       key: 'dot_code',
       header: t('tyre.label.dotCode'),
       render: (v) => v || '-',
@@ -194,13 +190,18 @@ export default function TyreListPage() {
       key: 'cost',
       header: t('tyre.label.cost') || 'Cost',
       align: 'right',
-      render: (v) => v ? formatNumber(v, 2) : '-',
+      render: (v) => v ? formatRupiah(v) : '-',
     },
     {
       key: 'status',
       header: t('common.label.status'),
       sortable: true,
       render: (v) => getStatusBadge(v),
+    },
+    {
+      key: 'remarks',
+      header: t('tyre.label.remarks'),
+      render: (_, row) => row.remarks?.status_name || '-',
     },
     {
       key: 'unit_id',

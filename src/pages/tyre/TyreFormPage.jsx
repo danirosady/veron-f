@@ -18,6 +18,7 @@ import { masterAPI } from '@/api/master';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import { useBreadcrumb } from '@/hooks/useBreadcrumb';
+import { formatRupiah, parseRupiah } from '@/utils/format';
 
 const tyreSchema = z.object({
   serial_number: z.string().min(1, 'Serial number is required').max(100),
@@ -29,10 +30,10 @@ const tyreSchema = z.object({
   pattern_id: z.string().optional().or(z.literal('')),
   depth_new: z.string().min(1, 'OTD is required'),
   dot_code: z.string().optional().or(z.literal('')),
-  dot: z.string().optional().or(z.literal('')),
   cost: z.string().optional().or(z.literal('')),
   purchase_date: z.string().optional().or(z.literal('')),
-  status: z.enum(['spare', 'mounted', 'dismounted', 'scrap']).default('spare'),
+  status: z.enum(['new_tyre', 'spare', 'mounted', 'dismounted', 'scrap']).default('new_tyre'),
+  remarks_id: z.string().optional().or(z.literal('')),
 });
 
 export default function TyreFormPage() {
@@ -44,6 +45,7 @@ export default function TyreFormPage() {
   const { isSuperadmin } = usePermission();
   const isEdit = Boolean(id);
   const { setBreadcrumb } = useBreadcrumb();
+  const [costDisplay, setCostDisplay] = React.useState('');
 
   const { data: tyreData, isLoading: loadingTyre } = useQuery({
     queryKey: ['tyre', id],
@@ -76,10 +78,16 @@ export default function TyreFormPage() {
     queryFn: () => masterAPI.listPatterns({ per_page: 200 }),
   });
 
+  const { data: remarksData } = useQuery({
+    queryKey: ['master', 'remarks'],
+    queryFn: () => masterAPI.listRemarks(),
+  });
+
   const {
     register,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(tyreSchema),
@@ -93,10 +101,10 @@ export default function TyreFormPage() {
       pattern_id: '',
       depth_new: '',
       dot_code: '',
-      dot: '',
       cost: '',
       purchase_date: '',
-      status: 'spare',
+      status: 'new_tyre',
+      remarks_id: '',
     },
   });
 
@@ -107,6 +115,8 @@ export default function TyreFormPage() {
       const t_data = tyreData.data?.data || tyreData.data;
       // type is stored as string (e.g. "Radial"), match by name to find id
       const matchedType = types.find((tp) => tp.name === t_data.type);
+      
+      // Use dot_code directly from API response
       reset({
         serial_number: t_data.serial_number || '',
         barcode: t_data.barcode || '',
@@ -117,11 +127,12 @@ export default function TyreFormPage() {
         pattern_id: t_data.pattern_id ? String(t_data.pattern_id) : '',
         depth_new: t_data.rtd ? String(t_data.rtd) : '',
         dot_code: t_data.dot_code || '',
-        dot: t_data.dot || '',
         cost: t_data.cost ? String(t_data.cost) : '',
         purchase_date: t_data.purchase_date ? t_data.purchase_date.substring(0, 10) : '',
-        status: t_data.status || 'spare',
+        status: t_data.status || 'new_tyre',
+        remarks_id: t_data.remarks_id ? String(t_data.remarks_id) : '',
       });
+      setCostDisplay(t_data.cost ? formatRupiah(t_data.cost) : '');
       // Set breadcrumb
       setBreadcrumb(t_data.serial_number || `Tyre #${id}`);
     }
@@ -137,41 +148,31 @@ export default function TyreFormPage() {
     },
   });
 
-  const onSubmit = (data) => {
-    const otd = Number(data.depth_new);
+  const onSubmit = () => {
+    const formData = getValues();
+    const rawCost = parseRupiah(costDisplay);
+    const costValue = rawCost ? parseFloat(rawCost) : null;
+    const dotCodeValue = formData.dot_code || '';
 
     if (isEdit) {
-      // Edit: send all editable fields (only non-empty values)
-      const rtd = Number(data.depth_new);
-      const selectedType = types.find((tp) => String(tp.id) === String(data.type_id));
-      const payload = {
-        rtd,
-        remarks: data.remarks || '',
-      };
-      if (data.brand_id) payload.brand_id = Number(data.brand_id);
-      if (data.size_id) payload.size_id = Number(data.size_id);
-      if (data.pattern_id) payload.pattern_id = Number(data.pattern_id);
-      if (selectedType) payload.type = selectedType.name;
-      if (data.dot_code && data.dot_code.trim()) payload.dot_code = data.dot_code.trim();
-      if (data.dot && data.dot.trim()) payload.dot = data.dot.trim();
-      if (data.cost && data.cost.trim()) payload.cost = parseFloat(data.cost);
+      const payload = {};
+      if (costValue) payload.cost = costValue;
+      if (dotCodeValue) payload.dot_code = dotCodeValue;
       saveMutation.mutate(payload);
     } else {
-      // Create: full payload
       const payload = {
-        serial_number: data.serial_number,
-        barcode: data.barcode,
-        company_id: data.company_id ? Number(data.company_id) : Number(user?.company_id),
-        brand_id: Number(data.brand_id),
-        size_id: Number(data.size_id),
-        pattern_id: data.pattern_id ? Number(data.pattern_id) : null,
-        otd: otd,
-        rtd: otd,
-        remarks: data.remarks || '',
+        serial_number: formData.serial_number,
+        barcode: formData.barcode,
+        company_id: formData.company_id ? Number(formData.company_id) : Number(user?.company_id),
+        brand_id: Number(formData.brand_id),
+        size_id: Number(formData.size_id),
+        pattern_id: formData.pattern_id ? Number(formData.pattern_id) : null,
+        otd: Number(formData.depth_new),
+        rtd: Number(formData.depth_new),
+        remarks_id: formData.remarks_id ? Number(formData.remarks_id) : null,
       };
-      if (data.dot_code && data.dot_code.trim()) payload.dot_code = data.dot_code.trim();
-      if (data.dot && data.dot.trim()) payload.dot = data.dot.trim();
-      if (data.cost && data.cost.trim()) payload.cost = parseFloat(data.cost);
+      if (costValue) payload.cost = costValue;
+      if (dotCodeValue) payload.dot_code = dotCodeValue;
       saveMutation.mutate(payload);
     }
   };
@@ -180,6 +181,8 @@ export default function TyreFormPage() {
   const brands = brandsData?.data?.data || brandsData?.data || [];
   const sizes = sizesData?.data?.data || sizesData?.data || [];
   const patterns = patternsData?.data?.data || patternsData?.data || [];
+  const remarksList = remarksData?.data?.data || remarksData?.data || [];
+  const remarksOptions = remarksList.map((r) => ({ value: r.id, label: r.status_name }));
 
   return (
     <div className="space-y-6">
@@ -225,19 +228,21 @@ export default function TyreFormPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {isSuperadmin() && (
                 <FormField label={t('tyre.label.company')} error={errors.company_id?.message}>
                   <Select
                     options={companies.map((c) => ({ value: c.id, label: c.name }))}
                     placeholder={t('tyre.placeholder.selectCompany')}
-                    disabled={isEdit || !isSuperadmin()}
                     {...register('company_id')}
                     error={errors.company_id?.message}
                   />
                 </FormField>
+              )}
 
                 <FormField label={t('common.label.status')} error={errors.status?.message}>
                   <Select
                     options={[
+                      { value: 'new_tyre', label: t('tyre.status.new_tyre') },
                       { value: 'spare', label: t('tyre.status.spare') },
                       { value: 'mounted', label: t('tyre.status.mounted') },
                       { value: 'dismounted', label: t('tyre.status.dismounted') },
@@ -248,6 +253,7 @@ export default function TyreFormPage() {
                     error={errors.status?.message}
                   />
                 </FormField>
+
 
                 <FormField label={t('tyre.label.brand')} required error={errors.brand_id?.message}>
                   <Select
@@ -295,16 +301,6 @@ export default function TyreFormPage() {
                   />
                 </FormField>
 
-                <FormField label={t('tyre.label.dot')} error={errors.dot?.message}>
-                  <Input
-                    type="text"
-                    maxLength={10}
-                    placeholder={t('tyre.placeholder.dot')}
-                    {...register('dot')}
-                    error={errors.dot?.message}
-                  />
-                </FormField>
-
                 <FormField label={t('tyre.label.dotCode')} error={errors.dot_code?.message}>
                   <Input
                     type="text"
@@ -317,10 +313,13 @@ export default function TyreFormPage() {
 
                 <FormField label={t('tyre.label.cost')} error={errors.cost?.message}>
                   <Input
-                    type="number"
-                    step="0.01"
-                    placeholder={t('tyre.placeholder.cost')}
-                    {...register('cost')}
+                    type="text"
+                    placeholder={t('tyre.placeholder.cost') || 'Rp 0'}
+                    value={costDisplay}
+                    onChange={(e) => {
+                      const rawValue = parseRupiah(e.target.value);
+                      setCostDisplay(rawValue ? formatRupiah(rawValue) : '');
+                    }}
                     error={errors.cost?.message}
                   />
                 </FormField>

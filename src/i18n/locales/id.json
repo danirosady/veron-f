@@ -135,6 +135,7 @@
     "placeholder": {
       "name": "Nama karyawan",
       "employeeId": "ID Karyawan",
+      "phone": "Nomor telepon (contoh 081234567890)",
       "selectCompany": "Pilih perusahaan",
       "search": "Cari karyawan..."
     },
@@ -251,6 +252,7 @@
     "title": "Dashboard",
     "welcome": "Selamat Datang",
     "subtitle": "Ringkasan Sistem Manajemen Ban",
+    "subtitleCompany": "Ringkasan Perusahaan Anda",
     "summary": {
       "totalCompany": "Total Perusahaan",
       "totalProject": "Total Proyek",
@@ -315,11 +317,11 @@
     },
     "placeholder": {
       "name": "Masukkan nama perusahaan",
-      "code": "Kode perusahaan (opsional)",
+      "code": "Masukkan kode perusahaan (mis. CMP-001)",
       "address": "Alamat lengkap perusahaan (opsional)",
       "phone": "Nomor telepon",
       "email": "email@perusahaan.com",
-      "contactPerson": "Nama orang kontak",
+      "contactPerson": "Masukkan nama orang yang dapat dihubungi",
       "search": "Cari perusahaan..."
     },
     "filter": {
@@ -338,12 +340,6 @@
       "createSuccess": "Perusahaan berhasil ditambahkan",
       "deleteSuccess": "Perusahaan berhasil dihapus",
       "updateSuccess": "Perusahaan berhasil diperbarui"
-    },
-    "placeholder": {
-      "name": "Masukkan nama perusahaan",
-      "address": "Masukkan alamat lengkap",
-      "phone": "Masukkan nomor telepon",
-      "email": "Masukkan email"
     }
   },
   "project": {
@@ -523,11 +519,11 @@
       "selectType": "Pilih tipe",
       "selectPattern": "Pilih pola",
       "selectCompany": "Pilih perusahaan",
+      "selectRemarks": "Pilih keterangan",
       "search": "Cari berdasarkan barcode atau nomor seri...",
       "otd": "Kedalaman tapak awal (mm)",
       "rtd": "Kedalaman tapak saat ini (mm)",
-      "dot": "DOT (contoh 3522)",
-      "dotCode": "Kode DOT lengkap (contoh E4PN 3502)",
+      "dotCode": "Kode DOT (contoh E4PN 3502)",
       "cost": "Harga ban"
     },
     "empty": {
@@ -549,7 +545,6 @@
       "size": "Ukuran",
       "type": "Tipe",
       "pattern": "Pola",
-      "dot": "DOT",
       "dotCode": "Kode DOT",
       "cost": "Harga",
       "purchaseDate": "Tanggal Pembelian",
@@ -579,7 +574,8 @@
       "disposed": "Dibuang",
       "retread": "Sosek",
       "transfer": "Dipindahkan",
-      "scrap": "Rusak"
+      "scrap": "Rusak",
+      "new_tyre": "Ban Baru"
     },
     "filter": {
       "brand": "Merek",

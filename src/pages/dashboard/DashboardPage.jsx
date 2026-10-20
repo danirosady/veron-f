@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Building2,
@@ -88,10 +87,6 @@ export default function DashboardPage() {
     queryFn: () => dashboardAPI.getStats(),
   });
 
-  if (!isSuperadmin()) {
-    return <Navigate to="/units" replace />;
-  }
-
   const stats = data?.data?.data || {};
 
   if (isLoading) {
@@ -116,18 +111,29 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {t('dashboard.subtitle')}
+          {isSuperadmin()
+            ? t('dashboard.subtitle')
+            : t('dashboard.subtitleCompany')}
         </p>
       </div>
 
-      {/* Main Stats - Company & Project */}
+      {/* Main Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={Building2}
-          label={t('dashboard.summary.totalCompany')}
-          value={stats.total_companies}
-          colorClass="text-blue-600"
-        />
+        {isSuperadmin() ? (
+          <StatCard
+            icon={Building2}
+            label={t('dashboard.summary.totalCompany')}
+            value={stats.total_companies}
+            colorClass="text-blue-600"
+          />
+        ) : (
+          <StatCard
+            icon={FolderKanban}
+            label={t('dashboard.summary.totalProject')}
+            value={stats.total_projects}
+            colorClass="text-blue-600"
+          />
+        )}
         <StatCard
           icon={FolderKanban}
           label={t('dashboard.summary.totalProject')}

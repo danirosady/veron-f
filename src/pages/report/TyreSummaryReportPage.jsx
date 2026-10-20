@@ -11,7 +11,7 @@ import { companiesAPI } from '@/api/companies';
 import { masterAPI } from '@/api/master';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
-import { formatNumber, getRtdColor } from '@/utils/format';
+import { formatNumber, formatRupiah, getRtdColor } from '@/utils/format';
 import { TYRE_STATUS_LABELS, TYRE_STATUS_OPTIONS } from '@/utils/constants';
 
 export default function TyreSummaryReportPage() {
@@ -119,13 +119,13 @@ export default function TyreSummaryReportPage() {
       key: 'cost',
       header: 'Cost',
       align: 'right',
-      render: (v) => v > 0 ? `$${formatNumber(v, 2)}` : '-',
+      render: (v) => v > 0 ? formatRupiah(v) : '-',
     },
     {
       key: 'cost_per_hm',
       header: 'Cost/HM',
       align: 'right',
-      render: (v) => v > 0 ? `$${formatNumber(v, 4)}` : '-',
+      render: (v) => v > 0 ? formatRupiah(v) : '-',
     },
     {
       key: 'total_tread_used',
@@ -189,7 +189,7 @@ export default function TyreSummaryReportPage() {
             <div>
               <p className="text-sm text-gray-500">Avg Cost/HM</p>
               <p className="text-xl font-bold text-gray-900">
-                {avgCostPerHM > 0 ? `$${formatNumber(avgCostPerHM, 4)}` : '-'}
+                {avgCostPerHM > 0 ? formatRupiah(avgCostPerHM) : '-'}
               </p>
             </div>
           </CardBody>

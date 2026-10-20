@@ -27,7 +27,10 @@ const unitSchema = z.object({
   plate_number: z.string().max(50).optional().or(z.literal('')),
   tyre_size_default: z.string().min(1, 'Tyre Size Default is required').max(50),
   unit_type: z.string().min(1, 'Type is required'),
-  current_hm: z.string().optional().or(z.literal('')),
+  current_hm: z.string()
+    .optional()
+    .refine((val) => !val || /^\d*\.?\d+$/.test(val), 'Must be a valid number')
+    .or(z.literal('')),
   status: z.enum(['active', 'inactive', 'maintenance']).default('active'),
 });
 
@@ -187,15 +190,16 @@ export default function UnitFormPage() {
                   />
                 </FormField>
 
-                <FormField label="Company" required error={errors.company_id?.message}>
-                  <Select
-                    options={companies.map((c) => ({ value: c.id, label: c.name }))}
-                    placeholder="Select company"
-                    disabled={!isSuperadmin()}
-                    {...register('company_id')}
-                    error={errors.company_id?.message}
-                  />
-                </FormField>
+                {isSuperadmin() && (
+                  <FormField label="Company" required error={errors.company_id?.message}>
+                    <Select
+                      options={companies.map((c) => ({ value: c.id, label: c.name }))}
+                      placeholder="Select company"
+                      {...register('company_id')}
+                      error={errors.company_id?.message}
+                    />
+                  </FormField>
+                )}
 
                 <FormField label="Project" required error={errors.project_id?.message}>
                   <Select
@@ -256,10 +260,16 @@ export default function UnitFormPage() {
 
                 <FormField label="Current HM" error={errors.current_hm?.message}>
                   <Input
-                    type="number"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0"
-                    {...register('current_hm')}
+                    value={watch('current_hm') || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*\.?\d*$/.test(val)) {
+                        setValue('current_hm', val);
+                      }
+                    }}
                     error={errors.current_hm?.message}
                   />
                 </FormField>

@@ -134,6 +134,7 @@
     "placeholder": {
       "name": "Employee name",
       "employeeId": "Employee ID",
+      "phone": "Phone number (e.g. 081234567890)",
       "selectCompany": "Select company",
       "search": "Search employees..."
     },
@@ -250,6 +251,7 @@
     "title": "Dashboard",
     "welcome": "Welcome",
     "subtitle": "Tyre Management System Summary",
+    "subtitleCompany": "Your Company Overview",
     "summary": {
       "totalCompany": "Total Companies",
       "totalProject": "Total Projects",
@@ -314,11 +316,11 @@
     },
     "placeholder": {
       "name": "Enter company name",
-      "code": "Company code (optional)",
+      "code": "Enter company code (e.g. CMP-001)",
       "address": "Company address (optional)",
       "phone": "Phone number",
       "email": "company@example.com",
-      "contactPerson": "Contact person name",
+      "contactPerson": "Enter contact person name",
       "search": "Search companies..."
     },
     "filter": {
@@ -337,12 +339,6 @@
       "createSuccess": "Company added successfully",
       "deleteSuccess": "Company deleted successfully",
       "updateSuccess": "Company updated successfully"
-    },
-    "placeholder": {
-      "name": "Enter company name",
-      "address": "Enter full address",
-      "phone": "Enter phone number",
-      "email": "Enter email"
     }
   },
   "project": {
@@ -522,11 +518,11 @@
       "selectType": "Select type",
       "selectPattern": "Select pattern",
       "selectCompany": "Select company",
+      "selectRemarks": "Select remarks",
       "search": "Search by barcode or serial number...",
       "otd": "Original tread depth (mm)",
       "rtd": "Current tread depth (mm)",
-      "dot": "DOT (e.g. 3522)",
-      "dotCode": "Full DOT code (e.g. E4PN 3502)",
+      "dotCode": "DOT Code (e.g. E4PN 3502)",
       "cost": "Tyre price/cost"
     },
     "empty": {
@@ -548,7 +544,6 @@
       "size": "Size",
       "type": "Type",
       "pattern": "Pattern",
-      "dot": "DOT",
       "dotCode": "DOT Code",
       "cost": "Cost",
       "purchaseDate": "Purchase Date",
@@ -578,7 +573,8 @@
       "disposed": "Disposed",
       "retread": "Retread",
       "transfer": "Transferred",
-      "scrap": "Scrap"
+      "scrap": "Scrap",
+      "new_tyre": "New Tyre"
     },
     "filter": {
       "brand": "Brand",

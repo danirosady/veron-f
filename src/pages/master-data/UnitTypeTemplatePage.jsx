@@ -16,6 +16,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import TyrePositionCanvasEditable from '@/components/tyre/TyrePositionCanvasEditable';
 import { masterAPI } from '@/api/master';
 import { VEHICLE_CHASSIS_IMAGES } from '@/utils/vehicleLayouts';
+import { SEED_CONFIGS } from '@/utils/unitTypeSeedData';
 
 // ─── Mini Preview ─────────────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ function TemplateSaveButton({ form, positions, templateId, onSuccess }) {
 
 // ─── Template Editor Modal ──────────────────────────────────────────────────
 
-function TemplateEditorModal({ isOpen, onClose, template }) {
+function TemplateEditorModal({ isOpen, onClose, template, unitTypeCodes }) {
   const [form, setForm] = useState({
     unit_type: '',
     display_name: '',
@@ -234,6 +235,7 @@ function TemplateEditorModal({ isOpen, onClose, template }) {
           }}
           form={form}
           onFormChange={setForm}
+          unitTypeCodes={unitTypeCodes}
         />
       </div>
     </Modal>
@@ -256,6 +258,12 @@ export default function UnitTypeTemplatePage() {
   });
 
   const templates = data?.data?.data || data?.data || [];
+
+  // Extract unique unit type codes from existing templates + seed data
+  const dbCodes = templates.map(t => t.unit_type).filter(Boolean);
+  const seedCodes = SEED_CONFIGS.map(c => c.unit_type);
+  const allCodes = [...new Set([...seedCodes, ...dbCodes])];
+  const unitTypeCodes = allCodes;
 
   const deleteMutation = useMutation({
     mutationFn: (id) => masterAPI.deleteUnitType(id),
@@ -353,6 +361,7 @@ export default function UnitTypeTemplatePage() {
         isOpen={editorOpen}
         onClose={closeEditor}
         template={editingTemplate}
+        unitTypeCodes={unitTypeCodes}
       />
 
       {/* Delete Confirm */}
